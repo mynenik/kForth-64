@@ -1,0 +1,2535 @@
+// vm64.s
+//
+// The assembler portion of kForth 64-bit Virtual Machine
+//
+// Copyright (c) 1998--2019 Krishna Myneni,
+//   <krishna.myneni@ccreweb.org>
+//
+// This software is provided under the terms of the GNU 
+// Affero General Public License (AGPL), v3.0 or later.
+//
+// Usage from C++
+//
+//       extern "C" int vm (byte* ip);
+//       ecode = vm(ip);
+//
+.include "vm64-common.s"
+
+	.comm GlobalTp, WSIZE,WSIZE
+	.comm GlobalRtp, WSIZE,WSIZE
+	.comm BottomOfTypeStack, WSIZE,WSIZE
+	.comm BottomOfReturnTypeStack, WSIZE,WSIZE
+
+.macro FETCH op
+	movq GlobalTp, %rbx
+	inc %rbx
+        movb (%rbx), %al
+        cmpb $OP_ADDR, %al
+        jnz E_not_addr
+        movb \op, (%rbx)
+	LDSP
+	INC_DSP
+        mov (%rbx), %rax	
+        mov (%rax), %rax
+	mov %rax, (%rbx)
+	xor %rax, %rax
+.endm
+
+.macro SWAP
+        LDSP
+        INC_DSP
+	mov (%rbx), %rax
+	INC_DSP
+	mov (%rbx), %rcx
+	mov %rax, (%rbx)
+	mov %rcx, -WSIZE(%rbx)
+        movq GlobalTp, %rbx
+        inc %rbx
+	movb (%rbx), %al
+	inc %rbx
+	movb (%rbx), %cl
+	movb %al, (%rbx)
+	movb %cl, -1(%rbx)
+        xor %rax, %rax
+.endm
+
+.macro OVER
+        LDSP
+        movq 2*WSIZE(%rbx), %rax
+        mov %rax, (%rbx)
+	DEC_DSP
+	STSP
+        movq GlobalTp, %rbx
+        movb 2(%rbx), %al
+        movb %al, (%rbx)
+        decq GlobalTp
+        xor %rax, %rax
+.endm
+
+.macro FDUP
+	LDSP
+	mov %rbx, %rcx
+	INC_DSP
+	mov (%rbx), %rdx
+	INC_DSP
+	mov (%rbx), %rax
+	mov %rcx, %rbx
+	mov %rax, (%rbx)
+	DEC_DSP
+	mov %rdx, (%rbx)
+	DEC_DSP
+	STSP
+	movq GlobalTp, %rbx
+	inc %rbx
+	movw (%rbx), %ax
+	subq $2, %rbx
+	movw %ax, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalTp
+	xor %rax, %rax
+.endm
+	
+.macro FDROP
+	movq $2*WSIZE, %rax
+	addq %rax, GlobalSp
+        INC2_DTSP
+	xor %rax, %rax
+.endm
+
+.macro FSWAP
+	LDSP
+	movq $WSIZE, %rcx
+	add %rcx, %rbx
+	mov (%rbx), %rdx
+	add %rcx, %rbx
+	mov (%rbx), %rax
+	add %rcx, %rbx
+	xchg %rdx, (%rbx)
+	add %rcx, %rbx
+	xchg %rax, (%rbx)
+	sub %rcx, %rbx
+	sub %rcx, %rbx
+	mov %rax, (%rbx)
+	sub %rcx, %rbx
+	mov %rdx, (%rbx)
+	movq GlobalTp, %rbx
+	inc %rbx
+	movw (%rbx), %ax
+	addq $2, %rbx
+	xchgw %ax, (%rbx)
+	subq $2, %rbx
+	movw %ax, (%rbx)
+	xor %rax, %rax
+.endm
+		
+.macro FOVER
+	LDSP
+	mov %rbx, %rcx
+	addq $3*WSIZE, %rbx
+	mov (%rbx), %rdx
+	INC_DSP
+	mov (%rbx), %rax
+	mov %rcx, %rbx
+	mov %rax, (%rbx)
+	DEC_DSP
+	mov %rdx, (%rbx)
+	DEC_DSP
+	STSP
+	movq GlobalTp, %rbx
+	mov %rbx, %rcx
+	addq $3, %rbx
+	movw (%rbx), %ax
+	mov %rcx, %rbx
+	dec %rbx
+	movw %ax, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalTp
+	xor %rax, %rax	
+.endm
+	
+.macro PUSH_R
+	LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx	
+        STSP
+	mov (%rbx), %rcx
+	movq GlobalRp, %rbx
+	mov %rcx, (%rbx)
+	sub %rax, %rbx
+	movq %rbx, GlobalRp
+	movq GlobalTp, %rbx
+	inc %rbx
+	movq %rbx, GlobalTp
+	movb (%rbx), %al
+	movq GlobalRtp, %rbx
+	movb %al, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalRtp
+        xor %rax, %rax
+.endm
+
+	
+.macro POP_R
+	movq $WSIZE, %rax
+	movq GlobalRp, %rbx
+	add %rax, %rbx
+	movq %rbx, GlobalRp
+	mov (%rbx), %rcx
+	LDSP
+	mov %rcx, (%rbx)
+	sub %rax, %rbx
+	STSP
+	movq GlobalRtp, %rbx
+	inc %rbx
+	movq %rbx, GlobalRtp
+	movb (%rbx), %al
+	movq GlobalTp, %rbx
+	movb %al, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalTp
+	xor %rax, %rax
+.endm
+	
+// Dyadic Logic operators 
+	
+.macro LOGIC_DYADIC op
+	LDSP
+	movq $WSIZE, %rcx
+	add %rcx, %rbx
+	STSP
+	mov (%rbx), %rax
+	add %rcx, %rbx
+	\op (%rbx), %rax
+	mov %rax, (%rbx)
+	movq GlobalTp, %rax
+	inc %rax
+	movq %rax, GlobalTp
+	movb $OP_IVAL, 1(%rax)	
+	xor %rax, %rax 
+.endm
+	
+.macro _AND
+	LOGIC_DYADIC and
+.endm
+	
+.macro _OR
+	LOGIC_DYADIC or
+.endm
+	
+.macro _XOR
+	LOGIC_DYADIC xor
+.endm
+	
+
+// use algorithm from DNW's vm-osxppc.s
+.macro _ABS	
+	LDSP
+	INC_DSP
+	mov (%rbx), %rcx
+	xor %rax, %rax
+	cmp %rax, %rcx
+	setl %al
+	neg %rax
+	mov %rax, %rdx
+	xor %rcx, %rdx
+	sub %rax, %rdx
+	mov %rdx, (%rbx)
+	xor %rax, %rax
+.endm
+	
+// Dyadic relational operators (single length numbers) 
+	
+.macro REL_DYADIC setx
+	LDSP
+	movq $WSIZE, %rcx
+	add %rcx, %rbx
+	STSP
+	mov (%rbx), %rax
+	add %rcx, %rbx
+	cmp %rax, (%rbx)
+	movq $0, %rax
+	\setx %al
+	neg %rax
+	mov %rax, (%rbx)
+	movq GlobalTp, %rax
+	inc %rax
+	movq %rax, GlobalTp
+	movb $OP_IVAL, 1(%rax)
+	xor %rax, %rax
+.endm
+
+// Relational operators for zero (single length numbers)
+	
+.macro REL_ZERO setx
+	LDSP
+	INC_DSP
+	mov (%rbx), %rax
+	cmpq $0, %rax
+	movq $0, %rax
+	\setx %al
+	neg %rax
+	mov %rax, (%rbx)
+	movq GlobalTp, %rax
+	movb $OP_IVAL, 1(%rax)
+	xor %rax, %rax
+.endm
+
+.macro FREL_DYADIC logic arg set
+	LDSP
+	movq $WSIZE, %rcx
+	add %rcx, %rbx
+	fld (%rbx)
+	add %rcx, %rbx
+	add %rcx, %rbx
+	STSP
+	fcomp (%rbx)
+	fnstsw %ax
+	andb $65, %ah
+	\logic \arg, %ah
+	movq $0, %rax
+	\set %al
+	neg %rax
+	add %rcx, %rbx
+	mov %rax, (%rbx)
+	movq GlobalTp, %rax
+	addq $3, %rax
+	movq %rax, GlobalTp
+	movb $OP_IVAL, 1(%rax)
+	xor %rax, %rax
+.endm
+				
+	# b = (d1.hi < d2.hi) OR ((d1.hi = d2.hi) AND (d1.lo u< d2.lo))
+.macro DLT
+	LDSP
+	movq $WSIZE, %rcx
+	xor %rdx, %rdx
+	add %rcx, %rbx
+	mov (%rbx), %rax
+	cmp %rax, 2*WSIZE(%rbx)
+	sete %dl
+	setl %dh
+	add %rcx, %rbx
+	mov (%rbx), %rax
+	add %rcx, %rbx
+	STSP
+	add %rcx, %rbx
+	cmp %rax, (%rbx)
+	setb %al
+	andb %al, %dl
+	orb  %dh, %dl
+	xor %rax, %rax
+	movb %dl, %al
+	neg %rax
+	mov %rax, (%rbx)
+	movq GlobalTp, %rax
+	addq $4, %rax
+	movb $OP_IVAL, (%rax)
+	dec %rax
+	movq %rax, GlobalTp	
+	xor %rax, %rax
+.endm
+
+	# b = (d1.hi > d2.hi) OR ((d1.hi = d2.hi) AND (d1.lo u> d2.lo))
+.macro DGT
+	LDSP
+	movq $WSIZE, %rcx
+	xor %rdx, %rdx
+	add %rcx, %rbx
+	mov (%rbx), %rax
+	cmp %rax, 2*WSIZE(%rbx)
+	sete %dl
+	setl %dh
+	add %rcx, %rbx
+	mov (%rbx), %rax
+	add %rcx, %rbx
+	STSP
+	add %rcx, %rbx
+	cmp %rax, (%rbx)
+	setb %al
+	andb %al, %dl
+	orb  %dh, %dl
+	xor %rax, %rax
+	movb %dl, %al
+	neg %rax
+	mov %rax, (%rbx)
+	movq GlobalTp, %rax
+	addq $4, %rax
+	movb $OP_IVAL, (%rax)
+	dec %rax
+	movq %rax, GlobalTp	
+	xor %rax, %rax
+.endm
+			
+.macro DNEGATE
+	LDSP
+	INC_DSP
+	mov %rbx, %rcx
+	INC_DSP
+	mov (%rbx), %rax
+	not %rax
+	clc
+	addq $1, %rax
+	mov %rax, (%rbx)
+	mov %rcx, %rbx
+	mov (%rbx), %rax
+	not %rax
+	adcq $0, %rax
+	mov %rax, (%rbx)
+	xor %rax, %rax	
+.endm
+	
+.macro STARSLASH
+	movq $2*WSIZE, %rax
+        addq %rax, GlobalSp
+        LDSP
+        movq WSIZE(%rbx), %rax
+        imulq (%rbx)
+	idivq -WSIZE(%rbx)
+	mov %rax, WSIZE(%rbx)
+	INC2_DTSP
+	xor %rax, %rax
+.endm
+	
+
+.macro TNEG
+	LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	mov (%rbx), %rdx
+	add %rax, %rbx
+	mov (%rbx), %rcx
+	add %rax, %rbx
+	mov (%rbx), %rax
+	not %rax
+	not %rcx
+	not %rdx
+	clc
+	addq $1, %rax
+	adcq $0, %rcx
+	adcq $0, %rdx
+	mov %rax, (%rbx)
+	movq $WSIZE, %rax
+	sub %rax, %rbx
+	mov %rcx, (%rbx)
+	sub %rax, %rbx
+	mov %rdx, (%rbx)
+	xor %rax, %rax	
+.endm
+
+// VIRTUAL MACHINE 
+						
+.global vm
+	.type	vm,@function
+vm:
+        push %rbp
+        push %rbx
+	pushq GlobalIp
+	pushq vmEntryRp
+	movq %rdi, %rbp         # load the Forth instruction pointer
+        movq %rbp, GlobalIp
+	movq GlobalRp, %rax
+	movq %rax, vmEntryRp
+	xor %rax, %rax
+next:
+        movb (%rbp), %al         # get the opcode
+	movq JumpTable(,%rax,WSIZE), %rbx	# machine code address of word
+	xor %rax, %rax           # clear error code
+	call *%rbx		 # call the word
+	movq GlobalIp, %rbp      # resync ip (possibly changed in call)
+	inc %rbp		 # increment the Forth instruction ptr
+	movq %rbp, GlobalIp
+	cmpb $0, %al		 # check for error
+	jz next        
+exitloop:
+        cmpq $OP_RET, %rax       # return from vm?
+        jnz vmexit
+        xor %rax, %rax           # clear the error
+vmexit:
+	popq vmEntryRp
+	popq GlobalIp
+        pop %rbx
+        pop %rbp
+        ret
+
+L_ret:
+	movq vmEntryRp, %rax		# Return Stack Ptr on entry to VM
+	movq GlobalRp, %rcx
+	cmp %rax, %rcx
+	jl ret1
+        movq $OP_RET, %rax             # exhausted the return stack so exit vm
+        ret
+ret1:
+	addq $WSIZE, %rcx
+        movq %rcx, GlobalRp
+        incq GlobalRtp	
+	movq GlobalRtp, %rbx
+	movb (%rbx), %al
+        cmpb $OP_ADDR, %al
+        jnz  E_ret_stk_corrupt
+	mov (%rcx), %rax
+	movq %rax, GlobalIp		# reset the instruction ptr
+        xor %rax, %rax
+retexit:
+        ret
+
+L_tobody:
+	LDSP
+	INC_DSP
+	mov (%rbx), %rcx	# code address
+	inc %rcx		# the data address is offset by one
+	mov (%rcx), %rcx
+	mov %rcx, (%rbx)
+	ret
+#
+# For precision delays, use US or MS instead of USLEEP
+# Use USLEEP when task can be put to sleep and reawakened by OS
+#
+L_usleep:
+	addq $WSIZE, GlobalSp
+	INC_DTSP
+	LDSP
+	mov (%rbx), %rax
+	push %rax
+	call usleep
+	pop %rax
+	xor %rax, %rax
+	ret
+
+L_ms:
+	LDSP
+	movq WSIZE(%rbx), %rax
+	imulq $1000, %rax
+	mov %rax, WSIZE(%rbx)
+	call C_usec
+	ret
+
+L_fill:
+	SWAP
+	movq $WSIZE, %rax
+	addq %rax, GlobalSp
+	INC_DTSP
+	LDSP
+	mov (%rbx), %rbx
+	push %rbx
+	addq %rax, GlobalSp
+	INC_DTSP
+	LDSP
+	mov (%rbx), %rbx
+	push %rbx
+	addq %rax, GlobalSp
+	INC_DTSP
+	movq GlobalTp, %rbx
+	movb (%rbx), %al
+	cmpb $OP_ADDR, %al
+	jz fill2
+	pop %rbx
+	pop %rbx
+	movq $E_NOT_ADDR, %rax
+	jmp fillexit
+fill2:	LDSP
+	mov (%rbx), %rbx
+	push %rbx
+	call memset
+	addq $12, %rsp
+	xor %rax, %rax
+fillexit:	
+	ret
+L_erase:
+	LDSP
+	movq $0, (%rbx)
+	DEC_DSP
+	STSP
+	DEC_DTSP
+	call L_fill
+	ret
+L_blank:
+	LDSP
+	movq $32, (%rbx)
+	DEC_DSP
+	STSP
+	DEC_DTSP
+	call L_fill
+	ret	
+L_move:
+	movq $WSIZE, %rax
+	addq %rax, GlobalSp
+	INC_DTSP
+	LDSP
+	mov (%rbx), %rbx
+	push %rbx
+	SWAP
+	movq $WSIZE, %rax
+	addq %rax, GlobalSp
+	INC_DTSP
+	movq GlobalTp, %rbx
+	movb (%rbx), %al
+	cmpb $OP_ADDR, %al
+	jz move2
+	pop %rbx
+	movq $E_NOT_ADDR, %rax
+	ret
+move2:	LDSP
+	mov (%rbx), %rbx
+	push %rbx
+	movq $WSIZE, %rax
+	addq %rax, GlobalSp
+	INC_DTSP
+	movq GlobalTp, %rbx
+	movb (%rbx), %al
+	cmpb $OP_ADDR, %al
+	jz move3
+	pop %rbx
+	pop %rbx
+	movq $E_NOT_ADDR, %rax
+	ret
+move3:	LDSP
+	mov (%rbx), %rbx
+	push %rbx
+	call memmove
+	addq $12, %rsp
+	xor %rax, %rax				
+	ret
+L_cmove:
+	LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	mov (%rbx), %rcx		# nbytes in rcx
+	cmpq $0, %rcx
+	jnz  cmove1
+	addq $2*WSIZE, %rbx
+	STSP
+	addq $3, GlobalTp
+	xor %rax, %rax
+	NEXT		
+cmove1:	INC_DTSP
+	add %rax, %rbx
+	mov (%rbx), %rdx		# dest addr in rdx
+	STSP
+	INC_DTSP
+	movq GlobalTp, %rbx
+	movb (%rbx), %al
+	cmpb $OP_ADDR, %al
+	jz cmove2
+	movq $E_NOT_ADDR, %rax
+	ret
+cmove2:	LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	mov (%rbx), %rax		# src addr in rax
+	STSP
+	INC_DTSP
+	movq GlobalTp, %rbx
+	movb (%rbx), %bl
+	cmpb $OP_ADDR, %bl
+	jz cmove3
+	movq $E_NOT_ADDR, %rax
+	ret
+cmove3:	mov %rax, %rbx			# src addr in rbx
+cmoveloop: movb (%rbx), %al
+	movb %al, (%rdx)
+	inc %rbx
+	inc %rdx
+	loop cmoveloop
+	xor %rax, %rax				
+	NEXT				
+L_cmovefrom:
+	movq $WSIZE, %rax
+	addq %rax, GlobalSp
+	INC_DTSP
+	LDSP
+	mov (%rbx), %rcx	# load count register
+	addq %rax, GlobalSp
+	INC_DTSP
+	movq GlobalTp, %rbx
+	movb (%rbx), %al
+	cmpb $OP_ADDR, %al
+	jz cmovefrom2
+	movq $E_NOT_ADDR, %rax						
+	ret
+cmovefrom2:
+	LDSP
+	mov (%rbx), %rbx
+	mov %rcx, %rax
+	dec %rax
+	add %rax, %rbx
+	mov %rbx, %rdx		# dest addr in %rdx
+	movq $WSIZE, %rax
+	addq %rax, GlobalSp
+	INC_DTSP
+	movq GlobalTp, %rbx
+	movb (%rbx), %al
+	cmpb $OP_ADDR, %al
+	jz cmovefrom3
+	movq $E_NOT_ADDR, %rax
+	ret
+cmovefrom3:
+	LDSP
+	mov (%rbx), %rbx
+	mov %rcx, %rax
+	cmpq $0, %rax
+	jnz cmovefrom4
+	ret
+cmovefrom4:	
+	dec %rax
+	add %rax, %rbx		# src addr in %rbx
+cmovefromloop:	
+	movb (%rbx), %al
+	dec %rbx
+	xchg %rbx, %rdx
+	movb %al, (%rbx)
+	dec %rbx
+	xchg %rbx, %rdx
+	loop cmovefromloop	
+	xor %rax, %rax
+	ret
+
+L_slashstring:
+	LDSP
+	DROP
+	mov (%rbx), %rcx
+	INC_DSP
+	sub %rcx, (%rbx)
+	INC_DSP
+	add %rcx, (%rbx)
+	NEXT
+
+L_call:
+	LDSP
+	DROP
+	jmpq *(%rbx)
+	ret
+
+L_push_r:
+	PUSH_R
+        NEXT
+L_pop_r:
+	POP_R
+	NEXT
+
+L_twopush_r:
+	LDSP
+	INC_DSP
+	mov (%rbx), %rdx
+	INC_DSP
+	mov (%rbx), %rax
+	STSP
+	movq GlobalRp, %rbx
+	movq %rax, (%rbx)
+	subq $WSIZE, %rbx
+	mov %rdx, (%rbx)
+	subq $WSIZE, %rbx
+	movq %rbx, GlobalRp
+	movq GlobalTp, %rbx
+	inc %rbx
+	movw (%rbx), %ax
+	inc %rbx
+	movq %rbx, GlobalTp
+	movq GlobalRtp, %rbx
+	dec %rbx
+	movw %ax, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalRtp
+	xor %rax, %rax
+	NEXT
+
+L_twopop_r:
+	movq GlobalRp, %rbx
+	addq $WSIZE, %rbx
+	mov (%rbx), %rdx
+	addq $WSIZE, %rbx
+	mov (%rbx), %rax
+	movq %rbx, GlobalRp
+	LDSP
+	mov %rax, (%rbx)
+	subq $WSIZE, %rbx
+	mov %rdx, (%rbx)
+	subq $WSIZE, %rbx
+	STSP
+	movq GlobalRtp, %rbx
+	inc %rbx
+	movw (%rbx), %ax
+	inc %rbx
+	movq %rbx, GlobalRtp
+	movq GlobalTp, %rbx
+	dec %rbx
+	movw %ax, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalTp
+	xor %rax, %rax				
+	NEXT
+L_puship:
+        mov %rbp, %rax
+        movq GlobalRp, %rbx
+        mov %rax, (%rbx)
+	movq $WSIZE, %rax
+        subq %rax, GlobalRp
+        movq GlobalRtp, %rbx
+	movb $OP_ADDR, %al
+        movb %al, (%rbx)
+	decq GlobalRtp
+        xor %rax, %rax
+        NEXT
+L_execute:	
+        mov %rbp, %rcx
+        movq GlobalRp, %rbx
+        mov %rcx, (%rbx)
+	movq $WSIZE, %rax 
+        sub %rax, %rbx 
+	movq %rbx, GlobalRp
+        movq GlobalRtp, %rbx
+	movb $OP_ADDR, (%rbx)
+	dec %rbx
+        movq %rbx, GlobalRtp
+	LDSP
+        add %rax, %rbx
+	STSP
+        mov (%rbx), %rax
+	dec %rax
+	mov %rax, %rbp
+	INC_DTSP
+        xor %rax, %rax
+        NEXT
+L_definition:
+        mov %rbp, %rbx
+	movq $WSIZE, %rax
+	inc %rbx
+	mov (%rbx), %rcx # address to execute
+	addq $3, %rbx
+	mov %rbx, %rdx
+	movq GlobalRp, %rbx
+	movq %rdx, (%rbx)
+	sub %rax, %rbx
+	movq %rbx, GlobalRp
+	movq GlobalRtp, %rbx
+	movb $OP_ADDR, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalRtp
+	dec %rcx
+	mov %rcx, %rbp
+        xor %rax, %rax	
+	NEXT
+L_rfetch:
+        movq GlobalRp, %rbx
+        addq $WSIZE, %rbx
+        movq (%rbx), %rax
+        LDSP
+        mov %rax, (%rbx)
+	movq $WSIZE, %rax
+        subq %rax, GlobalSp
+        movq GlobalRtp, %rbx
+        inc %rbx
+        movb (%rbx), %al
+        movq GlobalTp, %rbx
+        movb %al, (%rbx)
+        DEC_DTSP
+        xor %rax, %rax
+	NEXT
+L_tworfetch:
+	movq GlobalRp, %rbx
+	addq $WSIZE, %rbx
+	mov (%rbx), %rdx
+	addq $WSIZE, %rbx
+	mov (%rbx), %rax
+	LDSP
+	mov %rax, (%rbx)
+	DEC_DSP
+	mov %rdx, (%rbx)
+	DEC_DSP
+	STSP
+	movq GlobalRtp, %rbx
+	inc %rbx
+	movw (%rbx), %ax
+	inc %rbx
+	movq GlobalTp, %rbx
+	dec %rbx
+	movw %ax, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalTp
+	xor %rax, %rax				
+	NEXT
+L_rpfetch:
+	LDSP
+	movq GlobalRp, %rax
+	addq $WSIZE, %rax
+	mov %rax, (%rbx)
+	DEC_DSP
+	STSP
+	movq GlobalTp, %rbx
+	movb $OP_ADDR, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalTp
+	xor %rax, %rax
+	NEXT
+L_spfetch:
+	movq GlobalSp, %rax
+	mov %rax, %rbx
+	addq $WSIZE, %rax
+	mov %rax, (%rbx)
+	DEC_DSP
+	STSP
+	movq GlobalTp, %rbx
+	movb $OP_ADDR, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalTp
+	xor %rax, %rax 
+	NEXT
+L_i:
+        movq GlobalRtp, %rbx
+        movb 3(%rbx), %al
+        movq GlobalTp, %rbx
+	movb %al, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalTp
+        movq GlobalRp, %rbx
+        movq 3*WSIZE(%rbx), %rax
+        LDSP
+        mov %rax, (%rbx)
+	movq $WSIZE, %rax
+        sub %rax, %rbx 
+	STSP
+        xor %rax, %rax
+        NEXT
+L_j:
+        movq GlobalRtp, %rbx
+        movb 6(%rbx), %al
+	movq GlobalTp, %rbx
+	movb %al, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalTp
+        movq GlobalRp, %rbx
+        movq 6*WSIZE(%rbx), %rax
+        LDSP
+        mov %rax, (%rbx)
+	movq $WSIZE, %rax
+        sub %rax, %rbx
+	STSP
+        xor %rax, %rax
+        NEXT
+
+L_loop:
+        movq GlobalRtp, %rbx
+        inc %rbx
+        movb (%rbx), %al
+        cmpb $OP_ADDR, %al
+        jnz  E_ret_stk_corrupt
+        movq GlobalRp, %rbx	
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	mov (%rbx), %rdx
+	add %rax, %rbx
+	mov (%rbx), %rcx
+	add %rax, %rbx
+        mov (%rbx), %rax
+        inc %rax
+	cmp %rcx, %rax	
+        jz L_unloop
+loop1:	
+        mov %rax, (%rbx)	# set loop counter to next value
+	mov %rdx, %rbp		# set instruction ptr to start of loop
+        xor %rax, %rax
+        NEXT
+
+L_unloop:
+	UNLOOP
+	xor %rax, %rax
+        NEXT
+
+L_plusloop:
+	push %rbp
+	movq GlobalRtp, %rbx
+        inc %rbx
+        movb (%rbx), %al
+        cmpb $OP_ADDR, %al
+        jnz  E_ret_stk_corrupt
+	movq $WSIZE, %rax
+	LDSP
+	add %rax, %rbx
+	mov (%rbx), %rbp	# get loop increment 
+	STSP
+	INC_DTSP		
+        movq GlobalRp, %rbx
+	add %rax, %rbx		# get ip and save in rdx
+	mov (%rbx), %rdx
+	add %rax, %rbx
+	mov (%rbx), %rcx	# get terminal count in rcx
+	add %rax, %rbx
+	mov (%rbx), %rax	# get current loop index
+	add %rbp, %rax         # new loop index
+	cmpq $0, %rbp           
+	jl plusloop1            # loop inc < 0?
+
+     # positive loop increment
+	cmp %rcx, %rax
+	jl plusloop2            # is new loop index < rcx?
+	add %rbp, %rcx
+	cmp %rcx, %rax
+	jge plusloop2            # is new index >= rcx + inc?
+	pop %rbp
+	xor %rax, %rax
+	UNLOOP
+	NEXT
+
+plusloop1:       # negative loop increment
+	dec %rcx
+	cmp %rcx, %rax
+	jg plusloop2           # is new loop index > rcx-1?
+	add %rbp, %rcx
+	cmp %rcx, %rax
+	jle plusloop2           # is new index <= rcx + inc - 1?
+	pop %rbp
+	xor %rax, %rax
+	UNLOOP
+	NEXT
+
+plusloop2:
+	pop %rbp
+	mov %rax, (%rbx)
+	mov %rdx, %rbp
+	xor %rax, %rax
+	NEXT
+
+L_count:
+	movq GlobalTp, %rbx
+	movb 1(%rbx), %al
+	cmpb $OP_ADDR, %al
+	jnz  E_not_addr
+	movb $OP_IVAL, (%rbx)
+	DEC_DTSP
+	LDSP
+	movq WSIZE(%rbx), %rbx
+	xor %rax, %rax
+	movb (%rbx), %al
+	LDSP
+	incq WSIZE(%rbx)
+	mov %rax, (%rbx)
+	movq $WSIZE, %rax
+	subq %rax, GlobalSp
+	xor %rax, %rax
+	NEXT
+
+L_ival:
+	LDSP
+        mov %rbp, %rcx
+        inc %rcx
+        mov (%rcx), %rax
+	addq $WSIZE-1, %rcx
+	mov %rcx, %rbp
+	mov %rax, (%rbx)
+	DEC_DSP
+	STSP
+	STD_IVAL
+	xor %rax, %rax
+	NEXT
+
+L_addr:
+	LDSP
+	mov %rbp, %rcx
+	inc %rcx
+	mov (%rcx), %rax
+	addq $WSIZE-1, %rcx
+	mov %rcx, %rbp
+	mov %rax, (%rbx)
+	DEC_DSP
+	STSP
+	STD_ADDR
+	xor %rax, %rax
+	NEXT
+
+L_ptr:
+	LDSP
+	mov %rbp, %rcx
+	inc %rcx
+	mov (%rcx), %rax
+	addq $WSIZE-1, %rcx
+	mov %rcx, %rbp
+	mov (%rax), %rax
+	mov %rax, (%rbx)
+	DEC_DSP
+	STSP
+	STD_ADDR
+	xor %rax, %rax
+	NEXT
+
+L_fval:
+        mov %rbp, %rbx
+        inc %rbx
+        movq GlobalSp, %rcx
+        subq $WSIZE, %rcx
+        mov (%rbx), %rax
+	mov %rax, (%rcx)
+	movq WSIZE(%rbx), %rax
+	movq %rax, WSIZE(%rcx)
+	subq $WSIZE, %rcx
+	movq %rcx, GlobalSp
+	addq $2*WSIZE-1, %rbx
+	mov %rbx, %rbp
+	movq GlobalTp, %rbx
+	movb $OP_IVAL, (%rbx)
+	dec %rbx
+	movb $OP_IVAL, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalTp
+	xor %rax, %rax
+	NEXT
+
+L_and:
+	_AND
+	NEXT
+L_or:
+	_OR
+	NEXT
+L_not:
+	LDSP
+	_NOT
+	NEXT
+L_xor:
+	_XOR
+	NEXT
+
+L_eq:
+	REL_DYADIC sete
+	NEXT
+
+L_ne:
+	REL_DYADIC setne
+	NEXT
+
+L_ult:
+	REL_DYADIC setb
+	NEXT
+
+L_ugt:
+	REL_DYADIC seta 
+	NEXT
+
+L_lt:
+	REL_DYADIC setl
+	NEXT
+
+L_gt:
+	REL_DYADIC setg
+	NEXT
+
+L_le:
+	REL_DYADIC setle
+	NEXT
+
+L_ge:
+	REL_DYADIC setge
+	NEXT
+
+L_zeroeq:
+	REL_ZERO setz
+	NEXT
+
+L_zerone:
+	REL_ZERO setnz
+	NEXT
+
+L_zerolt:
+	REL_ZERO setl
+	NEXT
+
+L_zerogt:
+	REL_ZERO setg
+	NEXT
+
+L_within:
+        LDSP                       # stack: a b c 
+        movq 2*WSIZE(%rbx), %rcx   # rcx = b
+	movq WSIZE(%rbx), %rax     # rax = c
+	sub %rcx, %rax            # rax = c - b
+	INC_DSP     
+	INC_DSP
+	movq WSIZE(%rbx), %rdx     # rdx = a
+        sub %rcx, %rdx            # rdx = a - b
+	cmp %rax, %rdx
+	movq $0, %rax
+	setb %al
+	neg %rax
+	movq %rax, WSIZE(%rbx)
+	STSP
+	movq GlobalTp, %rbx
+	addq $3, %rbx
+	movb $OP_IVAL, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalTp
+	xor %rax, %rax
+        NEXT
+
+L_deq:
+	movq GlobalTp, %rbx
+	addq $4, %rbx
+	movb $OP_IVAL, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalTp
+	LDSP
+	INC_DSP
+	mov (%rbx), %rdx
+	INC_DSP
+	mov (%rbx), %rcx
+	INC_DSP
+	STSP
+	mov (%rbx), %rax
+	sub %rdx, %rax
+	INC_DSP
+	mov (%rbx), %rdx
+	sub %rcx, %rdx
+	or %rdx, %rax
+	cmpq $0, %rax
+	movq $0, %rax
+	setz %al
+	neg %rax
+	mov %rax, (%rbx)
+	xor %rax, %rax
+	NEXT
+
+L_dzeroeq:
+	movq GlobalTp, %rbx
+	addq $2, %rbx
+	movb $OP_IVAL, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalTp
+	LDSP
+	INC_DSP
+	STSP
+	mov (%rbx), %rax
+	INC_DSP
+	or (%rbx), %rax
+	cmpq $0, %rax
+	movq $0, %rax
+	setz %al
+	neg %rax
+	mov %rax, (%rbx)
+	xor %rax, %rax
+	NEXT
+
+L_dzerolt:
+	REL_ZERO setl
+	mov (%rbx), %rax
+	movq %rax, WSIZE(%rbx)
+	STSP
+	INC_DTSP
+	xor %rax, %rax
+	NEXT	
+
+L_dlt:	
+	DLT
+	NEXT
+
+L_dult:	# b = (d1.hi u< d2.hi) OR ((d1.hi = d2.hi) AND (d1.lo u< d2.lo)) 
+	LDSP
+	movq $WSIZE, %rcx
+	xor %rdx, %rdx
+	add %rcx, %rbx
+	mov (%rbx), %rax
+	cmpq %rax, 2*WSIZE(%rbx)
+	sete %dl
+	setb %dh
+	add %rcx, %rbx
+	mov (%rbx), %rax
+	add %rcx, %rbx
+	STSP
+	add %rcx, %rbx
+	cmp %rax, (%rbx)
+	setb %al
+	andb %al, %dl
+	orb  %dh, %dl
+	xor %rax, %rax
+	movb %dl, %al
+	neg %rax
+	mov %rax, (%rbx)
+	movq GlobalTp, %rax
+	addq $4, %rax
+	movb $OP_IVAL, (%rax)
+	dec %rax
+	movq %rax, GlobalTp
+	xor %rax, %rax
+	NEXT
+	
+L_querydup:
+	LDSP
+	movq WSIZE(%rbx), %rax
+	cmpq $0, %rax
+	je L_querydupexit
+	mov %rax, (%rbx)
+	DEC_DSP
+	STSP
+	movq GlobalTp, %rbx
+	movb 1(%rbx), %al
+	movb %al, (%rbx)
+	DEC_DTSP
+	xor %rax, %rax
+L_querydupexit:
+	NEXT
+
+
+L_swap:
+	SWAP
+        NEXT
+
+L_over:
+	OVER
+        NEXT
+
+L_rot:
+	push %rbp
+	LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	mov %rbx, %rbp
+	add %rax, %rbx
+	add %rax, %rbx
+	mov (%rbx), %rcx
+	mov (%rbp), %rdx
+	mov %rcx, (%rbp)
+	add %rax, %rbp
+	mov (%rbp), %rcx
+	mov %rdx, (%rbp)
+	mov %rcx, (%rbx)
+        movq GlobalTp, %rbx
+        inc %rbx
+	mov %rbx, %rbp
+	movw (%rbx), %cx
+	addq $2, %rbx
+	movb (%rbx), %al
+	movb %al, (%rbp)
+	inc %rbp
+	movw %cx, (%rbp)
+	xor %rax, %rax
+	pop %rbp
+	NEXT
+
+L_minusrot:
+	LDSP
+	movq WSIZE(%rbx), %rax
+	mov %rax, (%rbx)
+	INC_DSP
+	movq WSIZE(%rbx), %rax
+	mov %rax, (%rbx)
+	INC_DSP
+	movq WSIZE(%rbx), %rax
+	mov %rax, (%rbx)
+	movq -2*WSIZE(%rbx), %rax
+	movq %rax, WSIZE(%rbx)
+	movq GlobalTp, %rbx
+	movb 1(%rbx), %al
+	movb %al, (%rbx)
+	inc %rbx
+	movw 1(%rbx), %ax
+	movw %ax, (%rbx)
+	movb -1(%rbx), %al
+	movb %al, 2(%rbx)
+	xor %rax, %rax
+	NEXT
+
+L_nip:
+        SWAP
+        addq $WSIZE, GlobalSp
+        INC_DTSP
+        NEXT
+
+L_tuck:
+        SWAP
+        OVER
+        NEXT
+
+L_pick:
+	LDSP
+	addq $WSIZE, %rbx
+	mov %rbx, %rdx
+	mov (%rbx), %rax
+	inc %rax
+	mov %rax, %rcx
+	imulq $WSIZE, %rax
+	add %rax, %rbx
+	mov (%rbx), %rax
+	mov %rdx, %rbx
+	mov %rax, (%rbx)
+	movq GlobalTp, %rbx
+	inc %rbx
+	mov %rbx, %rdx
+	add %rcx, %rbx
+	movb (%rbx), %al
+	mov %rdx, %rbx
+	movb %al, (%rbx)
+	xor %rax, %rax
+	NEXT
+
+L_roll:
+	movq $WSIZE, %rax
+	addq %rax, GlobalSp
+	INC_DTSP
+	LDSP 
+	mov (%rbx), %rax
+	inc %rax
+	push %rax
+	push %rax
+	push %rax
+	push %rbx
+	imulq $WSIZE, %rax
+	add %rax, %rbx		# addr of item to roll
+	mov (%rbx), %rax
+	pop %rbx
+	mov %rax, (%rbx)
+	pop %rax		# number of cells to copy
+	mov %rax, %rcx
+	imulq $WSIZE, %rax
+	add %rax, %rbx
+	mov %rbx, %rdx		# dest addr
+	subq $WSIZE, %rbx	# src addr
+rollloop:
+	mov (%rbx), %rax
+	subq $WSIZE, %rbx
+	xchg %rbx, %rdx
+	mov %rax, (%rbx)
+	subq $WSIZE, %rbx
+	xchg %rbx, %rdx
+	loop rollloop
+
+	pop %rax		# now we have to roll the typestack
+	movq GlobalTp, %rbx	
+	add %rax, %rbx
+	movb (%rbx), %al
+	movq GlobalTp, %rbx
+	movb %al, (%rbx)
+	pop %rax
+	mov %rax, %rcx
+	add %rax, %rbx
+	mov %rbx, %rdx
+	dec %rbx
+rolltloop:
+	movb (%rbx), %al
+	dec %rbx
+	xchg %rbx, %rdx
+	movb %al, (%rbx)
+	dec %rbx
+	xchg %rbx, %rdx
+	loop rolltloop
+	xor %rax, %rax
+	ret
+
+L_depth:
+	LDSP
+	movq BottomOfStack, %rax
+	sub %rbx, %rax
+	movq $WSIZE, (%rbx)
+	movq $0, %rdx
+	idivq (%rbx)
+	mov %rax, (%rbx)
+	movq $WSIZE, %rax
+	subq %rax, GlobalSp
+	STD_IVAL
+	xor %rax, %rax
+        ret
+
+L_2drop:
+	FDROP
+        NEXT
+
+L_f2drop:
+	FDROP
+	FDROP
+	NEXT
+
+L_f2dup:
+        FOVER
+	FOVER
+	NEXT
+
+L_2dup:
+	FDUP
+        NEXT
+
+L_2swap:
+	FSWAP	
+        NEXT
+
+L_2over:
+	FOVER
+        NEXT
+
+L_2rot:
+	LDSP
+	INC_DSP
+	mov %rbx, %rcx
+	mov (%rbx), %rdx
+	INC_DSP
+	mov (%rbx), %rax
+	INC_DSP
+	xchg %rdx, (%rbx)
+	INC_DSP
+	xchg %rax, (%rbx)
+	INC_DSP
+	xchg %rdx, (%rbx)
+	INC_DSP
+	xchg %rax, (%rbx)
+	mov %rcx, %rbx
+	mov %rdx, (%rbx)
+	addq $WSIZE, %rbx
+	mov %rax, (%rbx)
+	movq GlobalTp, %rbx
+	inc %rbx
+	mov %rbx, %rcx
+	movw (%rbx), %ax
+	addq $2, %rbx
+	xchgw %ax, (%rbx)
+	addq $2, %rbx
+	xchgw %ax, (%rbx)
+	mov %rcx, %rbx
+	movw %ax, (%rbx)
+	xor %rax, %rax
+        NEXT
+
+L_question:
+	FETCH $OP_IVAL
+	call CPP_dot	
+	ret	
+
+L_fetch:
+	FETCH $OP_IVAL
+	NEXT
+
+L_store:
+        movq GlobalTp, %rbx
+	inc %rbx
+        movb (%rbx), %al
+        cmpb $OP_ADDR, %al
+        jnz E_not_addr
+	movq $WSIZE, %rax
+	LDSP
+        add %rax, %rbx
+        mov (%rbx), %rcx	# address to store to in rcx
+	add %rax, %rbx
+	mov (%rbx), %rdx	# value to store in rdx
+	STSP
+	mov %rdx, (%rcx)
+	INC2_DTSP
+	xor %rax, %rax
+	NEXT
+
+L_afetch:
+	FETCH $OP_ADDR
+	NEXT
+
+L_cfetch:
+	movq GlobalTp, %rbx
+	inc %rbx
+	movb (%rbx), %al
+	cmpb $OP_ADDR, %al
+	jnz E_not_addr
+	movb $OP_IVAL, (%rbx)
+	xor %rax, %rax
+	LDSP
+	INC_DSP
+	mov (%rbx), %rcx
+	movb (%rcx), %al
+	mov %rax, (%rbx)
+	xor %rax, %rax
+        NEXT
+
+L_cstore:
+	movq GlobalTp, %rdx
+	inc %rdx
+	movb (%rdx), %al
+	cmpb $OP_ADDR, %al
+	jnz E_not_addr
+	LDSP
+	INC_DSP
+	mov (%rbx), %rcx	# address to store
+	INC_DSP
+	mov (%rbx), %rax	# value to store
+	movb %al, (%rcx)
+	STSP
+	inc %rdx
+	movq %rdx, GlobalTp
+	xor %rax, %rax
+	NEXT	
+
+L_wfetch:
+	movq GlobalTp, %rcx
+	movb 1(%rcx), %al
+	cmpb $OP_ADDR, %al
+	jnz E_not_addr
+	movb $OP_IVAL, 1(%rcx)
+	LDSP
+	movq WSIZE(%rbx), %rbx
+	movw (%rbx), %ax
+	cwde
+	LDSP
+	movq %rax, WSIZE(%rbx)
+	xor %rax, %rax
+        NEXT
+
+L_wstore:
+	movq $WSIZE, %rax
+	addq %rax, GlobalSp
+	INC_DTSP
+	movq GlobalTp, %rcx
+	movb (%rcx), %al
+	cmpb $OP_ADDR, %al
+	jnz E_not_addr
+	LDSP
+	mov (%rbx), %rax
+	push %rax
+	INC_DSP
+	mov (%rbx), %rax
+	pop %rbx
+	movw %ax, (%rbx)
+	movq $WSIZE, %rax
+	addq %rax, GlobalSp
+	INC_DTSP
+	xor %rax, %rax
+        NEXT
+
+L_sffetch:
+	movq $WSIZE, %rax
+        addq %rax, GlobalSp
+        INC_DTSP
+        movq GlobalTp, %rbx
+        movb (%rbx), %al
+        cmpb $OP_ADDR, %al
+        jnz E_not_addr
+        movb $OP_IVAL, (%rbx)
+        dec %rbx
+        movb $OP_IVAL, (%rbx)
+        DEC_DTSP
+	DEC_DTSP
+        LDSP
+        mov (%rbx), %rbx
+        flds (%rbx)
+	movq $WSIZE, %rax
+        subq %rax, GlobalSp
+        LDSP
+        fstp (%rbx)
+        subq %rax, GlobalSp
+	xor %rax, %rax
+        NEXT
+
+L_sfstore:
+	movq $WSIZE, %rax
+        addq %rax, GlobalSp
+        INC_DTSP
+        movq GlobalTp, %rbx
+        movb (%rbx), %al
+        cmpb $OP_ADDR, %al
+        jnz E_not_addr
+        LDSP
+        INC_DSP
+        fld (%rbx)              # load the f number into NDP
+        DEC_DSP
+        mov (%rbx), %rbx          # load the dest address
+        fstps (%rbx)             # store as single precision float
+	movq $WSIZE, %rax
+	salq $1, %rax
+        addq %rax, GlobalSp
+	INC2_DTSP
+	xor %rax, %rax
+        NEXT
+
+L_dffetch:	
+        movq GlobalTp, %rbx
+	inc %rbx
+        movb (%rbx), %al
+        cmpb $OP_ADDR, %al
+        jnz E_not_addr
+	movb $OP_IVAL, (%rbx)
+	dec %rbx
+	movb $OP_IVAL, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalTp 
+	LDSP
+	mov %rbx, %rdx
+	INC_DSP
+	mov (%rbx), %rcx
+	mov (%rcx), %rax
+	mov %rax, (%rdx)
+	addq $WSIZE, %rcx
+	mov (%rcx), %rax
+	mov %rax, (%rbx)
+	subq $WSIZE, %rdx
+	movq %rdx, GlobalSp
+	xor %rax, %rax
+	NEXT
+
+L_dfstore:
+        movq GlobalTp, %rbx
+	inc %rbx
+        movb (%rbx), %al
+        cmpb $OP_ADDR, %al
+        jnz  E_not_addr
+	addq $2, %rbx
+	movq %rbx, GlobalTp
+	LDSP
+	movq $WSIZE, %rdx
+	add %rdx, %rbx
+	mov %rbx, %rax
+	mov (%rbx), %rbx  # address to store
+	add %rdx, %rax
+	mov (%rax), %rcx
+	mov %rcx, (%rbx)
+	add %rdx, %rax
+	add %rdx, %rbx
+	mov (%rax), %rcx
+	mov %rcx, (%rbx)
+	movq %rax, GlobalSp
+	xor %rax, %rax
+	NEXT
+
+L_abs:
+	_ABS
+        NEXT
+
+L_max:
+	movq $WSIZE, %rax
+	addq %rax, GlobalSp
+	LDSP
+	mov (%rbx), %rax
+	movq WSIZE(%rbx), %rbx
+	cmp %rax, %rbx
+	jl max1
+	mov %rbx, %rax
+	LDSP
+	movq %rax, WSIZE(%rbx)
+	jmp maxexit
+max1:
+	LDSP
+	movq %rax, WSIZE(%rbx)
+maxexit:
+	INC_DTSP
+	xor %rax, %rax
+        NEXT
+
+L_min:
+	movq $WSIZE, %rax
+	addq %rax, GlobalSp
+	LDSP
+	movq (%rbx), %rax
+	movq WSIZE(%rbx), %rbx
+	cmp %rax, %rbx
+	jg min1
+	mov %rbx, %rax
+	LDSP
+	movq %rax, WSIZE(%rbx)
+	jmp minexit
+min1:
+	LDSP
+	movq %rax, WSIZE(%rbx)
+minexit:
+	INC_DTSP
+	xor %rax, %rax
+        NEXT
+
+L_dmax:
+	FOVER
+	FOVER
+	DLT
+	INC_DTSP
+	LDSP
+	INC_DSP
+	mov (%rbx), %rax
+	STSP
+	cmpq $0, %rax
+	jne dmin1
+	FDROP
+	xor %rax, %rax
+	NEXT
+
+L_dmin:
+	FOVER
+	FOVER
+	DLT
+	INC_DTSP
+	movq $WSIZE, %rcx
+	LDSP
+	add %rcx, %rbx
+	mov (%rbx), %rax
+	STSP
+	cmpq $0, %rax
+	je dmin1
+	FDROP
+	xor %rax, %rax
+	NEXT
+dmin1:
+	FSWAP
+	FDROP
+	xor %rax, %rax
+	NEXT
+
+#  L_dtwostar and L_dtwodiv are valid for two's-complement systems
+L_dtwostar:
+        LDSP
+        INC_DSP
+        movq WSIZE(%rbx), %rax
+        mov %rax, %rcx
+        salq $1, %rax
+        movq %rax, WSIZE(%rbx)
+        shrq $31, %rcx
+        mov (%rbx), %rax
+        salq $1, %rax
+        or  %rcx, %rax
+        mov %rax, (%rbx)
+        xor %rax, %rax
+        NEXT
+
+L_dtwodiv:
+	LDSP
+	INC_DSP
+	mov (%rbx), %rax
+        mov %rax, %rcx
+        sarq $1, %rax
+        mov %rax, (%rbx)
+        shlq $31, %rcx
+        movq WSIZE(%rbx), %rax
+        shrq $1, %rax
+        or %rcx, %rax
+        movq %rax, WSIZE(%rbx)
+        xor %rax, %rax
+        NEXT
+
+L_add:
+	LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	mov (%rbx), %rax
+	addq %rax, WSIZE(%rbx)
+	STSP
+	movq GlobalTp, %rbx
+	inc %rbx
+	movq %rbx, GlobalTp
+	movw (%rbx), %ax
+	andb %ah, %al		# and the two types to preserve addr type
+	inc %rbx
+	movb %al, (%rbx)
+        xor %rax, %rax
+        NEXT
+
+L_div:
+	movq $WSIZE, %rax
+        addq %rax, GlobalSp
+        INC_DTSP
+        LDSP
+        mov (%rbx), %rax
+        cmpq $0, %rax
+        jz  E_div_zero	
+	INC_DSP
+        mov (%rbx), %rax
+	cdq
+        idivq -WSIZE(%rbx)
+        mov %rax, (%rbx)
+	xor %rax, %rax
+divexit:
+        ret
+
+L_mod:
+	call L_div
+	cmpq $0, %rax
+	jnz  divexit
+	mov %rdx, (%rbx)
+	NEXT
+
+L_slashmod:
+	call L_div
+	cmpq $0, %rax
+	jnz  divexit
+	DEC_DSP
+	mov %rdx, (%rbx)
+	DEC_DSP
+	STSP
+	DEC_DTSP
+	SWAP
+	NEXT
+
+L_starslash:
+	STARSLASH	
+	NEXT
+
+L_starslashmod:
+	STARSLASH
+	mov %rdx, (%rbx)
+	DEC_DSP
+	STSP
+	DEC_DTSP
+	SWAP
+	ret
+
+L_plusstore:
+	movq GlobalTp, %rbx
+	movb 1(%rbx), %al
+	cmpb $OP_ADDR, %al
+	jnz  E_not_addr
+	LDSP
+	push %rbx
+	push %rbx
+	push %rbx
+	movq WSIZE(%rbx), %rbx
+	mov (%rbx), %rax
+	pop %rbx
+	movq 2*WSIZE(%rbx), %rbx
+	add %rbx, %rax
+	pop %rbx
+	movq WSIZE(%rbx), %rbx
+	mov %rax, (%rbx)
+	pop %rbx
+	movq $WSIZE, %rax
+	salq $1, %rax
+	add %rax, %rbx
+	STSP
+	INC2_DTSP
+	xor %rax, %rax
+	NEXT
+
+L_dabs:
+	LDSP
+	INC_DSP
+	mov (%rbx), %rcx
+	mov %rcx, %rax
+	cmpq $0, %rax
+	jl dabs_go
+	xor %rax, %rax
+	ret
+dabs_go:
+	INC_DSP
+	mov (%rbx), %rax
+	clc
+	subq $1, %rax
+	not %rax
+	mov %rax, (%rbx)
+	mov %rcx, %rax
+	sbbq $0, %rax
+	not %rax
+	movq %rax, -WSIZE(%rbx)
+	xor %rax, %rax
+	ret
+
+L_dnegate:
+	DNEGATE
+#	NEXT	
+	ret
+
+L_dplus:
+	DPLUS
+#	NEXT
+        ret
+
+L_dminus:
+	DMINUS
+	ret
+
+L_umstar:
+	LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	mov (%rbx), %rcx
+	add %rax, %rbx
+	mov %rcx, %rax
+	mulq (%rbx)
+	mov %rax, (%rbx)
+	DEC_DSP
+	mov %rdx, (%rbx)
+	xor %rax, %rax				
+	NEXT
+
+L_dsstar:
+	# multiply signed double and signed to give triple length product
+	LDSP
+	movq $WSIZE, %rcx
+	add %rcx, %rbx
+	mov (%rbx), %rdx
+	cmpq $0, %rdx
+	setl %al
+	add %rcx, %rbx
+	mov (%rbx), %rdx
+	cmpq $0, %rdx
+	setl %ah
+	xorb %ah, %al      # sign of result
+	andq $1, %rax
+	push %rax
+	_ABS
+	LDSP
+	INC_DSP
+	STSP
+	INC_DTSP
+	call L_dabs
+	LDSP
+	DEC_DSP
+	STSP
+	DEC_DTSP
+	call L_udmstar
+	pop %rax
+	cmpq $0, %rax
+	jne dsstar1
+	NEXT
+dsstar1:
+	TNEG
+	NEXT
+
+L_umslashmod:
+# Divide unsigned double length by unsigned single length to
+# give unsigned single quotient and remainder. A "Divide overflow"
+# error results if the quotient doesn't fit into a single word.
+	LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	STSP
+	mov (%rbx), %rcx
+	cmpq $0, %rcx
+	jz   E_div_zero
+	add %rax, %rbx
+	movq $0, %rdx
+	mov (%rbx), %rax
+	divq %rcx
+	cmpq $0, %rax
+	jne  E_div_overflow
+	mov (%rbx), %rdx
+	INC_DSP
+	mov (%rbx), %rax
+	divq %rcx
+	mov %rdx, (%rbx)
+	DEC_DSP
+	mov %rax, (%rbx)
+	INC_DTSP
+	xor %rax, %rax		
+	NEXT
+
+L_mstar:
+	LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	mov (%rbx), %rcx
+	add %rax, %rbx
+	mov %rcx, %rax
+	imulq (%rbx)
+	mov %rax, (%rbx)
+	DEC_DSP
+	mov %rdx, (%rbx)
+	xor %rax, %rax		
+	NEXT
+
+L_mplus:
+	STOD
+	DPLUS
+	NEXT
+
+L_mslash:
+        LDSP
+	movq $WSIZE, %rax
+        INC_DTSP
+	add %rax, %rbx
+        mov (%rbx), %rcx
+	INC_DTSP
+	add %rax, %rbx
+	STSP
+        cmpq $0, %rcx
+	je  E_div_zero
+        mov (%rbx), %rdx
+	add %rax, %rbx
+	mov (%rbx), %rax
+        idivq %rcx
+        mov %rax, (%rbx)
+	xor %rax, %rax		
+	NEXT
+
+L_udmstar:
+# Multiply unsigned double and unsigned single to give 
+# the triple length product.
+	LDSP
+	INC_DSP
+	mov (%rbx), %rcx
+	INC_DSP
+	mov (%rbx), %rax
+	mulq %rcx
+	movq %rdx, -WSIZE(%rbx)
+	mov %rax, (%rbx)
+	INC_DSP
+	mov %rcx, %rax
+	mulq (%rbx)
+	mov %rax, (%rbx)
+	DEC_DSP
+	mov (%rbx), %rax
+	DEC_DSP
+	clc
+	add %rdx, %rax
+	mov %rax, WSIZE(%rbx)
+	mov (%rbx), %rax
+	adcq $0, %rax
+	mov %rax, (%rbx)
+	xor %rax, %rax 		
+	ret
+
+L_utsslashmod:
+# Divide unsigned triple length by unsigned single length to
+# give an unsigned triple quotient and single remainder.
+	LDSP
+	INC_DSP
+	mov (%rbx), %rcx		# divisor in rcx
+	cmpq $0, %rcx
+	jz  E_div_zero
+	INC_DSP
+	mov (%rbx), %rax		# ut3
+	movq $0, %rdx
+	divq %rcx			# ut3/u
+	call utmslash1
+	LDSP
+	movq WSIZE(%rbx), %rax
+	mov %rax, (%rbx)
+	INC_DSP
+	movq WSIZE(%rbx), %rax
+	mov %rax, (%rbx)
+	INC_DSP	
+	movq -17*WSIZE(%rbx), %rax       # r7
+	mov %rax, (%rbx)
+	subq $3*WSIZE, %rbx
+	movq -5*WSIZE(%rbx), %rax        # q3
+	mov %rax, (%rbx)
+	DEC_DSP
+	STSP
+	DEC_DTSP
+	DEC_DTSP
+	xor %rax, %rax	
+	ret
+
+L_tabs:
+# Triple length absolute value (needed by L_stsslashrem, STS/REM)
+        LDSP
+        INC_DSP
+        mov (%rbx), %rcx
+        mov %rcx, %rax
+        cmpq $0, %rax
+        jl tabs1
+        xor %rax, %rax
+        ret
+tabs1:
+        addq $2*WSIZE, %rbx
+        mov (%rbx), %rax
+        clc
+        subq $1, %rax
+        not %rax
+        mov %rax, (%rbx)
+	DEC_DSP
+	mov (%rbx), %rax
+	sbbq $0, %rax
+	not %rax
+	mov %rax, (%rbx)
+        mov %rcx, %rax
+        sbbq $0, %rax
+        not %rax
+        mov %rax, -WSIZE(%rbx)
+        xor %rax, %rax
+        ret
+
+L_stsslashrem:
+# Divide signed triple length by signed single length to give a
+# signed triple quotient and single remainder, according to the
+# rule for symmetric division.
+	LDSP
+	INC_DSP
+	mov (%rbx), %rcx		# divisor in rcx
+	cmpq $0, %rcx
+	jz   E_div_zero
+	movq WSIZE(%rbx), %rax		# t3
+	push %rax
+	cmpq $0, %rax
+	movq $0, %rax
+	setl %al
+	neg %rax
+	mov %rax, %rdx
+	cmpq $0, %rcx
+	movq $0, %rax
+	setl %al
+	neg %rax
+	xor %rax, %rdx			# sign of quotient
+	push %rdx
+	STSP
+	call L_tabs
+	subq $WSIZE, GlobalSp
+	_ABS
+	call L_utsslashmod
+	pop %rdx
+	cmpq $0, %rdx
+	jz stsslashrem1
+	TNEG
+stsslashrem1:	
+	pop %rax
+	cmpq $0, %rax
+	jz stsslashrem2
+	LDSP
+	addq $4*WSIZE, %rbx
+	negq (%rbx)	
+stsslashrem2:
+	xor %rax, %rax
+	ret
+
+L_utmslash:
+# Divide unsigned triple length by unsigned single to give 
+# unsigned double quotient. A "Divide Overflow" error results
+# if the quotient doesn't fit into a double word.
+	LDSP
+	INC_DSP
+	mov (%rbx), %rcx		# divisor in rcx
+	cmpq $0, %rcx
+	jz   E_div_zero	
+	INC_DSP
+	mov (%rbx), %rax		# ut3
+	movq $0, %rdx
+	divq %rcx			# ut3/u
+	cmpq $0, %rax
+	jnz  E_div_overflow
+utmslash1:	
+	push %rbx			# keep local stack ptr
+	LDSP
+	movq %rax, -4*WSIZE(%rbx)	# q3
+	movq %rdx, -5*WSIZE(%rbx)	# r3
+	pop %rbx
+	INC_DSP
+	mov (%rbx), %rax		# ut2
+	movq $0, %rdx
+	divq %rcx			# ut2/u
+	push %rbx
+	LDSP
+	movq %rax, -2*WSIZE(%rbx)	# q2
+	movq %rdx, -3*WSIZE(%rbx)	# r2
+	pop %rbx
+	INC_DSP
+	mov (%rbx), %rax		# ut1
+	movq $0, %rdx
+	divq %rcx			# ut1/u
+	push %rbx
+	LDSP
+	mov %rax, (%rbx)		# q1
+	movq %rdx, -WSIZE(%rbx)		# r1
+	movq -5*WSIZE(%rbx), %rdx	# r3 << 32
+	movq $0, %rax
+	divq %rcx			# (r3 << 32)/u
+	movq %rax, -6*WSIZE(%rbx)	# q4
+	movq %rdx, -7*WSIZE(%rbx)	# r4
+	movq -3*WSIZE(%rbx), %rdx	# r2 << 32
+	movq $0, %rax
+	divq %rcx			# (r2 << 32)/u
+	movq %rax, -8*WSIZE(%rbx)	# q5
+	movq %rdx, -9*WSIZE(%rbx)	# r5
+	movq -7*WSIZE(%rbx), %rdx	# r4 << 32
+	movq $0, %rax
+	divq %rcx			# (r4 << 32)/u
+	movq %rax, -10*WSIZE(%rbx)	# q6
+	movq %rdx, -11*WSIZE(%rbx)	# r6
+	movq $0, %rdx
+	movq -WSIZE(%rbx), %rax		# r1
+	addq -9*WSIZE(%rbx), %rax	# r1 + r5
+	jnc   utmslash2
+	inc %rdx
+utmslash2:			
+	addq -11*WSIZE(%rbx), %rax	# r1 + r5 + r6
+	jnc  utmslash3
+	inc %rdx
+utmslash3:
+	divq %rcx
+	movq %rax, -12*WSIZE(%rbx)	# q7
+	movq %rdx, -13*WSIZE(%rbx)	# r7
+	movq $0, %rdx
+	addq -10*WSIZE(%rbx), %rax	# q7 + q6
+	jnc  utmslash4
+	inc %rdx
+utmslash4:	
+	addq -8*WSIZE(%rbx), %rax	# q7 + q6 + q5
+	jnc  utmslash5
+	inc %rdx
+utmslash5:	
+	add (%rbx), %rax		# q7 + q6 + q5 + q1
+	jnc utmslash6
+	inc %rdx
+utmslash6:
+	pop %rbx
+	mov %rax, (%rbx)
+	DEC_DSP
+	push %rbx
+	LDSP
+	movq -2*WSIZE(%rbx), %rax	# q2
+	addq -6*WSIZE(%rbx), %rax	# q2 + q4
+	add %rdx, %rax
+	pop %rbx
+	mov %rax, (%rbx)
+	DEC_DSP
+	STSP
+	INC2_DTSP
+	xor %rax, %rax
+	ret
+
+L_mstarslash:
+	LDSP
+	INC_DSP
+	INC_DSP
+	mov (%rbx), %rax
+	INC_DSP
+	xor (%rbx), %rax
+	shrq $31, %rax
+	push %rax	# keep sign of result -- negative is nonzero
+	LDSP
+	INC_DSP
+	STSP
+	INC_DTSP
+	_ABS
+	LDSP
+	INC_DSP
+	STSP
+	INC_DTSP
+	call L_dabs
+	LDSP
+	DEC_DSP
+	STSP
+	DEC_DTSP
+	call L_udmstar
+	LDSP
+	DEC_DSP
+	STSP
+	DEC_DTSP
+	call L_utmslash	
+	pop %rax
+	cmpq $0, %rax
+	jnz mstarslash_neg
+	xor %rax, %rax
+	ret
+mstarslash_neg:
+	DNEGATE
+	xor %rax, %rax
+	ret
+		
+L_fmslashmod:
+	LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	STSP
+	mov (%rbx), %rcx
+	cmpq $0, %rcx
+	jz   E_div_zero
+	add %rax, %rbx
+	mov (%rbx), %rdx
+	add %rax, %rbx
+	mov (%rbx), %rax
+	idivq %rcx
+	mov %rdx, (%rbx)
+	DEC_DSP
+	mov %rax, (%rbx)
+	INC_DTSP
+	cmpq $0, %rcx
+	jg fmslashmod2
+	cmpq $0, %rdx
+	jg fmslashmod3
+	xor %rax, %rax
+	NEXT
+fmslashmod2:		
+	cmpq $0, %rdx
+	jge fmslashmodexit
+fmslashmod3:	
+	dec %rax		# floor the result
+	mov %rax, (%rbx)
+	INC_DSP
+	add %rcx, (%rbx)
+fmslashmodexit:
+	xor %rax, %rax
+	NEXT
+
+L_smslashrem:
+	LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	STSP
+	mov (%rbx), %rcx
+	cmpq $0, %rcx
+	jz   E_div_zero
+	add %rax, %rbx
+	mov (%rbx), %rdx
+	add %rax, %rbx
+	mov (%rbx), %rax
+	idivq %rcx
+	mov %rdx, (%rbx)
+	DEC_DSP
+	mov %rax, (%rbx)
+	INC_DTSP
+	xor %rax, %rax		
+	NEXT
+
+L_stof:
+	movq $WSIZE, %rax
+        addq %rax, GlobalSp
+        INC_DTSP
+        LDSP
+        fild (%rbx)
+        movq GlobalTp, %rbx
+        movb $OP_IVAL, (%rbx)
+        dec %rbx
+        movb $OP_IVAL, (%rbx)
+	DEC_DTSP
+	DEC_DTSP
+        LDSP
+	movq $WSIZE, %rax
+        sub %rax, %rbx
+        fstp (%rbx)
+	salq $1, %rax
+        subq %rax, GlobalSp
+	xor %rax, %rax
+        NEXT
+
+L_dtof:
+        LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	mov (%rbx), %rax
+	xchgq WSIZE(%rbx), %rax
+	mov %rax, (%rbx)
+        fildq (%rbx)
+        fstp (%rbx)
+	xor %rax, %rax	
+	NEXT	
+
+L_froundtos:
+	movq $WSIZE, %rax
+        addq %rax, GlobalSp
+        LDSP
+        fld (%rbx)
+        add %rax, %rbx
+        fistp (%rbx)
+        INC_DTSP
+        movq GlobalTp, %rbx
+        inc %rbx
+        movb $OP_IVAL, (%rbx)
+	xor %rax, %rax
+        NEXT
+
+L_ftrunctos:
+	LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	STSP
+	fld (%rbx)
+	fnstcw (%rbx)
+	mov (%rbx), %rcx	# save NDP control word		
+	mov %rcx, %rdx	
+	movb $12, %dh
+	mov %rdx, (%rbx)
+	fldcw (%rbx)
+	add %rax, %rbx	
+	fistp (%rbx)
+	sub %rax, %rbx
+	mov %rcx, (%rbx)
+	fldcw (%rbx)		# restore NDP control word
+	INC_DTSP
+	movq GlobalTp, %rbx
+	inc %rbx
+	movb $OP_IVAL, (%rbx)
+	xor %rax, %rax	
+	NEXT
+	
+L_ftod:
+	LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	fld (%rbx)
+	sub %rax, %rbx
+	fnstcw (%rbx)
+	mov (%rbx), %rcx	# save NDP control word	
+	mov %rcx, %rdx
+	movb $12, %dh		
+	mov %rdx, (%rbx)
+	fldcw (%rbx)
+	add %rax, %rbx	
+	fistpq (%rbx)
+	sub %rax, %rbx
+	mov %rcx, (%rbx)
+	fldcw (%rbx)		# restore NDP control word
+	add %rax, %rbx 
+	mov (%rbx), %rax
+	xchgq WSIZE(%rbx), %rax
+	mov %rax, (%rbx)
+	xor %rax, %rax	
+	NEXT
+
+L_fne:
+	FREL_DYADIC xorb $64 setnz
+	NEXT
+L_feq:
+	FREL_DYADIC andb $64 setnz
+	NEXT
+L_flt:
+	FREL_DYADIC andb $65 setz
+	NEXT
+L_fgt:
+	FREL_DYADIC andb $1 setnz
+	NEXT	
+L_fle:
+	FREL_DYADIC xorb $1 setnz
+	NEXT
+L_fge:
+	FREL_DYADIC andb $65 setnz
+	NEXT
+L_fzeroeq:
+	LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	mov (%rbx), %rcx
+	STSP
+	add %rax, %rbx
+	mov (%rbx), %rax
+	shlq $1, %rax
+	or %rcx, %rax
+	movq $0, %rax
+	setz %al
+	neg %rax
+	mov %rax, (%rbx)
+frelzero:
+	movq GlobalTp, %rbx
+	inc %rbx
+	movq %rbx, GlobalTp
+	inc %rbx
+	movb $OP_IVAL, (%rbx)
+	xor %rax, %rax
+	NEXT
+L_fzerolt:
+	LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	STSP
+	fld (%rbx)
+	add %rax, %rbx
+	fldz
+	fcompp	
+	fnstsw %ax
+	andb $69, %ah
+	movq $0, %rax
+	setz %al
+	neg %rax
+	mov %rax, (%rbx)
+	jmp frelzero
+L_fzerogt:
+	LDSP
+	movq $WSIZE, %rax
+	add %rax, %rbx
+	STSP
+	fldz
+	fld (%rbx)
+	add %rax, %rbx
+	fucompp	
+	fnstsw %ax
+	sahf 
+	movq $0, %rax
+	seta %al
+	neg %rax
+	mov %rax, (%rbx)
+	jmp frelzero
+
+L_fsincos:
+	LDSP
+	fld WSIZE(%rbx)
+	fsincos
+	fstp -WSIZE(%rbx)
+	fstp WSIZE(%rbx)
+	subq $2*WSIZE, %rbx
+	STSP
+	movq GlobalTp, %rbx
+	movb $OP_IVAL, (%rbx)
+	dec %rbx
+	movb $OP_IVAL, (%rbx)
+	dec %rbx
+	movq %rbx, GlobalTp	
+	NEXT
+
