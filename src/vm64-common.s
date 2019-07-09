@@ -322,7 +322,7 @@ L_quit:
 	mov BottomOfReturnTypeStack, %rax
 	mov %rax, GlobalRtp
   .endif
-	mov $8, %rax		# exit the virtual machine
+	movq $8, %rax		# exit the virtual machine
 	ret
 L_abort:
 	mov BottomOfStack, %rax
@@ -337,9 +337,9 @@ L_jz:
         LDSP
 	DROP
         mov (%rbx), %rax
-        cmp $0, %rax
+        cmpq $0, %rax
         jz jz1
-	mov $4, %rax
+	movq $WSIZE, %rax
         add %rax, %rbp       # do not jump
 	xor %rax, %rax
         NEXT

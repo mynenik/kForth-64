@@ -1635,7 +1635,7 @@ int CPP_postpone ()
 	  if (wc == OP_IVAL)
 	    {
 	      pCurrentOps->push_back(OP_IVAL);
-	      OpsPushInt (*((int*) w.Pfa));
+	      OpsPushInt (*((long int*) w.Pfa));
 	      pCurrentOps->push_back(OP_LITERAL);
 	    }
 	  else if ((wc == OP_ADDR) || (wc == OP_PTR))
