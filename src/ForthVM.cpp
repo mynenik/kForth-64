@@ -228,14 +228,14 @@ int Vocabulary::Initialize( WordTemplate wt[], int n )
         wcode = wt[i].WordCode;
 	w.WordCode = wcode;
 	w.Precedence = wt[i].Precedence;
-        w.Pfa = new byte[8];
+        w.Pfa = new byte[WSIZE+2];
 	w.Cfa = w.Pfa;
 	byte* bp = (byte*) w.Pfa;
 	if (wcode >> 8)
 	{
 	    bp[0] = OP_CALLADDR;
 	    *((long int*) (bp+1)) = (long int) JumpTable[wcode];
-	    bp[5] = OP_RET;
+	    bp[WSIZE+1] = OP_RET;
 	}
 	else
 	{
@@ -398,7 +398,7 @@ void OpsCopyInt (long int offset, long int i)
 
   vector<byte>::iterator ib = pCurrentOps->begin() + offset;
   byte* ip = (byte*) &i;
-  for (unsigned int j = 0; j < sizeof(long int); j++) *(ib+j) = *(ip + j);
+  for (unsigned int j = 0; j < WSIZE; j++) *(ib+j) = *(ip + j);
 //  *ib++ = *ip; *ib++ = *(ip + 1); *ib++ = *(ip + 2); *ib = *(ip + 3);
 
 }
@@ -409,7 +409,7 @@ void OpsPushInt (long int i)
   // push an integer into the current opcode vector
 
   byte* ip = (byte*) &i;
-  for (unsigned int j = 0; j < sizeof(long int); j++) pCurrentOps->push_back(*(ip + j));
+  for (unsigned int j = 0; j < WSIZE; j++) pCurrentOps->push_back(*(ip + j));
 }
 //---------------------------------------------------------------
 
@@ -429,7 +429,7 @@ int OpsCompileByte ()
   int endian = 1;
   DROP
   byte* ip = (byte*) GlobalSp;
-  ip += (*((byte*) &endian)) ? 0 : sizeof(int)-1; // handle big or little endian
+  ip += (*((byte*) &endian)) ? 0 : sizeof(long int)-1; // handle big or little endian
   pCurrentOps->push_back(*ip);
   return 0;
 }
@@ -673,7 +673,7 @@ int CPP_vocabulary()
 
      iWord->Precedence = PRECEDENCE_NON_DEFERRED;
      iWord->Pfa = NULL;
-     byte* bp = new byte[20];
+     byte* bp = new byte[3*WSIZE+6];
      iWord->Cfa = bp;
      iWord->WordCode = OP_DEFINITION;
     
@@ -681,13 +681,13 @@ int CPP_vocabulary()
      // get-order nip pVoc swap set-order
      bp[0] = OP_CALLADDR;
      *((long int*)(bp+1)) = (long int) JumpTable[OP_GETORDER]; 
-     bp[5] = OP_NIP;
-     bp[6] = OP_ADDR;
-     *((long int*)(bp+7)) = (long int) pVoc;
-     bp[11] = OP_SWAP;
-     bp[12] = OP_CALLADDR;
-     *((long int*) (bp+13)) = (long int) JumpTable[OP_SETORDER];
-     bp[17] = OP_RET;
+     bp[WSIZE+1] = OP_NIP;
+     bp[WSIZE+2] = OP_ADDR;
+     *((long int*)(bp+WSIZE+3)) = (long int) pVoc;
+     bp[2*WSIZE+3] = OP_SWAP;
+     bp[2*WSIZE+4] = OP_CALLADDR;
+     *((long int*) (bp+2*WSIZE+5)) = (long int) JumpTable[OP_SETORDER];
+     bp[3*WSIZE+5] = OP_RET;
 
      return 0;
 }
@@ -1412,11 +1412,11 @@ int CPP_allot ()
 	  if (id->Pfa) memset (id->Pfa, 0, n); 
 
 	  // Provide execution code to the word to return its Pfa
-  	  byte *bp = new byte[6];
+  	  byte *bp = new byte[WSIZE+2];
   	  id->Cfa = bp;
   	  bp[0] = OP_ADDR;
   	  *((long int*) &bp[1]) = (long int) id->Pfa;
-  	  bp[5] = OP_RET;
+  	  bp[WSIZE+1] = OP_RET;
 	}
       else 
 	return E_V_REALLOT;
@@ -1484,14 +1484,14 @@ int CPP_alias ()
     if (found) {
       CPP_create();
       WordIndex j = pCompilationWL->end() - 1;
-      byte* bp = new byte[8];
+      byte* bp = new byte[WSIZE+2];
       j->Cfa = bp;
       j->Pfa = NULL;
       j->Precedence = w.Precedence;
       j->WordCode = OP_DEFINITION;
       bp[0] = OP_DEFINITION;
       *((long int*)(bp+1)) = (long int) w.Cfa;
-      bp[5] = OP_RET;
+      bp[WSIZE+1] = OP_RET;
     }
     else
       return E_C_UNKNOWNWORD;
@@ -1536,12 +1536,12 @@ int CPP_constant ()
   id->WordCode = IS_ADDR ? OP_PTR : OP_IVAL;
   id->Pfa = new long int[1];
   *((long int*) (id->Pfa)) = TOS;
-  byte *bp = new byte[7];
+  byte *bp = new byte[WSIZE+3];
   id->Cfa = bp;
   bp[0] = OP_ADDR;
   *((long int*) &bp[1]) = (long int) id->Pfa;
-  bp[5] = (id->WordCode == OP_PTR) ? OP_AFETCH : OP_FETCH;
-  bp[6] = OP_RET;
+  bp[WSIZE+1] = (id->WordCode == OP_PTR) ? OP_AFETCH : OP_FETCH;
+  bp[WSIZE+2] = OP_RET;
   return 0;
 }
 //------------------------------------------------------------------
@@ -1557,12 +1557,12 @@ int CPP_fconstant ()
   DROP
   *((double*) (id->Pfa)) = *((double*)GlobalSp);
   DROP
-  byte *bp = new byte[7];
+  byte *bp = new byte[WSIZE+3];
   id->Cfa = bp;
   bp[0] = OP_ADDR;
   *((long int*) &bp[1]) = (long int) id->Pfa;
-  bp[5] = OP_DFFETCH;
-  bp[6] = OP_RET;
+  bp[WSIZE+1] = OP_DFFETCH;
+  bp[WSIZE+2] = OP_RET;
   return 0;
 }
 //------------------------------------------------------------------
@@ -2413,6 +2413,7 @@ int CPP_refill()
 
 int CPP_state()
 {
+if (debug) cout << "Executing STATE" << endl;
     PUSH_ADDR((long int)(&State))
     return 0;
 }

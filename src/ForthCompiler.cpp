@@ -361,7 +361,7 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 
 		    case EXECUTE_CURRENT_ONLY:
 		      i = ((d.WordCode == OP_DEFINITION) || (d.WordCode == OP_IVAL) || 
-			   (d.WordCode >> 8)) ? 5 : 1;
+			   (d.WordCode >> 8)) ? WSIZE+1 : 1; 
 		      ib1 = pOpCodes->end() - i;
 		      for (j = 0; j < i; j++) SingleOp.push_back(*(ib1+j));
 		      SingleOp.push_back(OP_RET);

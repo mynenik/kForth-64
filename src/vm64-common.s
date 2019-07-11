@@ -367,10 +367,10 @@ L_jmp:
 L_calladdr:
 	inc %rbp
 	mov %rbp, %rcx # address to execute (intrinsic Forth word or other)
-	add $3, %rbp
+	add $WSIZE-1, %rbp
 	mov %rbp, GlobalIp
 	call *(%rcx)
-	mov GlobalIp, %rbp
+	movq GlobalIp, %rbp
 	ret
 
 L_binary:

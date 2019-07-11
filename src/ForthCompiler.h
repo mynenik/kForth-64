@@ -1,6 +1,6 @@
 // ForthCompiler.h
 //
-// Copyright (c) 1998--2018 Krishna Myneni,
+// Copyright (c) 1998--2019 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -9,6 +9,8 @@
 
 #ifndef __FORTHCOMPILER_H__
 #define __FORTHCOMPILER_H__
+
+#define WSIZE 8
 
 #define byte unsigned char
 #define word unsigned short int
