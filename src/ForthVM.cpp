@@ -105,7 +105,7 @@ extern "C" {
   char ParseBuf[1024];
 
 }
-extern "C" int JumpTable[];
+extern "C" long int JumpTable[];
 extern "C" void dump_return_stack(void); 
 
 // The Dictionary
@@ -2413,7 +2413,6 @@ int CPP_refill()
 
 int CPP_state()
 {
-if (debug) cout << "Executing STATE" << endl;
     PUSH_ADDR((long int)(&State))
     return 0;
 }
