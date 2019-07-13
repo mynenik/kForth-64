@@ -794,7 +794,7 @@ L_definition:
 	movq $WSIZE, %rax
 	inc %rbx
 	mov (%rbx), %rcx # address to execute
-	addq $3, %rbx
+	addq $WSIZE-1, %rbx
 	mov %rbx, %rdx
 	movq GlobalRp, %rbx
 	movq %rdx, (%rbx)
