@@ -1556,6 +1556,7 @@ L_wfetch:
 	movq WSIZE(%rbx), %rbx
 	movw (%rbx), %ax
 	cwde
+	cdqe
 	LDSP
 	movq %rax, WSIZE(%rbx)
 	xor %rax, %rax
