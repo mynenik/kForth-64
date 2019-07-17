@@ -2007,7 +2007,7 @@ int CPP_repeat()
       if (j > i)
 	{
 	  whilestack.pop_back();
-	  ival = pCurrentOps->size() - j + 6;
+	  ival = pCurrentOps->size() - j + WSIZE + 2;
 	  OpsCopyInt (j, ival);  // write the relative jump count
 	}
     }
