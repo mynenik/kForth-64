@@ -1505,7 +1505,7 @@ int CPP_variable ()
   // stack: ( -- | create dictionary entry and allot space )
 
   if (CPP_create()) return E_V_CREATE;  
-  TOS = sizeof(int);
+  TOS = sizeof(long int);
   DEC_DSP
   STD_IVAL
   int e = CPP_allot();
