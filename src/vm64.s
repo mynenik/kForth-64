@@ -1815,7 +1815,7 @@ L_div:
         jz  E_div_zero	
 	INC_DSP
         mov (%rbx), %rax
-	cdq
+	cqo
         idivq -WSIZE(%rbx)
         mov %rax, (%rbx)
 	xor %rax, %rax

@@ -241,7 +241,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 	LDSP
 	movq $WSIZE, %rcx
 	movq WSIZE(%rbx), %rax
-	cdq
+	cqo
 	movq %rdx, (%rbx)
 	sub %rcx, %rbx
 	STSP
