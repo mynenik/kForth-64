@@ -2209,7 +2209,7 @@ int CPP_does()
 {
   // Allocate new opcode array
 
-  byte* p = new byte[12];
+  byte* p = new byte[2*WSIZE+4];
 
   // Insert pfa of last word in dictionary
 
@@ -2219,11 +2219,11 @@ int CPP_does()
 
   // Insert current instruction ptr 
 
-  p[5] = OP_ADDR;
-  *((long int*)(p+6)) = (long int)(GlobalIp + 1);
+  p[WSIZE+1] = OP_ADDR;
+  *((long int*)(p+WSIZE+2)) = (long int)(GlobalIp + 1);
 
-  p[10] = OP_EXECUTE;
-  p[11] = OP_RET;
+  p[2*WSIZE+2] = OP_EXECUTE;
+  p[2*WSIZE+3] = OP_RET;
 
   id->Cfa = (void*) p;
   id->WordCode = OP_DEFINITION;
