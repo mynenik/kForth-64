@@ -1740,7 +1740,7 @@ L_dtwostar:
         mov %rax, %rcx
         salq $1, %rax
         movq %rax, WSIZE(%rbx)
-        shrq $31, %rcx
+	shrq $8*WSIZE-1, %rcx
         mov (%rbx), %rax
         salq $1, %rax
         or  %rcx, %rax
@@ -1755,7 +1755,7 @@ L_dtwodiv:
         mov %rax, %rcx
         sarq $1, %rax
         mov %rax, (%rbx)
-        shlq $31, %rcx
+	shlq $8*WSIZE-1, %rcx
         movq WSIZE(%rbx), %rax
         shrq $1, %rax
         or %rcx, %rax
