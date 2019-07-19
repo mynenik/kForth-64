@@ -488,10 +488,8 @@ L_usleep:
 	addq $WSIZE, GlobalSp
 	INC_DTSP
 	LDSP
-	mov (%rbx), %rax
-	push %rax
+	mov (%rbx), %rdi
 	call usleep
-	pop %rax
 	xor %rax, %rax
 	ret
 
@@ -504,35 +502,24 @@ L_ms:
 	ret
 
 L_fill:
-	SWAP
+	LDSP
 	movq $WSIZE, %rax
-	addq %rax, GlobalSp
+	add %rax, %rbx
+	mov (%rbx), %rsi
 	INC_DTSP
-	LDSP
-	mov (%rbx), %rbx
-	push %rbx
-	addq %rax, GlobalSp
+	add %rax, %rbx
+	mov (%rbx), %rdx
 	INC_DTSP
-	LDSP
-	mov (%rbx), %rbx
-	push %rbx
-	addq %rax, GlobalSp
+	add %rax, %rbx
+	mov (%rbx), %rdi
+	STSP
 	INC_DTSP
 	movq GlobalTp, %rbx
 	movb (%rbx), %al
 	cmpb $OP_ADDR, %al
-	jz fill2
-	pop %rbx
-	pop %rbx
-	movq $E_NOT_ADDR, %rax
-	jmp fillexit
-fill2:	LDSP
-	mov (%rbx), %rbx
-	push %rbx
+	jnz E_not_addr
 	call memset
-	addq $12, %rsp
-	xor %rax, %rax
-fillexit:	
+	xor %rax, %rax	
 	ret
 L_erase:
 	LDSP
@@ -551,42 +538,30 @@ L_blank:
 	call L_fill
 	ret	
 L_move:
-	movq $WSIZE, %rax
-	addq %rax, GlobalSp
-	INC_DTSP
 	LDSP
-	mov (%rbx), %rbx
-	push %rbx
-	SWAP
 	movq $WSIZE, %rax
-	addq %rax, GlobalSp
+	add %rax, %rbx
+	mov (%rbx), %rdx
 	INC_DTSP
+	add %rax, %rbx
+	mov (%rbx), %rdi
+	INC_DTSP
+	add %rax, %rbx
+	mov (%rbx), %rsi
+	STSP
 	movq GlobalTp, %rbx
 	movb (%rbx), %al
 	cmpb $OP_ADDR, %al
 	jz move2
-	pop %rbx
-	movq $E_NOT_ADDR, %rax
-	ret
-move2:	LDSP
-	mov (%rbx), %rbx
-	push %rbx
-	movq $WSIZE, %rax
-	addq %rax, GlobalSp
+	INC_DTSP
+	jmp E_not_addr
+move2:
 	INC_DTSP
 	movq GlobalTp, %rbx
 	movb (%rbx), %al
 	cmpb $OP_ADDR, %al
-	jz move3
-	pop %rbx
-	pop %rbx
-	movq $E_NOT_ADDR, %rax
-	ret
-move3:	LDSP
-	mov (%rbx), %rbx
-	push %rbx
-	call memmove
-	addq $12, %rsp
+	jnz E_not_addr
+move3:	call memmove
 	xor %rax, %rax				
 	ret
 L_cmove:
