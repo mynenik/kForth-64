@@ -45,7 +45,7 @@ CFLAGS = -c -Wall
 FAST = -D__FAST__
 OBJS = kforth.o ForthVM.o ForthCompiler.o vm64.o vmc.o
 FOBJS = kforth-fast.o ForthVM-fast.o ForthCompiler.o vm64-fast.o vmc-fast.o
-LIBS = -lreadline -lncurses -ldl -lm
+LIBS = -lreadline -lncurses -ldl -lm -no-pie
 
 all:	
 	make kforth64
