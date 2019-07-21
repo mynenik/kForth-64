@@ -2238,7 +2238,7 @@ L_mstarslash:
 	mov (%rbx), %rax
 	INC_DSP
 	xor (%rbx), %rax
-	shrq $31, %rax
+	shrq $8*WSIZE-1, %rax
 	push %rax	# keep sign of result -- negative is nonzero
 	LDSP
 	INC_DSP
