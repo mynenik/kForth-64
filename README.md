@@ -2,7 +2,7 @@
 64-bit Forth System for x86_64-GNU/Linux
 NOTE: At present there is no stable release of kForth-64. It is presently
 under development. Although the application will build and execute, please
-note that it has not been tested and is likely to crash.
+note that it has only undergone limited system tests (see forth-src/system-test/).
 
 Copyright &copy; 1998--2019 Krishna Myneni, <krishna.myneni@ccreweb.org>
 
