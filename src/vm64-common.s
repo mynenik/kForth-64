@@ -26,7 +26,7 @@
 .equ E_DIV_OVERFLOW,   20
 	
 .data
-NDPcw: .int 0
+NDPcw: .quad 0
 FCONST_180: .double 180.
 
 // Jump table is read-only
