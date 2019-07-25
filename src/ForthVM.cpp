@@ -1951,7 +1951,7 @@ int CPP_abortquote ()
   StringTable.push_back(str);
 
   pCurrentOps->push_back(OP_JZ);
-  OpsPushInt(25);   // relative jump count                       
+  OpsPushInt(4*WSIZE+9);   // relative jump count                       
 
 // the relative jump count (above) must be modified if the 
 // instructions below are updated!
