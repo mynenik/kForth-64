@@ -21,7 +21,7 @@
 	.comm BottomOfReturnTypeStack, WSIZE,WSIZE
 
 .macro FETCH op
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	inc %rbx
         movb (%rbx), %al
         cmpb $OP_ADDR, %al
@@ -43,7 +43,7 @@
 	mov (%rbx), %rcx
 	mov %rax, (%rbx)
 	mov %rcx, -WSIZE(%rbx)
-        movq GlobalTp, %rbx
+        movq GlobalTp(%rip), %rbx
         inc %rbx
 	movb (%rbx), %al
 	inc %rbx
@@ -59,10 +59,10 @@
         mov %rax, (%rbx)
 	DEC_DSP
 	STSP
-        movq GlobalTp, %rbx
+        movq GlobalTp(%rip), %rbx
         movb 2(%rbx), %al
         movb %al, (%rbx)
-        decq GlobalTp
+        decq GlobalTp(%rip)
         xor %rax, %rax
 .endm
 
@@ -79,19 +79,19 @@
 	mov %rdx, (%rbx)
 	DEC_DSP
 	STSP
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	inc %rbx
 	movw (%rbx), %ax
 	subq $2, %rbx
 	movw %ax, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalTp
+	movq %rbx, GlobalTp(%rip)
 	xor %rax, %rax
 .endm
 	
 .macro FDROP
 	movq $2*WSIZE, %rax
-	addq %rax, GlobalSp
+	addq %rax, GlobalSp(%rip)
         INC2_DTSP
 	xor %rax, %rax
 .endm
@@ -112,7 +112,7 @@
 	mov %rax, (%rbx)
 	sub %rcx, %rbx
 	mov %rdx, (%rbx)
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	inc %rbx
 	movw (%rbx), %ax
 	addq $2, %rbx
@@ -135,7 +135,7 @@
 	mov %rdx, (%rbx)
 	DEC_DSP
 	STSP
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	mov %rbx, %rcx
 	addq $3, %rbx
 	movw (%rbx), %ax
@@ -143,7 +143,7 @@
 	dec %rbx
 	movw %ax, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalTp
+	movq %rbx, GlobalTp(%rip)
 	xor %rax, %rax	
 .endm
 	
@@ -153,40 +153,40 @@
 	add %rax, %rbx	
         STSP
 	mov (%rbx), %rcx
-	movq GlobalRp, %rbx
+	movq GlobalRp(%rip), %rbx
 	mov %rcx, (%rbx)
 	sub %rax, %rbx
-	movq %rbx, GlobalRp
-	movq GlobalTp, %rbx
+	movq %rbx, GlobalRp(%rip)
+	movq GlobalTp(%rip), %rbx
 	inc %rbx
-	movq %rbx, GlobalTp
+	movq %rbx, GlobalTp(%rip)
 	movb (%rbx), %al
-	movq GlobalRtp, %rbx
+	movq GlobalRtp(%rip), %rbx
 	movb %al, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalRtp
+	movq %rbx, GlobalRtp(%rip)
         xor %rax, %rax
 .endm
 
 	
 .macro POP_R
 	movq $WSIZE, %rax
-	movq GlobalRp, %rbx
+	movq GlobalRp(%rip), %rbx
 	add %rax, %rbx
-	movq %rbx, GlobalRp
+	movq %rbx, GlobalRp(%rip)
 	mov (%rbx), %rcx
 	LDSP
 	mov %rcx, (%rbx)
 	sub %rax, %rbx
 	STSP
-	movq GlobalRtp, %rbx
+	movq GlobalRtp(%rip), %rbx
 	inc %rbx
-	movq %rbx, GlobalRtp
+	movq %rbx, GlobalRtp(%rip)
 	movb (%rbx), %al
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb %al, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalTp
+	movq %rbx, GlobalTp(%rip)
 	xor %rax, %rax
 .endm
 	
@@ -201,9 +201,9 @@
 	add %rcx, %rbx
 	\op (%rbx), %rax
 	mov %rax, (%rbx)
-	movq GlobalTp, %rax
+	movq GlobalTp(%rip), %rax
 	inc %rax
-	movq %rax, GlobalTp
+	movq %rax, GlobalTp(%rip)
 	movb $OP_IVAL, 1(%rax)	
 	xor %rax, %rax 
 .endm
@@ -251,9 +251,9 @@
 	\setx %al
 	neg %rax
 	mov %rax, (%rbx)
-	movq GlobalTp, %rax
+	movq GlobalTp(%rip), %rax
 	inc %rax
-	movq %rax, GlobalTp
+	movq %rax, GlobalTp(%rip)
 	movb $OP_IVAL, 1(%rax)
 	xor %rax, %rax
 .endm
@@ -269,7 +269,7 @@
 	\setx %al
 	neg %rax
 	mov %rax, (%rbx)
-	movq GlobalTp, %rax
+	movq GlobalTp(%rip), %rax
 	movb $OP_IVAL, 1(%rax)
 	xor %rax, %rax
 .endm
@@ -291,9 +291,9 @@
 	neg %rax
 	add %rcx, %rbx
 	mov %rax, (%rbx)
-	movq GlobalTp, %rax
+	movq GlobalTp(%rip), %rax
 	addq $3, %rax
-	movq %rax, GlobalTp
+	movq %rax, GlobalTp(%rip)
 	movb $OP_IVAL, 1(%rax)
 	xor %rax, %rax
 .endm
@@ -321,11 +321,11 @@
 	movb %dl, %al
 	neg %rax
 	mov %rax, (%rbx)
-	movq GlobalTp, %rax
+	movq GlobalTp(%rip), %rax
 	addq $4, %rax
 	movb $OP_IVAL, (%rax)
 	dec %rax
-	movq %rax, GlobalTp	
+	movq %rax, GlobalTp(%rip)
 	xor %rax, %rax
 .endm
 
@@ -352,11 +352,11 @@
 	movb %dl, %al
 	neg %rax
 	mov %rax, (%rbx)
-	movq GlobalTp, %rax
+	movq GlobalTp(%rip), %rax
 	addq $4, %rax
 	movb $OP_IVAL, (%rax)
 	dec %rax
-	movq %rax, GlobalTp	
+	movq %rax, GlobalTp(%rip)
 	xor %rax, %rax
 .endm
 			
@@ -380,7 +380,7 @@
 	
 .macro STARSLASH
 	movq $2*WSIZE, %rax
-        addq %rax, GlobalSp
+        addq %rax, GlobalSp(%rip)
         LDSP
         movq WSIZE(%rbx), %rax
         imulq (%rbx)
@@ -423,21 +423,22 @@
 vm:
         push %rbp
         push %rbx
-	pushq GlobalIp
-	pushq vmEntryRp
+	pushq GlobalIp(%rip)
+	pushq vmEntryRp(%rip)
 	movq %rdi, %rbp         # load the Forth instruction pointer
-        movq %rbp, GlobalIp
-	movq GlobalRp, %rax
-	movq %rax, vmEntryRp
+        movq %rbp, GlobalIp(%rip)
+	movq GlobalRp(%rip), %rax
+	movq %rax, vmEntryRp(%rip)
 	xor %rax, %rax
 next:
         movb (%rbp), %al         # get the opcode
-	movq JumpTable(,%rax,WSIZE), %rbx	# machine code address of word
+	leaq JumpTable(%rip), %rcx
+	movq (%rcx,%rax,WSIZE), %rbx	# machine code address of word
 	xor %rax, %rax           # clear error code
 	call *%rbx		 # call the word
-	movq GlobalIp, %rbp      # resync ip (possibly changed in call)
+	movq GlobalIp(%rip), %rbp      # resync ip (possibly changed in call)
 	inc %rbp		 # increment the Forth instruction ptr
-	movq %rbp, GlobalIp
+	movq %rbp, GlobalIp(%rip)
 	cmpb $0, %al		 # check for error
 	jz next        
 exitloop:
@@ -445,29 +446,29 @@ exitloop:
         jnz vmexit
         xor %rax, %rax           # clear the error
 vmexit:
-	popq vmEntryRp
-	popq GlobalIp
+	popq vmEntryRp(%rip)
+	popq GlobalIp(%rip)
         pop %rbx
         pop %rbp
         ret
 
 L_ret:
-	movq vmEntryRp, %rax		# Return Stack Ptr on entry to VM
-	movq GlobalRp, %rcx
+	movq vmEntryRp(%rip), %rax		# Return Stack Ptr on entry to VM
+	movq GlobalRp(%rip), %rcx
 	cmp %rax, %rcx
 	jl ret1
         movq $OP_RET, %rax             # exhausted the return stack so exit vm
         ret
 ret1:
 	addq $WSIZE, %rcx
-        movq %rcx, GlobalRp
-        incq GlobalRtp	
-	movq GlobalRtp, %rbx
+        movq %rcx, GlobalRp(%rip)
+        incq GlobalRtp(%rip)
+	movq GlobalRtp(%rip), %rbx
 	movb (%rbx), %al
         cmpb $OP_ADDR, %al
         jnz  E_ret_stk_corrupt
 	mov (%rcx), %rax
-	movq %rax, GlobalIp		# reset the instruction ptr
+	movq %rax, GlobalIp(%rip)		# reset the instruction ptr
         xor %rax, %rax
 retexit:
         ret
@@ -485,11 +486,11 @@ L_tobody:
 # Use USLEEP when task can be put to sleep and reawakened by OS
 #
 L_usleep:
-	addq $WSIZE, GlobalSp
+	addq $WSIZE, GlobalSp(%rip)
 	INC_DTSP
 	LDSP
 	mov (%rbx), %rdi
-	call usleep
+	call usleep@plt
 	xor %rax, %rax
 	ret
 
@@ -514,11 +515,11 @@ L_fill:
 	mov (%rbx), %rdi
 	STSP
 	INC_DTSP
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb (%rbx), %al
 	cmpb $OP_ADDR, %al
 	jnz E_not_addr
-	call memset
+	call memset@plt
 	xor %rax, %rax	
 	ret
 L_erase:
@@ -549,7 +550,7 @@ L_move:
 	add %rax, %rbx
 	mov (%rbx), %rsi
 	STSP
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb (%rbx), %al
 	cmpb $OP_ADDR, %al
 	jz move2
@@ -557,11 +558,11 @@ L_move:
 	jmp E_not_addr
 move2:
 	INC_DTSP
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb (%rbx), %al
 	cmpb $OP_ADDR, %al
 	jnz E_not_addr
-move3:	call memmove
+move3:	call memmove@plt
 	xor %rax, %rax				
 	ret
 L_cmove:
@@ -573,7 +574,7 @@ L_cmove:
 	jnz  cmove1
 	addq $2*WSIZE, %rbx
 	STSP
-	addq $3, GlobalTp
+	addq $3, GlobalTp(%rip)
 	xor %rax, %rax
 	NEXT		
 cmove1:	INC_DTSP
@@ -581,7 +582,7 @@ cmove1:	INC_DTSP
 	mov (%rbx), %rdx		# dest addr in rdx
 	STSP
 	INC_DTSP
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb (%rbx), %al
 	cmpb $OP_ADDR, %al
 	jz cmove2
@@ -593,7 +594,7 @@ cmove2:	LDSP
 	mov (%rbx), %rax		# src addr in rax
 	STSP
 	INC_DTSP
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb (%rbx), %bl
 	cmpb $OP_ADDR, %bl
 	jz cmove3
@@ -609,13 +610,13 @@ cmoveloop: movb (%rbx), %al
 	NEXT				
 L_cmovefrom:
 	movq $WSIZE, %rax
-	addq %rax, GlobalSp
+	addq %rax, GlobalSp(%rip)
 	INC_DTSP
 	LDSP
 	mov (%rbx), %rcx	# load count register
-	addq %rax, GlobalSp
+	addq %rax, GlobalSp(%rip)
 	INC_DTSP
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb (%rbx), %al
 	cmpb $OP_ADDR, %al
 	jz cmovefrom2
@@ -629,9 +630,9 @@ cmovefrom2:
 	add %rax, %rbx
 	mov %rbx, %rdx		# dest addr in %rdx
 	movq $WSIZE, %rax
-	addq %rax, GlobalSp
+	addq %rax, GlobalSp(%rip)
 	INC_DTSP
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb (%rbx), %al
 	cmpb $OP_ADDR, %al
 	jz cmovefrom3
@@ -688,73 +689,73 @@ L_twopush_r:
 	INC_DSP
 	mov (%rbx), %rax
 	STSP
-	movq GlobalRp, %rbx
+	movq GlobalRp(%rip), %rbx
 	movq %rax, (%rbx)
 	subq $WSIZE, %rbx
 	mov %rdx, (%rbx)
 	subq $WSIZE, %rbx
-	movq %rbx, GlobalRp
-	movq GlobalTp, %rbx
+	movq %rbx, GlobalRp(%rip)
+	movq GlobalTp(%rip), %rbx
 	inc %rbx
 	movw (%rbx), %ax
 	inc %rbx
-	movq %rbx, GlobalTp
-	movq GlobalRtp, %rbx
+	movq %rbx, GlobalTp(%rip)
+	movq GlobalRtp(%rip), %rbx
 	dec %rbx
 	movw %ax, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalRtp
+	movq %rbx, GlobalRtp(%rip)
 	xor %rax, %rax
 	NEXT
 
 L_twopop_r:
-	movq GlobalRp, %rbx
+	movq GlobalRp(%rip), %rbx
 	addq $WSIZE, %rbx
 	mov (%rbx), %rdx
 	addq $WSIZE, %rbx
 	mov (%rbx), %rax
-	movq %rbx, GlobalRp
+	movq %rbx, GlobalRp(%rip)
 	LDSP
 	mov %rax, (%rbx)
 	subq $WSIZE, %rbx
 	mov %rdx, (%rbx)
 	subq $WSIZE, %rbx
 	STSP
-	movq GlobalRtp, %rbx
+	movq GlobalRtp(%rip), %rbx
 	inc %rbx
 	movw (%rbx), %ax
 	inc %rbx
-	movq %rbx, GlobalRtp
-	movq GlobalTp, %rbx
+	movq %rbx, GlobalRtp(%rip)
+	movq GlobalTp(%rip), %rbx
 	dec %rbx
 	movw %ax, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalTp
+	movq %rbx, GlobalTp(%rip)
 	xor %rax, %rax				
 	NEXT
 L_puship:
         mov %rbp, %rax
-        movq GlobalRp, %rbx
+        movq GlobalRp(%rip), %rbx
         mov %rax, (%rbx)
 	movq $WSIZE, %rax
-        subq %rax, GlobalRp
-        movq GlobalRtp, %rbx
+        subq %rax, GlobalRp(%rip)
+        movq GlobalRtp(%rip), %rbx
 	movb $OP_ADDR, %al
         movb %al, (%rbx)
-	decq GlobalRtp
+	decq GlobalRtp(%rip)
         xor %rax, %rax
         NEXT
 L_execute:	
         mov %rbp, %rcx
-        movq GlobalRp, %rbx
+        movq GlobalRp(%rip), %rbx
         mov %rcx, (%rbx)
 	movq $WSIZE, %rax 
         sub %rax, %rbx 
-	movq %rbx, GlobalRp
-        movq GlobalRtp, %rbx
+	movq %rbx, GlobalRp(%rip)
+        movq GlobalRtp(%rip), %rbx
 	movb $OP_ADDR, (%rbx)
 	dec %rbx
-        movq %rbx, GlobalRtp
+        movq %rbx, GlobalRtp(%rip)
 	LDSP
         add %rax, %rbx
 	STSP
@@ -771,36 +772,36 @@ L_definition:
 	mov (%rbx), %rcx # address to execute
 	addq $WSIZE-1, %rbx
 	mov %rbx, %rdx
-	movq GlobalRp, %rbx
+	movq GlobalRp(%rip), %rbx
 	movq %rdx, (%rbx)
 	sub %rax, %rbx
-	movq %rbx, GlobalRp
-	movq GlobalRtp, %rbx
+	movq %rbx, GlobalRp(%rip)
+	movq GlobalRtp(%rip), %rbx
 	movb $OP_ADDR, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalRtp
+	movq %rbx, GlobalRtp(%rip)
 	dec %rcx
 	mov %rcx, %rbp
         xor %rax, %rax	
 	NEXT
 L_rfetch:
-        movq GlobalRp, %rbx
+        movq GlobalRp(%rip), %rbx
         addq $WSIZE, %rbx
         movq (%rbx), %rax
         LDSP
         mov %rax, (%rbx)
 	movq $WSIZE, %rax
-        subq %rax, GlobalSp
-        movq GlobalRtp, %rbx
+        subq %rax, GlobalSp(%rip)
+        movq GlobalRtp(%rip), %rbx
         inc %rbx
         movb (%rbx), %al
-        movq GlobalTp, %rbx
+        movq GlobalTp(%rip), %rbx
         movb %al, (%rbx)
         DEC_DTSP
         xor %rax, %rax
 	NEXT
 L_tworfetch:
-	movq GlobalRp, %rbx
+	movq GlobalRp(%rip), %rbx
 	addq $WSIZE, %rbx
 	mov (%rbx), %rdx
 	addq $WSIZE, %rbx
@@ -811,51 +812,51 @@ L_tworfetch:
 	mov %rdx, (%rbx)
 	DEC_DSP
 	STSP
-	movq GlobalRtp, %rbx
+	movq GlobalRtp(%rip), %rbx
 	inc %rbx
 	movw (%rbx), %ax
 	inc %rbx
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	dec %rbx
 	movw %ax, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalTp
+	movq %rbx, GlobalTp(%rip)
 	xor %rax, %rax				
 	NEXT
 L_rpfetch:
 	LDSP
-	movq GlobalRp, %rax
+	movq GlobalRp(%rip), %rax
 	addq $WSIZE, %rax
 	mov %rax, (%rbx)
 	DEC_DSP
 	STSP
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb $OP_ADDR, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalTp
+	movq %rbx, GlobalTp(%rip)
 	xor %rax, %rax
 	NEXT
 L_spfetch:
-	movq GlobalSp, %rax
+	movq GlobalSp(%rip), %rax
 	mov %rax, %rbx
 	addq $WSIZE, %rax
 	mov %rax, (%rbx)
 	DEC_DSP
 	STSP
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb $OP_ADDR, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalTp
+	movq %rbx, GlobalTp(%rip)
 	xor %rax, %rax 
 	NEXT
 L_i:
-        movq GlobalRtp, %rbx
+        movq GlobalRtp(%rip), %rbx
         movb 3(%rbx), %al
-        movq GlobalTp, %rbx
+        movq GlobalTp(%rip), %rbx
 	movb %al, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalTp
-        movq GlobalRp, %rbx
+	movq %rbx, GlobalTp(%rip)
+        movq GlobalRp(%rip), %rbx
         movq 3*WSIZE(%rbx), %rax
         LDSP
         mov %rax, (%rbx)
@@ -865,13 +866,13 @@ L_i:
         xor %rax, %rax
         NEXT
 L_j:
-        movq GlobalRtp, %rbx
+        movq GlobalRtp(%rip), %rbx
         movb 6(%rbx), %al
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb %al, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalTp
-        movq GlobalRp, %rbx
+	movq %rbx, GlobalTp(%rip)
+        movq GlobalRp(%rip), %rbx
         movq 6*WSIZE(%rbx), %rax
         LDSP
         mov %rax, (%rbx)
@@ -882,12 +883,12 @@ L_j:
         NEXT
 
 L_loop:
-        movq GlobalRtp, %rbx
+        movq GlobalRtp(%rip), %rbx
         inc %rbx
         movb (%rbx), %al
         cmpb $OP_ADDR, %al
         jnz  E_ret_stk_corrupt
-        movq GlobalRp, %rbx	
+        movq GlobalRp(%rip), %rbx
 	movq $WSIZE, %rax
 	add %rax, %rbx
 	mov (%rbx), %rdx
@@ -911,7 +912,7 @@ L_unloop:
 
 L_plusloop:
 	push %rbp
-	movq GlobalRtp, %rbx
+	movq GlobalRtp(%rip), %rbx
         inc %rbx
         movb (%rbx), %al
         cmpb $OP_ADDR, %al
@@ -922,7 +923,7 @@ L_plusloop:
 	mov (%rbx), %rbp	# get loop increment 
 	STSP
 	INC_DTSP		
-        movq GlobalRp, %rbx
+        movq GlobalRp(%rip), %rbx
 	add %rax, %rbx		# get ip and save in rdx
 	mov (%rbx), %rdx
 	add %rax, %rbx
@@ -964,7 +965,7 @@ plusloop2:
 	NEXT
 
 L_count:
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb 1(%rbx), %al
 	cmpb $OP_ADDR, %al
 	jnz  E_not_addr
@@ -978,7 +979,7 @@ L_count:
 	incq WSIZE(%rbx)
 	mov %rax, (%rbx)
 	movq $WSIZE, %rax
-	subq %rax, GlobalSp
+	subq %rax, GlobalSp(%rip)
 	xor %rax, %rax
 	NEXT
 
@@ -1028,22 +1029,22 @@ L_ptr:
 L_fval:
         mov %rbp, %rbx
         inc %rbx
-        movq GlobalSp, %rcx
+        movq GlobalSp(%rip), %rcx
         subq $WSIZE, %rcx
         mov (%rbx), %rax
 	mov %rax, (%rcx)
 	movq WSIZE(%rbx), %rax
 	movq %rax, WSIZE(%rcx)
 	subq $WSIZE, %rcx
-	movq %rcx, GlobalSp
+	movq %rcx, GlobalSp(%rip)
 	addq $2*WSIZE-1, %rbx
 	mov %rbx, %rbp
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb $OP_IVAL, (%rbx)
 	dec %rbx
 	movb $OP_IVAL, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalTp
+	movq %rbx, GlobalTp(%rip)
 	xor %rax, %rax
 	NEXT
 
@@ -1124,20 +1125,20 @@ L_within:
 	neg %rax
 	movq %rax, WSIZE(%rbx)
 	STSP
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	addq $3, %rbx
 	movb $OP_IVAL, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalTp
+	movq %rbx, GlobalTp(%rip)
 	xor %rax, %rax
         NEXT
 
 L_deq:
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	addq $4, %rbx
 	movb $OP_IVAL, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalTp
+	movq %rbx, GlobalTp(%rip)
 	LDSP
 	INC_DSP
 	mov (%rbx), %rdx
@@ -1160,11 +1161,11 @@ L_deq:
 	NEXT
 
 L_dzeroeq:
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	addq $2, %rbx
 	movb $OP_IVAL, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalTp
+	movq %rbx, GlobalTp(%rip)
 	LDSP
 	INC_DSP
 	STSP
@@ -1214,11 +1215,11 @@ L_dult:	# b = (d1.hi u< d2.hi) OR ((d1.hi = d2.hi) AND (d1.lo u< d2.lo))
 	movb %dl, %al
 	neg %rax
 	mov %rax, (%rbx)
-	movq GlobalTp, %rax
+	movq GlobalTp(%rip), %rax
 	addq $4, %rax
 	movb $OP_IVAL, (%rax)
 	dec %rax
-	movq %rax, GlobalTp
+	movq %rax, GlobalTp(%rip)
 	xor %rax, %rax
 	NEXT
 	
@@ -1230,7 +1231,7 @@ L_querydup:
 	mov %rax, (%rbx)
 	DEC_DSP
 	STSP
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb 1(%rbx), %al
 	movb %al, (%rbx)
 	DEC_DTSP
@@ -1262,7 +1263,7 @@ L_rot:
 	mov (%rbp), %rcx
 	mov %rdx, (%rbp)
 	mov %rcx, (%rbx)
-        movq GlobalTp, %rbx
+        movq GlobalTp(%rip), %rbx
         inc %rbx
 	mov %rbx, %rbp
 	movw (%rbx), %cx
@@ -1287,7 +1288,7 @@ L_minusrot:
 	mov %rax, (%rbx)
 	movq -2*WSIZE(%rbx), %rax
 	movq %rax, WSIZE(%rbx)
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb 1(%rbx), %al
 	movb %al, (%rbx)
 	inc %rbx
@@ -1300,7 +1301,7 @@ L_minusrot:
 
 L_nip:
         SWAP
-        addq $WSIZE, GlobalSp
+        addq $WSIZE, GlobalSp(%rip)
         INC_DTSP
         NEXT
 
@@ -1321,7 +1322,7 @@ L_pick:
 	mov (%rbx), %rax
 	mov %rdx, %rbx
 	mov %rax, (%rbx)
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	inc %rbx
 	mov %rbx, %rdx
 	add %rcx, %rbx
@@ -1333,7 +1334,7 @@ L_pick:
 
 L_roll:
 	movq $WSIZE, %rax
-	addq %rax, GlobalSp
+	addq %rax, GlobalSp(%rip)
 	INC_DTSP
 	LDSP 
 	mov (%rbx), %rax
@@ -1363,10 +1364,10 @@ rollloop:
 	loop rollloop
 
 	pop %rax		# now we have to roll the typestack
-	movq GlobalTp, %rbx	
+	movq GlobalTp(%rip), %rbx
 	add %rax, %rbx
 	movb (%rbx), %al
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb %al, (%rbx)
 	pop %rax
 	mov %rax, %rcx
@@ -1386,14 +1387,14 @@ rolltloop:
 
 L_depth:
 	LDSP
-	movq BottomOfStack, %rax
+	movq BottomOfStack(%rip), %rax
 	sub %rbx, %rax
 	movq $WSIZE, (%rbx)
 	movq $0, %rdx
 	idivq (%rbx)
 	mov %rax, (%rbx)
 	movq $WSIZE, %rax
-	subq %rax, GlobalSp
+	subq %rax, GlobalSp(%rip)
 	STD_IVAL
 	xor %rax, %rax
         ret
@@ -1443,7 +1444,7 @@ L_2rot:
 	mov %rdx, (%rbx)
 	addq $WSIZE, %rbx
 	mov %rax, (%rbx)
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	inc %rbx
 	mov %rbx, %rcx
 	movw (%rbx), %ax
@@ -1466,7 +1467,7 @@ L_fetch:
 	NEXT
 
 L_store:
-        movq GlobalTp, %rbx
+        movq GlobalTp(%rip), %rbx
 	inc %rbx
         movb (%rbx), %al
         cmpb $OP_ADDR, %al
@@ -1488,7 +1489,7 @@ L_afetch:
 	NEXT
 
 L_cfetch:
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	inc %rbx
 	movb (%rbx), %al
 	cmpb $OP_ADDR, %al
@@ -1504,7 +1505,7 @@ L_cfetch:
         NEXT
 
 L_cstore:
-	movq GlobalTp, %rdx
+	movq GlobalTp(%rip), %rdx
 	inc %rdx
 	movb (%rdx), %al
 	cmpb $OP_ADDR, %al
@@ -1517,12 +1518,12 @@ L_cstore:
 	movb %al, (%rcx)
 	STSP
 	inc %rdx
-	movq %rdx, GlobalTp
+	movq %rdx, GlobalTp(%rip)
 	xor %rax, %rax
 	NEXT	
 
 L_wfetch:
-	movq GlobalTp, %rcx
+	movq GlobalTp(%rip), %rcx
 	movb 1(%rcx), %al
 	cmpb $OP_ADDR, %al
 	jnz E_not_addr
@@ -1539,9 +1540,9 @@ L_wfetch:
 
 L_wstore:
 	movq $WSIZE, %rax
-	addq %rax, GlobalSp
+	addq %rax, GlobalSp(%rip)
 	INC_DTSP
-	movq GlobalTp, %rcx
+	movq GlobalTp(%rip), %rcx
 	movb (%rcx), %al
 	cmpb $OP_ADDR, %al
 	jnz E_not_addr
@@ -1553,16 +1554,16 @@ L_wstore:
 	pop %rbx
 	movw %ax, (%rbx)
 	movq $WSIZE, %rax
-	addq %rax, GlobalSp
+	addq %rax, GlobalSp(%rip)
 	INC_DTSP
 	xor %rax, %rax
         NEXT
 
 L_sffetch:
 	movq $WSIZE, %rax
-        addq %rax, GlobalSp
+        addq %rax, GlobalSp(%rip)
         INC_DTSP
-        movq GlobalTp, %rbx
+        movq GlobalTp(%rip), %rbx
         movb (%rbx), %al
         cmpb $OP_ADDR, %al
         jnz E_not_addr
@@ -1575,18 +1576,18 @@ L_sffetch:
         mov (%rbx), %rbx
         flds (%rbx)
 	movq $WSIZE, %rax
-        subq %rax, GlobalSp
+        subq %rax, GlobalSp(%rip)
         LDSP
         fstp (%rbx)
-        subq %rax, GlobalSp
+        subq %rax, GlobalSp(%rip)
 	xor %rax, %rax
         NEXT
 
 L_sfstore:
 	movq $WSIZE, %rax
-        addq %rax, GlobalSp
+        addq %rax, GlobalSp(%rip)
         INC_DTSP
-        movq GlobalTp, %rbx
+        movq GlobalTp(%rip), %rbx
         movb (%rbx), %al
         cmpb $OP_ADDR, %al
         jnz E_not_addr
@@ -1598,13 +1599,13 @@ L_sfstore:
         fstps (%rbx)             # store as single precision float
 	movq $WSIZE, %rax
 	salq $1, %rax
-        addq %rax, GlobalSp
+        addq %rax, GlobalSp(%rip)
 	INC2_DTSP
 	xor %rax, %rax
         NEXT
 
 L_dffetch:	
-        movq GlobalTp, %rbx
+        movq GlobalTp(%rip), %rbx
 	inc %rbx
         movb (%rbx), %al
         cmpb $OP_ADDR, %al
@@ -1613,7 +1614,7 @@ L_dffetch:
 	dec %rbx
 	movb $OP_IVAL, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalTp 
+	movq %rbx, GlobalTp(%rip)
 	LDSP
 	mov %rbx, %rdx
 	INC_DSP
@@ -1624,18 +1625,18 @@ L_dffetch:
 	mov (%rcx), %rax
 	mov %rax, (%rbx)
 	subq $WSIZE, %rdx
-	movq %rdx, GlobalSp
+	movq %rdx, GlobalSp(%rip)
 	xor %rax, %rax
 	NEXT
 
 L_dfstore:
-        movq GlobalTp, %rbx
+        movq GlobalTp(%rip), %rbx
 	inc %rbx
         movb (%rbx), %al
         cmpb $OP_ADDR, %al
         jnz  E_not_addr
 	addq $2, %rbx
-	movq %rbx, GlobalTp
+	movq %rbx, GlobalTp(%rip)
 	LDSP
 	movq $WSIZE, %rdx
 	add %rdx, %rbx
@@ -1648,7 +1649,7 @@ L_dfstore:
 	add %rdx, %rbx
 	mov (%rax), %rcx
 	mov %rcx, (%rbx)
-	movq %rax, GlobalSp
+	movq %rax, GlobalSp(%rip)
 	xor %rax, %rax
 	NEXT
 
@@ -1658,7 +1659,7 @@ L_abs:
 
 L_max:
 	movq $WSIZE, %rax
-	addq %rax, GlobalSp
+	addq %rax, GlobalSp(%rip)
 	LDSP
 	mov (%rbx), %rax
 	movq WSIZE(%rbx), %rbx
@@ -1678,7 +1679,7 @@ maxexit:
 
 L_min:
 	movq $WSIZE, %rax
-	addq %rax, GlobalSp
+	addq %rax, GlobalSp(%rip)
 	LDSP
 	movq (%rbx), %rax
 	movq WSIZE(%rbx), %rbx
@@ -1770,9 +1771,9 @@ L_add:
 	mov (%rbx), %rax
 	addq %rax, WSIZE(%rbx)
 	STSP
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	inc %rbx
-	movq %rbx, GlobalTp
+	movq %rbx, GlobalTp(%rip)
 	movw (%rbx), %ax
 	andb %ah, %al		# and the two types to preserve addr type
 	inc %rbx
@@ -1782,7 +1783,7 @@ L_add:
 
 L_div:
 	movq $WSIZE, %rax
-        addq %rax, GlobalSp
+        addq %rax, GlobalSp(%rip)
         INC_DTSP
         LDSP
         mov (%rbx), %rax
@@ -1830,7 +1831,7 @@ L_starslashmod:
 	ret
 
 L_plusstore:
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb 1(%rbx), %al
 	cmpb $OP_ADDR, %al
 	jnz  E_not_addr
@@ -2118,7 +2119,7 @@ L_stsslashrem:
 	push %rdx
 	STSP
 	call L_tabs
-	subq $WSIZE, GlobalSp
+	subq $WSIZE, GlobalSp(%rip)
 	_ABS
 	call L_utsslashmod
 	pop %rdx
@@ -2327,11 +2328,11 @@ L_smslashrem:
 
 L_stof:
 	movq $WSIZE, %rax
-        addq %rax, GlobalSp
+        addq %rax, GlobalSp(%rip)
         INC_DTSP
         LDSP
         fild (%rbx)
-        movq GlobalTp, %rbx
+        movq GlobalTp(%rip), %rbx
         movb $OP_IVAL, (%rbx)
         dec %rbx
         movb $OP_IVAL, (%rbx)
@@ -2342,7 +2343,7 @@ L_stof:
         sub %rax, %rbx
         fstp (%rbx)
 	salq $1, %rax
-        subq %rax, GlobalSp
+        subq %rax, GlobalSp(%rip)
 	xor %rax, %rax
         NEXT
 
@@ -2360,13 +2361,13 @@ L_dtof:
 
 L_froundtos:
 	movq $WSIZE, %rax
-        addq %rax, GlobalSp
+        addq %rax, GlobalSp(%rip)
         LDSP
         fld (%rbx)
         add %rax, %rbx
         fistp (%rbx)
         INC_DTSP
-        movq GlobalTp, %rbx
+        movq GlobalTp(%rip), %rbx
         inc %rbx
         movb $OP_IVAL, (%rbx)
 	xor %rax, %rax
@@ -2390,7 +2391,7 @@ L_ftrunctos:
 	mov %rcx, (%rbx)
 	fldcw (%rbx)		# restore NDP control word
 	INC_DTSP
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	inc %rbx
 	movb $OP_IVAL, (%rbx)
 	xor %rax, %rax	
@@ -2453,9 +2454,9 @@ L_fzeroeq:
 	neg %rax
 	mov %rax, (%rbx)
 frelzero:
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	inc %rbx
-	movq %rbx, GlobalTp
+	movq %rbx, GlobalTp(%rip)
 	inc %rbx
 	movb $OP_IVAL, (%rbx)
 	xor %rax, %rax
@@ -2501,11 +2502,11 @@ L_fsincos:
 	fstp WSIZE(%rbx)
 	subq $2*WSIZE, %rbx
 	STSP
-	movq GlobalTp, %rbx
+	movq GlobalTp(%rip), %rbx
 	movb $OP_IVAL, (%rbx)
 	dec %rbx
 	movb $OP_IVAL, (%rbx)
 	dec %rbx
-	movq %rbx, GlobalTp	
+	movq %rbx, GlobalTp(%rip)
 	NEXT
 
