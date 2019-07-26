@@ -96,24 +96,24 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad L_zeroeq, L_zerone, L_zerolt, L_zerogt # 244 -- 247
            .quad L_ult, L_ugt, CPP_begin, CPP_while    # 248 -- 251
            .quad CPP_repeat, CPP_until, CPP_again, CPP_bye  # 252 -- 255
-	   .quad L_utmslash, L_utsslashmod, L_stsslashrem, L_udmstar   # 256 -- 259
-	   .quad CPP_included, CPP_include, CPP_source, CPP_refill # 260--263
-	   .quad CPP_state, CPP_allocate, CPP_free, CPP_resize  # 264--267
-	   .quad L_cputest, L_dsstar, CPP_compilecomma, L_nop   # 268--271
-	   .quad CPP_postpone, CPP_nondeferred, CPP_forget, C_forth_signal # 272--275
-	   .quad C_raise, C_setitimer, C_getitimer, C_us2fetch  # 276--279
-	   .quad C_tofloat, L_fsincos, C_facosh, C_fasinh # 280--283
-	   .quad C_fatanh, C_fcosh, C_fsinh, C_ftanh   # 284--287
-	   .quad C_falog, L_dzerolt, L_dmax, L_dmin    # 288--291
-	   .quad L_dtwostar, L_dtwodiv, CPP_uddot, L_within  # 292--295
-	   .quad CPP_twoliteral, C_tonumber, C_numberquery, CPP_sliteral   # 296--299
+           .quad L_utmslash, L_utsslashmod, L_stsslashrem, L_udmstar   # 256 -- 259
+           .quad CPP_included, CPP_include, CPP_source, CPP_refill # 260--263
+           .quad CPP_state, CPP_allocate, CPP_free, CPP_resize  # 264--267
+           .quad L_cputest, L_dsstar, CPP_compilecomma, L_nop   # 268--271
+           .quad CPP_postpone, CPP_nondeferred, CPP_forget, C_forth_signal # 272--275
+           .quad C_raise, C_setitimer, C_getitimer, C_us2fetch  # 276--279
+           .quad C_tofloat, L_fsincos, C_facosh, C_fasinh # 280--283
+           .quad C_fatanh, C_fcosh, C_fsinh, C_ftanh   # 284--287
+           .quad C_falog, L_dzerolt, L_dmax, L_dmin    # 288--291
+           .quad L_dtwostar, L_dtwodiv, CPP_uddot, L_within  # 292--295
+           .quad CPP_twoliteral, C_tonumber, C_numberquery, CPP_sliteral   # 296--299
            .quad L_nop, L_nop, L_nop, L_nop            # 300--303
            .quad L_nop, L_nop, L_nop, L_nop            # 304--307
            .quad L_nop, L_nop, L_nop, L_blank          # 308--311
            .quad L_slashstring, C_trailing, C_parse, L_nop  # 312--315
-	   .quad L_nop, L_nop, L_nop, L_nop            # 316--319
+           .quad L_nop, L_nop, L_nop, L_nop            # 316--319
            .quad C_dlopen, C_dlerror, C_dlsym, C_dlclose # 320--323
-	   .quad C_usec, CPP_alias, L_nop, L_nop       # 324--327
+           .quad C_usec, CPP_alias, L_nop, L_nop       # 324--327
            .quad L_nop, L_nop, CPP_wordlist, CPP_forthwordlist               # 328--331
            .quad CPP_getcurrent, CPP_setcurrent, CPP_getorder, CPP_setorder  # 332--335
            .quad CPP_searchwordlist, CPP_definitions, CPP_vocabulary, L_nop  # 336--339
@@ -123,8 +123,8 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad L_nop, L_nop, L_nop, L_nop            # 352--355
            .quad L_nop, L_nop, L_nop, L_nop            # 356--359
            .quad L_precision, L_setprecision, L_nop, CPP_fsdot   # 360--363
-	   .quad L_nop, L_nop, C_fexpm1, C_flnp1	      # 364--367
-	   .quad L_nop, L_nop, L_f2drop, L_f2dup	      # 368--371
+           .quad L_nop, L_nop, C_fexpm1, C_flnp1	      # 364--367
+           .quad L_nop, L_nop, L_f2drop, L_f2dup	      # 368--371
 .text
 	.align WSIZE
 .global JumpTable
@@ -134,7 +134,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 
 .macro LDSP                      # load stack ptr into rbx reg
   .ifndef __FAST__
-        movq GlobalSp(%rip), %rbx
+	movq GlobalSp(%rip), %rbx
   .endif
 .endm
 
@@ -193,7 +193,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 .macro UNLOOP
 	addq $3*WSIZE, GlobalRp(%rip)  # terminal count reached, discard top 3 items
   .ifndef __FAST__
-        addq $3, GlobalRtp(%rip)
+	addq $3, GlobalRtp(%rip)
   .endif
 .endm
 
@@ -212,24 +212,24 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 
 
 .macro DROP                     # increment DSP by 1 cell; assume DSP in rbx reg
-        INC_DSP
+	INC_DSP
 	STSP
 	INC_DTSP
 .endm
 
 
 .macro DUP                      # assume DSP in rbx reg
-        movq WSIZE(%rbx), %rcx
-        mov %rcx, (%rbx)
+	movq WSIZE(%rbx), %rcx
+	mov %rcx, (%rbx)
 	DEC_DSP
 	STSP
   .ifndef __FAST__
-        movq GlobalTp(%rip), %rcx
-        movb 1(%rcx), %al
-        movb %al, (%rcx)
+	movq GlobalTp(%rip), %rcx
+	movb 1(%rcx), %al
+	movb %al, (%rcx)
 	xor %rax, %rax
-   .endif
-        DEC_DTSP
+  .endif
+	DEC_DTSP
 .endm
 
 
@@ -283,12 +283,12 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 
 // Error jumps
 E_not_addr:
-        mov $E_NOT_ADDR, %rax
-        ret
+	mov $E_NOT_ADDR, %rax
+	ret
 
 E_ret_stk_corrupt:
-        mov $E_RET_STK_CORRUPT, %rax
-        ret
+	mov $E_RET_STK_CORRUPT, %rax
+	ret
 
 E_div_zero:
 	mov $E_DIV_ZERO, %rax
@@ -307,14 +307,14 @@ L_initfpu:
 	fnstcw NDPcw(%rip)           # save the NDP control word
 	mov NDPcw(%rip), %rcx
 	andb $240, %ch         # mask the high byte
-        orb  $2,  %ch          # set double precision, round near
-        mov %rcx, (%rbx)
+	orb  $2,  %ch          # set double precision, round near
+	mov %rcx, (%rbx)
 	fldcw (%rbx)
 	ret
 
 L_nop:
-        mov $E_UNKNOWN_OP, %rax   # unknown operation
-        ret
+	mov $E_UNKNOWN_OP, %rax   # unknown operation
+	ret
 L_quit:
 	mov BottomOfReturnStack(%rip), %rax	# clear the return stacks
 	mov %rax, GlobalRp(%rip)
@@ -335,35 +335,35 @@ L_abort:
 	jmp L_quit
 
 L_jz:
-        LDSP
+	LDSP
 	DROP
-        mov (%rbx), %rax
-        cmpq $0, %rax
-        jz jz1
+	mov (%rbx), %rax
+	cmpq $0, %rax
+	jz jz1
 	movq $WSIZE, %rax
-        add %rax, %rbp       # do not jump
+	add %rax, %rbp       # do not jump
 	xor %rax, %rax
-        NEXT
+	NEXT
 jz1:    mov %rbp, %rcx
-        inc %rcx
-        mov (%rcx), %rax       # get the relative jump count
-        dec %rax
-        add %rax, %rbp
+	inc %rcx
+	mov (%rcx), %rax       # get the relative jump count
+	dec %rax
+	add %rax, %rbp
 	xor %rax, %rax
-        NEXT
+	NEXT
 
 L_jnz:				# not implemented
 	ret
 
 L_jmp:
-        mov %rbp, %rcx
-        inc %rcx
-        mov (%rcx), %rax       # get the relative jump count
-        add %rax, %rcx
-        sub $2, %rcx
-        mov %rcx, %rbp		# set instruction ptr
+	mov %rbp, %rcx
+	inc %rcx
+	mov (%rcx), %rax       # get the relative jump count
+	add %rax, %rcx
+	sub $2, %rcx
+	mov %rcx, %rbp		# set instruction ptr
 	xor %rax, %rax
-        NEXT
+	NEXT
 
 L_calladdr:
 	inc %rbp
@@ -399,7 +399,7 @@ L_base:
 L_precision:
 	LDSP
 	mov Precision(%rip), %rcx
-        mov %rcx, (%rbx)
+	mov %rcx, (%rbx)
 	DEC_DSP
 	STSP
 	STD_IVAL
@@ -459,27 +459,27 @@ L_dfloats:
 L_dup:
 	LDSP
 	DUP
-        NEXT
+	NEXT
 
 L_drop:
 	LDSP
-        DROP
-        NEXT
+	DROP
+	NEXT
 
 L_inc:
 	LDSP
-        incq WSIZE(%rbx)
-        NEXT
+	incq WSIZE(%rbx)
+	NEXT
 
 L_dec:
 	LDSP
-        decq WSIZE(%rbx)
-        NEXT
+	decq WSIZE(%rbx)
+	NEXT
 
 L_neg:
 	LDSP
 	negq WSIZE(%rbx)
-        NEXT
+	NEXT
 
 L_lshift:
 	LDSP
@@ -522,8 +522,8 @@ L_sub:
 	DROP         # result will have type of first operand
 	mov (%rbx), %rax
 	sub %rax, WSIZE(%rbx)	
-        xor %rax, %rax
-        NEXT
+	xor %rax, %rax
+	NEXT
 
 L_mul:
 	LDSP
@@ -535,11 +535,11 @@ L_mul:
 	imulq (%rbx)
 	mov %rax, (%rbx)
    .ifdef __FAST__
-        sub %rcx, %rbx
+	sub %rcx, %rbx
    .endif
 	INC_DTSP
 	xor %rax, %rax
-        NEXT
+	NEXT
 
 L_stod:
 	STOD
@@ -547,16 +547,16 @@ L_stod:
 
 L_fabs:
 	LDSP
-        fld WSIZE(%rbx)
-        fabs
-        fstp WSIZE(%rbx)
-        NEXT
+	fld WSIZE(%rbx)
+	fabs
+	fstp WSIZE(%rbx)
+	NEXT
 L_fneg:
-        LDSP
-        fld WSIZE(%rbx)
-        fchs
-        fstp WSIZE(%rbx)
-        NEXT
+	LDSP
+	fld WSIZE(%rbx)
+	fchs
+	fstp WSIZE(%rbx)
+	NEXT
 
 L_fsqrt:
 	LDSP
@@ -681,12 +681,12 @@ L_ftrunc:
 	INC_DSP
 	fld (%rbx)
 	fnstcw NDPcw(%rip)            # save NDP control word
-        mov NDPcw(%rip), %rcx
+	mov NDPcw(%rip), %rcx
 	movb $12, %ch
 	mov %rcx, (%rbx)
 	fldcw (%rbx)
 	frndint
-        fldcw NDPcw(%rip)             # restore NDP control word
+	fldcw NDPcw(%rip)             # restore NDP control word
 	fstp (%rbx)
 	DEC_DSP
 	NEXT
@@ -694,70 +694,70 @@ L_ftrunc:
 L_fadd:
 	LDSP
 	mov $WSIZE, %rax
-        add %rax, %rbx
-        fld (%rbx)
+	add %rax, %rbx
+	fld (%rbx)
 	sal $1, %rax
-        add %rax, %rbx
-        fadd (%rbx)
-        fstp (%rbx)
+	add %rax, %rbx
+	fadd (%rbx)
+	fstp (%rbx)
 	DEC_DSP
 	STSP
 	INC2_DTSP
 	xor %rax, %rax
-        NEXT
+	NEXT
 
 L_fsub:
 	LDSP
 	mov $3*WSIZE, %rax
 	add %rax, %rbx
-        fld (%rbx)
+	fld (%rbx)
 	sub $WSIZE, %rax
 	sub %rax, %rbx
-        fsub (%rbx)
-        add %rax, %rbx
-        fstp (%rbx)
-        DEC_DSP
+	fsub (%rbx)
+	add %rax, %rbx
+	fstp (%rbx)
+	DEC_DSP
 	STSP
 	INC2_DTSP
 	xor %rax, %rax
-        NEXT
+	NEXT
 
 L_fmul:
 	LDSP
 	mov $WSIZE, %rax
-        add %rax, %rbx
-        fld (%rbx)
-        add %rax, %rbx
+	add %rax, %rbx
+	fld (%rbx)
+	add %rax, %rbx
 	mov %rbx, %rcx
 	add %rax, %rbx
-        fmul (%rbx)
-        fstp (%rbx)
-        mov %rcx, %rbx
+	fmul (%rbx)
+	fstp (%rbx)
+	mov %rcx, %rbx
 	STSP
 	INC2_DTSP
 	xor %rax, %rax
-        NEXT
+	NEXT
 
 L_fdiv:
 	LDSP
 	mov $WSIZE, %rax
-        add %rax, %rbx
-        fld (%rbx)
-        add %rax, %rbx
+	add %rax, %rbx
+	fld (%rbx)
+	add %rax, %rbx
 	mov %rbx, %rcx
 	add %rax, %rbx
-        fdivr (%rbx)
-        fstp (%rbx)
-        mov %rcx, %rbx
+	fdivr (%rbx)
+	fstp (%rbx)
+	mov %rcx, %rbx
 	STSP
 	INC2_DTSP
 	xor %rax, %rax
 	NEXT
 
 L_backslash:
-        mov pTIB(%rip), %rcx
-        movb $0, (%rcx)
-        NEXT
+	mov pTIB(%rip), %rcx
+	movb $0, (%rcx)
+	NEXT
 
 
 	.comm GlobalSp, WSIZE,WSIZE
