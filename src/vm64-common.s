@@ -134,13 +134,13 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 
 .macro LDSP                      # load stack ptr into rbx reg
   .ifndef __FAST__
-        movq GlobalSp, %rbx
+        movq GlobalSp(%rip), %rbx
   .endif
 .endm
 
 .macro STSP
   .ifndef __FAST__
-	movq %rbx, GlobalSp
+	movq %rbx, GlobalSp(%rip)
   .endif
 .endm
 
@@ -158,53 +158,54 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 
 .macro INC_DTSP
   .ifndef __FAST__
-       incq GlobalTp
+       incq GlobalTp(%rip)
   .endif
 .endm
 
 .macro DEC_DTSP
   .ifndef __FAST__
-	decq GlobalTp
+	decq GlobalTp(%rip)
   .endif
 .endm
 
 .macro INC2_DTSP
   .ifndef __FAST__
-	addq $2, GlobalTp
+	addq $2, GlobalTp(%rip)
   .endif
 .endm
 
 .macro STD_IVAL
   .ifndef __FAST__
-	movq GlobalTp, %rdx
+	movq GlobalTp(%rip), %rdx
 	movb $OP_IVAL, (%rdx)
-	decq GlobalTp
+	decq GlobalTp(%rip)
   .endif
 .endm
 
 .macro STD_ADDR
   .ifndef __FAST__
-	movq GlobalTp, %rdx
+	movq GlobalTp(%rip), %rdx
 	movb $OP_ADDR, (%rdx)
-	decq GlobalTp
+	decq GlobalTp(%rip)
   .endif
 .endm
 
 .macro UNLOOP
-	addq $3*WSIZE, GlobalRp  # terminal count reached, discard top 3 items
+	addq $3*WSIZE, GlobalRp(%rip)  # terminal count reached, discard top 3 items
   .ifndef __FAST__
-        addq $3, GlobalRtp
+        addq $3, GlobalRtp(%rip)
   .endif
 .endm
 
 .macro NEXT
 	inc %rbp		 # increment the Forth instruction ptr
-	movq %rbp, GlobalIp
+	movq %rbp, GlobalIp(%rip)
   .ifdef  __FAST__
-	movq %rbx, GlobalSp
+	movq %rbx, GlobalSp(%rip)
   .endif
 	movb (%rbp), %al         # get the opcode
-	movq JumpTable(,%rax,WSIZE), %rcx	# machine code address of word
+	leaq JumpTable(%rip), %rcx
+	movq (%rcx,%rax,WSIZE), %rcx	# machine code address of word
 	xor %rax, %rax	
 	jmp *%rcx		# jump to next word
 .endm
@@ -223,7 +224,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 	DEC_DSP
 	STSP
   .ifndef __FAST__
-        movq GlobalTp, %rcx
+        movq GlobalTp(%rip), %rcx
         movb 1(%rcx), %al
         movb %al, (%rcx)
 	xor %rax, %rax
@@ -302,9 +303,9 @@ L_cputest:
 
 # set kForth's default fpu settings
 L_initfpu:
-	mov GlobalSp, %rbx
-	fnstcw NDPcw           # save the NDP control word
-	mov NDPcw, %rcx
+	mov GlobalSp(%rip), %rbx
+	fnstcw NDPcw(%rip)           # save the NDP control word
+	mov NDPcw(%rip), %rcx
 	andb $240, %ch         # mask the high byte
         orb  $2,  %ch          # set double precision, round near
         mov %rcx, (%rbx)
@@ -315,21 +316,21 @@ L_nop:
         mov $E_UNKNOWN_OP, %rax   # unknown operation
         ret
 L_quit:
-	mov BottomOfReturnStack, %rax	# clear the return stacks
-	mov %rax, GlobalRp
-	mov %rax, vmEntryRp
+	mov BottomOfReturnStack(%rip), %rax	# clear the return stacks
+	mov %rax, GlobalRp(%rip)
+	mov %rax, vmEntryRp(%rip)
   .ifndef __FAST__
-	mov BottomOfReturnTypeStack, %rax
-	mov %rax, GlobalRtp
+	mov BottomOfReturnTypeStack(%rip), %rax
+	mov %rax, GlobalRtp(%rip)
   .endif
 	movq $8, %rax		# exit the virtual machine
 	ret
 L_abort:
-	mov BottomOfStack, %rax
-	mov %rax, GlobalSp
+	mov BottomOfStack(%rip), %rax
+	mov %rax, GlobalSp(%rip)
   .ifndef __FAST__
-	mov BottomOfTypeStack, %rax
-	mov %rax, GlobalTp
+	mov BottomOfTypeStack(%rip), %rax
+	mov %rax, GlobalTp(%rip)
   .endif
 	jmp L_quit
 
@@ -368,27 +369,28 @@ L_calladdr:
 	inc %rbp
 	mov %rbp, %rcx # address to execute (intrinsic Forth word or other)
 	add $WSIZE-1, %rbp
-	mov %rbp, GlobalIp
+	mov %rbp, GlobalIp(%rip)
 	call *(%rcx)
-	movq GlobalIp, %rbp
+	movq GlobalIp(%rip), %rbp
 	ret
 
 L_binary:
-	mov $Base, %rcx
+	lea Base(%rip), %rcx
 	movq $2, (%rcx)
 	NEXT
 L_decimal:	
-	mov $Base, %rcx
+	lea Base(%rip), %rcx
 	movq $10, (%rcx)
 	NEXT
 L_hex:	
-	mov $Base, %rcx
+	lea Base(%rip), %rcx
 	movq $16, (%rcx)
 	NEXT
 
 L_base:
 	LDSP
-	movq $Base, (%rbx)
+	lea Base(%rip), %rcx
+	movq %rcx, (%rbx)
 	DEC_DSP
 	STSP
 	STD_ADDR
@@ -396,7 +398,7 @@ L_base:
 
 L_precision:
 	LDSP
-	mov Precision, %rcx
+	mov Precision(%rip), %rcx
         mov %rcx, (%rbx)
 	DEC_DSP
 	STSP
@@ -407,7 +409,7 @@ L_setprecision:
 	LDSP
 	DROP
 	mov (%rbx), %rcx
-	mov %rcx, Precision
+	mov %rcx, Precision(%rip)
 	NEXT
 
 L_false:
@@ -565,7 +567,7 @@ L_fsqrt:
 
 L_degtorad:
 	LDSP
-	fld FCONST_180
+	fld FCONST_180(%rip)
 	INC_DSP
 	fld (%rbx)
 	fdivp %st, %st(1)
@@ -582,7 +584,7 @@ L_radtodeg:
 	fldpi
 	fxch
 	fdivp %st, %st(1)
-	fld FCONST_180
+	fld FCONST_180(%rip)
 	fmulp %st, %st(1)
 	fstp (%rbx)
 	DEC_DSP
@@ -596,7 +598,7 @@ L_fcos:
 	push %rax
 	mov (%rbx), %rax
 	push %rax
-	call cos
+	call cos@plt
 	add $8, %rsp
 	pop %rbx
 	fstp (%rbx)
@@ -621,7 +623,7 @@ L_fsin:
 	push %rax
 	mov (%rbx), %rax
 	push %rax
-	call sin
+	call sin@plt
 	add $8, %rsp
 	pop %rbx
 	fstp (%rbx)
@@ -657,7 +659,7 @@ L_floor:
 	push %rax
 	mov (%rbx), %rax
 	push %rax
-	call floor
+	call floor@plt
 	add $8, %rsp
 	pop %rbx
 	fstp (%rbx)
@@ -678,13 +680,13 @@ L_ftrunc:
 	LDSP
 	INC_DSP
 	fld (%rbx)
-	fnstcw NDPcw            # save NDP control word
-        mov NDPcw, %rcx
+	fnstcw NDPcw(%rip)            # save NDP control word
+        mov NDPcw(%rip), %rcx
 	movb $12, %ch
 	mov %rcx, (%rbx)
 	fldcw (%rbx)
 	frndint
-        fldcw NDPcw             # restore NDP control word
+        fldcw NDPcw(%rip)             # restore NDP control word
 	fstp (%rbx)
 	DEC_DSP
 	NEXT
@@ -753,7 +755,7 @@ L_fdiv:
 	NEXT
 
 L_backslash:
-        mov pTIB, %rcx
+        mov pTIB(%rip), %rcx
         movb $0, (%rcx)
         NEXT
 

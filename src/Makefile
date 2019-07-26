@@ -40,12 +40,12 @@ LIBPATH = /usr/lib:/usr/lib32
 
 CPP = ${GCCDIR}/g++
 CC  = ${GCCDIR}/gcc
-CPPFLAGS = -c -Wall -fno-pie
-CFLAGS = -c -Wall -fno-pie
+CPPFLAGS = -c -Wall
+CFLAGS = -c -Wall
 FAST = -D__FAST__
 OBJS = kforth.o ForthVM.o ForthCompiler.o vm64.o vmc.o
 FOBJS = kforth-fast.o ForthVM-fast.o ForthCompiler.o vm64-fast.o vmc-fast.o
-LIBS = -lreadline -lncurses -ldl -lm -no-pie
+LIBS = -lreadline -lncurses -ldl -lm
 
 all:	
 	make kforth64
