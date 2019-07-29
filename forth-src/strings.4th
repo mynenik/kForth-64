@@ -211,6 +211,9 @@ variable  number_val
 	drop
 	number_val @ number_sign @ IF negate THEN ;
 
+cr .( FP string conversion words not currently supported in kforth64 ) cr
+1 cells 8 < [IF]
+ 
 \ Convert r to a formatted fixed point string with
 \ n decimal places, 0 <= n <= 17.
 \ WARNING: Requesting a number fixed point decimal places which
@@ -305,6 +308,6 @@ variable  fnumber_digits
 	  1+ >r 2>r
 	REPEAT
 	2r> 2drop r> ;
-
+[THEN]
 BASE !
 
