@@ -2,7 +2,7 @@
 //
 // The kForth environment
 //
-// Copyright (c) 1998--2018 Krishna Myneni, 
+// Copyright (c) 1998--2019 Krishna Myneni, 
 //   <krishna.myneni@ccreweb.org>
 // 
 // This software is provided under the terms of the GNU 
@@ -22,6 +22,7 @@
 //    Bdale Garbee              created Debian kForth package
 //    Christopher M. Brannon    bug alert for default-directory handling
 //    David N. Williams         Mac OS X ppc engine port, a few new words
+//    Iruatã M. S. Souza        build on x86_64 systems, assembly code.
 //
 // Usage from console prompt:
 //
@@ -79,8 +80,8 @@ int main(int argc, char *argv[])
 
     if (argc < 2) {
 	cout << "kForth-64 v " << version << "\t (Build: " << build << ")" << endl;
-	cout << "Copyright (c) 1998--2018 Krishna Myneni" << endl;
-        cout << "Contributions by: dpw gd mu bk abs tn cmb bg dnw" << endl;
+	cout << "Copyright (c) 1998--2019 Krishna Myneni" << endl;
+        cout << "Contributions by: dpw gd mu bk abs tn cmb bg dnw imss" << endl;
 	cout << "Provided under the GNU Affero General Public License, v3.0 or later" 
 	  << endl << endl;
     }
