@@ -8,16 +8,16 @@ Copyright &copy; 1998--2019 Krishna Myneni, <krishna.myneni@ccreweb.org>
 
 ### Contributors:
 
-   David P. Wallace
-   Matthias Urlichs
-   Guido Draheim
-   Brad Knotwell
-   Alaric B. Snell
-   Todd Nathan
-   Bdale Garbee
-   Christopher M. Brannon
-   David N. Williams
-   Iruatã M. S. Souza
+*  David P. Wallace
+*  Matthias Urlichs
+*  Guido Draheim
+*  Brad Knotwell
+*  Alaric B. Snell
+*  Todd Nathan
+*  Bdale Garbee
+*  Christopher M. Brannon
+*  David N. Williams
+*  Iruatã M. S. Souza
 
 ## LICENSE
 
