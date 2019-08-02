@@ -913,7 +913,7 @@ int CPP_dot ()
       if (n < 0)
 	{
 	  *pOutStream << '-';
-	  TOS = abs(n);
+	  TOS = labs(n);
 	}
       DEC_DSP
       DEC_DTSP
@@ -941,7 +941,7 @@ int CPP_dotr ()
   if (nfield <= 0) return 0;  // don't print anything if field with <= 0
 
   n = TOS;
-  u = abs(n);
+  u = labs(n);
   ndig = 1;
   uscale = 1;
   utemp = u;

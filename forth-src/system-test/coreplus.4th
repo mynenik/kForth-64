@@ -34,6 +34,10 @@
 include ans-words
 include ttester
 
+0 INVERT                        CONSTANT MAX-UINT
+0 INVERT 1 RSHIFT               CONSTANT MAX-INT
+0 INVERT 1 RSHIFT INVERT        CONSTANT MIN-INT
+
 DECIMAL
 
 Testing DO +LOOP with run-time increment, negative increment, infinite loop
@@ -72,6 +76,45 @@ T{ -20 31 -10 gd7 -> 31 21 11 1 -9 -19 6 }T
 T{ -20 29 -10 gd7 -> 29 19 9 -1 -11 5 }T
 
 \ ----------------------------------------------------------------------------
+TESTING DO +LOOP with large and small increments
+
+\ Contributed by Andrew Haley
+
+MAX-UINT 8 RSHIFT 1+ CONSTANT USTEP
+USTEP NEGATE CONSTANT -USTEP
+MAX-INT 7 RSHIFT 1+ CONSTANT STEP
+STEP NEGATE CONSTANT -STEP
+
+VARIABLE BUMP
+
+T{ : GD8 BUMP ! DO 1+ BUMP @ +LOOP ; -> }T
+
+T{ 0 MAX-UINT 0 USTEP GD8 -> 256 }T
+T{ 0 0 MAX-UINT -USTEP GD8 -> 256 }T
+quit
+T{ 0 MAX-INT MIN-INT STEP GD8 -> 256 }T
+T{ 0 MIN-INT MAX-INT -STEP GD8 -> 256 }T
+cr .( Reached here ) cr
+\ Two's complement arithmetic, wraps around modulo wordsize
+\ Only tested if the Forth system does wrap around, use of conditional
+\ compilation deliberately avoided
+
+MAX-INT 1+ MIN-INT = CONSTANT +WRAP?
+MIN-INT 1- MAX-INT = CONSTANT -WRAP?
+MAX-UINT 1+ 0=       CONSTANT +UWRAP?
+0 1- MAX-UINT =      CONSTANT -UWRAP?
+
+: GD9  ( n limit start step f result -- )
+   >R IF GD8 ELSE 2DROP 2DROP R@ THEN -> R> }T
+;
+
+T{ 0 0 0  USTEP +UWRAP? 256 GD9
+T{ 0 0 0 -USTEP -UWRAP?   1 GD9
+T{ 0 MIN-INT MAX-INT  STEP +WRAP? 1 GD9
+T{ 0 MAX-INT MIN-INT -STEP -WRAP? 1 GD9
+
+\ ------------------------------------------------------------------------------
+
 COMMENT Skipping RECURSE tests with :NONAME
 0 [IF]
 Testing RECURSE with :NONAME
