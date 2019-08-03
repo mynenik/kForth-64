@@ -1,6 +1,6 @@
 \ dump.4th
 \
-\ memory dump utility
+\ Memory Dump Utility
 \
 \ Copyright (c) 1999 Krishna Myneni
 \ Creative Consulting for Research and Education
@@ -8,35 +8,41 @@
 \ This software is provided under the terms of the GNU
 \ General Public License.
 \
-\ Last Revised: 4-25-1999
+\ Last Revised: 2019-08-03
 \
+
+BASE @
+DECIMAL
 
 create dump_display_buf 20 allot
 
 : hexchar ( n -- m | return ascii hex char value for n: 0 - 15 )
-	dup 9 > if 10 - 65 + else 48 + then ;
+	dup 9 > IF  10 - [char] A  ELSE [char] 0  THEN + ;
 
-: dump_display_char ( n -- n|46 )
-	dup 33 < over 126 > or if drop 46 then ;
+: dump_display_char ( n -- n|'.' )
+	dup [char] ! < over [char] ~ > or IF drop [char] . THEN ;
+
+: .address ( a -- ) base @ >r hex u. r> base ! ;
 
 : dump ( a n -- | display n bytes starting at a )
-	dup 0> if
-	  0 do
-	    i 16 mod 0= 
-	    if 
-	      cr dup . 58 emit 2 spaces 
-	    then
+	dup 0> IF
+	  0 DO
+	    I 16 mod 0= 
+	    IF 
+	      cr dup .address bl emit [char] : emit 2 spaces 
+	    THEN
 	    dup c@ 16 /mod 
 	    hexchar emit hexchar emit
 	    2 spaces
 	    dup c@ dump_display_char
 	    dump_display_buf i 16 mod + c!
 	    i 16 mod 15 =
-	    if dump_display_buf 16 type then
+	    IF dump_display_buf 16 type THEN
 	    1+
-	  loop
+	  LOOP
 	  drop
-	else
+	ELSE
 	  2drop
-	then ;
- 
+	THEN ;
+
+BASE !
