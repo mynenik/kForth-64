@@ -7,8 +7,12 @@
 \ 
 \ written on 25 December 2001 by Edward J. Beroset
 \ and released to the public domain by the author.
-
-\ Modified to run under kForth --- K. Myneni, 12-29-2001
+\
+\ Revisions:
+\   2001-12-29  km  Modified to run under kForth
+\   2019-08-04  km  Added utility words to display and reset
+\                   the binary tree
+\   2019-08-05  km  simplified DISPLAY-SUBTREE.
 \
 \ To run this code under ANS Forth, uncomment definition of 
 \ A@ and comment out the empty definition of ALIGN below:
@@ -17,7 +21,7 @@
 
 \ --------------- begin defs for kForth ----------
 
-CREATE ANIMAL-TREE 512 1024 * ALLOT	\ allot space for the binary tree
+CREATE ANIMAL-TREE 256 256 * ALLOT	\ allot space for the binary tree
 VARIABLE TREE-PTR
 ANIMAL-TREE TREE-PTR !
 
@@ -181,13 +185,49 @@ SEED
 		DUP LEFT SWAP RIGHT
 	THEN ;
 
+\ Utilities to display information about the tree
+
+: show-node-address ( anode -- )
+     ?dup IF 8 u.r ELSE [char] X emit 7 spaces THEN ;
+
+\ Display information about one node in the binary tree
+: display-node ( anode -- )
+    ?dup 0= IF EXIT THEN
+    dup       show-node-address 2 spaces
+    dup left  show-node-address 2 spaces
+    dup right show-node-address 2 spaces
+    2 cells + dup @ swap cell+ swap type ;
+
+\ Display the subtree starting with the given node
+: display-subtree ( anode -- )  
+    dup display-node cr
+    dup left  ?dup IF recurse THEN 
+    dup right ?dup IF recurse THEN 
+    drop
+;
+
+\ Display the entire tree
+: display-tree ( -- )
+    cr ." Node      Left      Right" cr
+    base @ hex root a@ display-subtree base ! ;
+
+\ Reset the tree to its startup state.
+: reset-tree ( -- )  ANIMAL-TREE TREE-PTR ! SEED ;
+
+
 \ lists the animals known to the game
 : INVENTORY ( -- )
 	0 ROOT A@ CR BEGIN EXPAND DUP 0= UNTIL DROP ;
-
 
 \ plays the animal game
 : ANIMAL
     ROOT BEGIN CR CR GUESS UNTIL DROP ;
 
+
+CR CR 
+.( ANIMAL        -- starts/continues the game ) CR
+.( INVENTORY     -- list the known animals    ) CR
+.( DISPLAY-TREE  -- display binary tree nodes ) CR
+.( RESET-TREE    -- reset the tree to startup state ) CR
+CR
 
