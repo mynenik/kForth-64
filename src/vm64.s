@@ -423,8 +423,6 @@
 vm:
 	push %rbp
 	push %rbx
-	push %rcx
-	push %rdx
 	pushq GlobalIp(%rip)
 	pushq vmEntryRp(%rip)
 	movq %rdi, %rbp         # load the Forth instruction pointer
@@ -450,8 +448,6 @@ exitloop:
 vmexit:
 	popq vmEntryRp(%rip)
 	popq GlobalIp(%rip)
-	pop %rdx
-	pop %rcx
 	pop %rbx
 	pop %rbp
 	ret
