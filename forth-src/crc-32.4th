@@ -4,10 +4,13 @@
 \
 \  by  Wil Baden - a long time ago
 \
-\  Modifications for use with kForth (also works without mods in PFE); 
-\    also added the words .CRC, CRC32S, and TEST-CRC (after an example 
-\    by Petrus Prawirodidjojo)  -- Krishna Myneni, 2001-10-19
-\
+\  Revs:
+\    2001-10-19 km Modifications for use with kForth (also works
+\      without mods in PFE); also added the words .CRC, CRC32S,
+\      and TEST-CRC (after an example by Petrus Prawirodidjojo)
+\  
+\    2019-08-10 km Modified to work on both 64 and 32-bit systems
+\ 
 \        CRC-32 International Standard 32-Bit CRC
 \
 \ The subject of this article is calculation of the International
@@ -131,25 +134,27 @@ FORGET RUN	\ Discard code no longer needed ( everything past CRC-Table)
 
 \  Update CRC by a byte.
 
-: CRC                   ( oldcrc byte -- newcrc )
-    OVER XOR  255 AND  CELLS CRC-Table +  @  SWAP  8 RSHIFT  XOR
+: CRC                   ( oldcrc byte -- newcrc )  
+    OVER XOR 255 AND CELLS CRC-Table +  @  SWAP  8 RSHIFT  XOR
     ;
 
 \ =================================================================
-
 
 : .CRC ( crc -- | print the crc value in hex)
 	BASE @ >R HEX 0 <# # # # # # # # # #> TYPE R> BASE ! ;
 
 \ Examples:
-
+BASE @
+HEX
 : CRC32S ( a u -- crc | compute checksum of u bytes at a)
-	-1 SWAP 0 ?DO  OVER C@ CRC >R 1+ R>  LOOP INVERT NIP ;
+	FFFFFFFF SWAP 0 ?DO  OVER C@ CRC >R 1+ R>  LOOP INVERT NIP ;
 
 : TEST-CRC
 	CR CR
 	s" An Arbitrary String" 2DUP TYPE CR
 	." crc-32: " CRC32S .CRC ."  should be 6FBEAAE7" CR ;
+
+BASE !
 
 TEST-CRC
 
