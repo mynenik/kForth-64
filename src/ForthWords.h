@@ -2,7 +2,7 @@
 //
 // The intrinsic Forth word list for kForth
 //
-// Copyright (c) 2008--2018 Krishna Myneni,
+// Copyright (c) 2008--2019 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org> 
 //
 // This software is provided under the terms of the GNU
@@ -62,7 +62,7 @@ WordTemplate ForthWords[] =
     { "LITERAL",   OP_LITERAL,      IMMEDIATE },
     { "2LITERAL",  OP_2LITERAL,     IMMEDIATE },
     { "SLITERAL",  OP_SLITERAL,     IMMEDIATE },
-    { "FLITERAL",  OP_2LITERAL,     IMMEDIATE },
+    { "FLITERAL",  OP_FLITERAL,     IMMEDIATE },
     { "EVALUATE",  OP_EVALUATE,     0 },
     { "INCLUDED",  OP_INCLUDED,     NONDEFERRED },
     { "INCLUDE",   OP_INCLUDE,      NONDEFERRED },
@@ -71,10 +71,10 @@ WordTemplate ForthWords[] =
     { "IMMEDIATE", OP_IMMEDIATE,    0 },
     { "NONDEFERRED", OP_NONDEFERRED, 0 },
     { "CONSTANT",  OP_CONSTANT,     NONDEFERRED },
-    { "2CONSTANT", OP_FCONSTANT,    NONDEFERRED },
+    { "2CONSTANT", OP_2CONSTANT,    NONDEFERRED },
     { "FCONSTANT", OP_FCONSTANT,    NONDEFERRED },
     { "VARIABLE",  OP_VARIABLE,     NONDEFERRED },
-    { "2VARIABLE", OP_FVARIABLE,    NONDEFERRED },
+    { "2VARIABLE", OP_2VARIABLE,    NONDEFERRED },
     { "FVARIABLE", OP_FVARIABLE,    NONDEFERRED },
     { "CELLS",     OP_CELLS,        0 },
     { "CELL+",     OP_CELLPLUS,     0 },
