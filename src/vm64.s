@@ -1026,6 +1026,25 @@ L_ptr:
 	xor %rax, %rax
 	NEXT
 
+L_2val:
+	LDSP
+	mov %rbp, %rcx
+	inc %rcx
+	mov (%rcx), %rax  # lower 64-bits
+	addq $WSIZE, %rcx
+	mov (%rcx), %rdx  # upper 64-bits
+	addq $WSIZE-1, %rcx
+	mov %rcx, %rbp
+	mov %rax, (%rbx)
+	DEC_DSP
+	mov %rdx, (%rbx)
+	DEC_DSP
+	STSP
+	STD_IVAL
+	STD_IVAL
+	xor %rax, %rax
+	NEXT
+
 L_fval:
 	mov %rbp, %rbx
 	inc %rbx
@@ -1466,6 +1485,19 @@ L_fetch:
 	FETCH $OP_IVAL
 	NEXT
 
+L_2fetch:
+	LDSP
+	mov WSIZE(%rbx), %rcx  # keep a copy of the address
+	FETCH $OP_IVAL
+	DEC_DSP
+	addq $WSIZE, %rcx
+	mov %rcx, (%rbx)
+	DEC_DSP
+	STSP
+	STD_ADDR
+	FETCH $OP_IVAL
+	NEXT
+
 L_store:
 	movq GlobalTp(%rip), %rbx
 	inc %rbx
@@ -1481,6 +1513,29 @@ L_store:
 	STSP
 	mov %rdx, (%rcx)
 	INC2_DTSP
+	xor %rax, %rax
+	NEXT
+
+L_2store:
+	movq GlobalTp(%rip), %rbx
+	inc %rbx
+	movb (%rbx), %al
+	cmpb $OP_ADDR, %al
+	jnz E_not_addr
+	movq $WSIZE, %rax
+	LDSP
+	add %rax, %rbx
+	mov (%rbx), %rcx	# target address in rcx
+	add %rax, %rbx
+	mov (%rbx), %rdx	# upper 64-bits to store in rdx
+	add %rax, %rbx
+	mov (%rbx), %rax  # lower 64-bit to store in rax
+	STSP
+	mov %rax, (%rcx)
+	addq $WSIZE, %rcx
+	mov %rdx, (%rcx)
+	INC2_DTSP
+	INC_DTSP
 	xor %rax, %rax
 	NEXT
 

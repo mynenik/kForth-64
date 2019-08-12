@@ -51,6 +51,7 @@ extern SearchList SearchOrder;
 void ClearControlStacks();
 void OpsCopyInt (long int, long int);
 void OpsPushInt (long int);
+void OpsPushTwoInt (long int, long int);
 void OpsPushDouble (double);
 void PrintVM_Error (int);
 int ForthVM (vector<byte>*, long int**, byte**);
@@ -206,6 +207,11 @@ void CompileWord (WordListEntry d)
     case OP_IVAL:
       OpsPushInt(*((long int*)d.Pfa));			
       break;
+
+	case OP_2VAL:
+	  OpsPushInt(*((long int*)d.Pfa));
+	  OpsPushInt(*((long int*)d.Pfa + 1));
+	  break;
 
     case OP_FVAL:
       OpsPushDouble(*((double*) d.Pfa));

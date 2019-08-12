@@ -409,7 +409,14 @@ void OpsPushInt (long int i)
   // push an integer into the current opcode vector
 
   byte* ip = (byte*) &i;
-  for (unsigned int j = 0; j < WSIZE; j++) pCurrentOps->push_back(*(ip + j));
+  for (int j = 0; j < WSIZE; j++) pCurrentOps->push_back(*(ip + j));
+}
+//---------------------------------------------------------------
+
+void OpsPushTwoInt (long int nl, long int nh)
+{
+   // push a double integer into the current opcode vector
+  OpsPushInt( nl ); OpsPushInt( nh );
 }
 //---------------------------------------------------------------
 
@@ -1513,6 +1520,18 @@ int CPP_variable ()
 }
 //-----------------------------------------------------------------
 
+int CPP_twovariable ()
+{
+  // stack: ( -- | create dictionary entry and allot space )
+  if (CPP_create()) return E_V_CREATE;  
+  TOS = 2*sizeof(long int);
+  DEC_DSP
+  STD_IVAL
+  int e = CPP_allot();
+  return e;
+}
+//-----------------------------------------------------------------
+
 int CPP_fvariable ()
 {
   // stack: ( -- | create dictionary entry and allot space )
@@ -1543,6 +1562,30 @@ int CPP_constant ()
   bp[WSIZE+1] = (id->WordCode == OP_PTR) ? OP_AFETCH : OP_FETCH;
   bp[WSIZE+2] = OP_RET;
   return 0;
+}
+//------------------------------------------------------------------
+
+int CPP_twoconstant ()
+{
+  // create dictionary entry and store n1 and n2 as a 2constant
+  // stack: ( n1 n2 -- )
+
+  if (CPP_create()) return E_V_CREATE;
+  WordIndex id = pCompilationWL->end() - 1;
+  id->WordCode = OP_2VAL;
+  id->Pfa = new long int[2];
+  DROP
+  *((long int*) id->Pfa + 1) = TOS;
+  DROP
+  *((long int*) id->Pfa) = TOS;
+  byte *bp = new byte[WSIZE+3];
+  id->Cfa = bp;
+  bp[0] = OP_ADDR;
+  *((long int*) &bp[1]) = (long int) id->Pfa;
+  bp[WSIZE+1] = OP_2FETCH;
+  bp[WSIZE+2] = OP_RET;
+  return 0;
+
 }
 //------------------------------------------------------------------
 
@@ -1837,6 +1880,14 @@ int CPP_sliteral ()
   OpsPushInt((long int) cp);
   pCurrentOps->push_back(OP_IVAL);
   OpsPushInt(u);
+
+  return 0;
+}
+//-------------------------------------------------------------------
+
+int CPP_fliteral ()
+{
+  // stack: ( F: r -- | place fp in compiled opcodes )
 
   return 0;
 }

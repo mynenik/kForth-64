@@ -59,10 +59,10 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad CPP_queryallot, CPP_allot, L_binary, L_count # 96 -- 99
            .quad L_decimal, CPP_emit, CPP_fdot, CPP_cold # 100 -- 103
            .quad L_hex, L_i, L_j, CPP_brackettick         # 104 -- 107
-           .quad CPP_fvariable, C_timeanddate, CPP_find, CPP_constant # 108 -- 111
+           .quad CPP_fvariable, L_2store, CPP_find, CPP_constant # 108 -- 111
            .quad CPP_immediate, CPP_fconstant, CPP_create, CPP_dotquote  # 112 -- 115
            .quad CPP_type, CPP_udot, CPP_variable, CPP_words # 116 -- 119
-           .quad CPP_does, C_system, C_chdir, C_search   # 120 -- 123
+           .quad CPP_does, L_2val, L_2fetch, C_search # 120 -- 123
            .quad L_or, C_compare, L_not, L_move    # 124 -- 127
            .quad L_fsin, L_fcos, C_ftan, C_fasin   # 128 -- 131
            .quad C_facos, C_fatan, C_fexp, C_fln   # 132 -- 135
@@ -106,15 +106,15 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad C_fatanh, C_fcosh, C_fsinh, C_ftanh   # 284--287
            .quad C_falog, L_dzerolt, L_dmax, L_dmin    # 288--291
            .quad L_dtwostar, L_dtwodiv, CPP_uddot, L_within  # 292--295
-           .quad CPP_twoliteral, C_tonumber, C_numberquery, CPP_sliteral   # 296--299
-           .quad L_nop, L_nop, L_nop, L_nop            # 300--303
+           .quad CPP_twoliteral, C_tonumber, C_numberquery, CPP_sliteral  # 296--299
+           .quad CPP_fliteral, CPP_twovariable, CPP_twoconstant, L_nop    # 300--303
            .quad L_nop, L_nop, L_nop, L_nop            # 304--307
            .quad L_nop, L_nop, L_nop, L_blank          # 308--311
            .quad L_slashstring, C_trailing, C_parse, L_nop  # 312--315
            .quad L_nop, L_nop, L_nop, L_nop            # 316--319
            .quad C_dlopen, C_dlerror, C_dlsym, C_dlclose # 320--323
-           .quad C_usec, CPP_alias, L_nop, L_nop       # 324--327
-           .quad L_nop, L_nop, CPP_wordlist, CPP_forthwordlist               # 328--331
+           .quad C_usec, CPP_alias, C_system, C_chdir    # 324--327
+           .quad C_timeanddate, L_nop, CPP_wordlist, CPP_forthwordlist       # 328--331
            .quad CPP_getcurrent, CPP_setcurrent, CPP_getorder, CPP_setorder  # 332--335
            .quad CPP_searchwordlist, CPP_definitions, CPP_vocabulary, L_nop  # 336--339
            .quad CPP_only, CPP_also, CPP_order, CPP_previous                 # 340--343
