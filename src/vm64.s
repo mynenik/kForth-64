@@ -1488,9 +1488,10 @@ L_fetch:
 L_2fetch:
 	LDSP
 	mov WSIZE(%rbx), %rcx  # keep a copy of the address
+	addq $WSIZE, WSIZE(%rbx)
 	FETCH $OP_IVAL
 	DEC_DSP
-	addq $WSIZE, %rcx
+#	addq $WSIZE, %rcx
 	mov %rcx, (%rbx)
 	DEC_DSP
 	STSP
@@ -1531,9 +1532,9 @@ L_2store:
 	add %rax, %rbx
 	mov (%rbx), %rax  # lower 64-bit to store in rax
 	STSP
-	mov %rax, (%rcx)
-	addq $WSIZE, %rcx
 	mov %rdx, (%rcx)
+	addq $WSIZE, %rcx
+	mov %rax, (%rcx)
 	INC2_DTSP
 	INC_DTSP
 	xor %rax, %rax
