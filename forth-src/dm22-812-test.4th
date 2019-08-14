@@ -38,8 +38,8 @@ create buf 64 allot
 
 : hexchar ( n -- ) dup 10 < if 48 + emit else 10 - 65 + emit then ;
 
-: hprint ( n -- ) [char] < emit dup 4 rshift hexchar 
-	15 and hexchar [char] > emit ;
+: hprint ( n -- ) bl emit dup 4 rshift hexchar 
+	15 and hexchar bl emit ;
 
 variable pklen
 
