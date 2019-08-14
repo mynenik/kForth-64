@@ -207,7 +207,7 @@ int C_open ()
      ^str is a counted string with the pathname, flags
      indicates the method of opening (read, write, etc.)  */
 
-  long int flags, mode = 0;
+  int flags, mode = 0;
   char* pname;
 
   DROP
@@ -225,7 +225,8 @@ int C_lseek ()
 {
   /* stack: ( fd offset mode -- error | set file position in fd ) */
 
-  long int fd, offset, mode;
+  int fd, mode;
+  unsigned long int offset;
   DROP
   mode = TOS;
   DROP
@@ -242,7 +243,7 @@ int C_close ()
 
   /* stack: ( fd -- err | close the specified file and return error code ) */
 
-  long int fd;
+  int fd;
   INC_DSP
   fd = TOS;
   TOS = close(fd);
@@ -253,16 +254,16 @@ int C_close ()
 int C_read ()
 {
   /* stack: ( fd buf count -- length | read count bytes into buf from fd ) */
-  long int fd, count;
+  int fd, count;
   void* buf;
 
   DROP
-  count = TOS;
+  count = (int)(TOS);
   DROP
   CHK_ADDR
   buf = *((void**)GlobalSp);
   DROP
-  fd = TOS;
+  fd = (int)(TOS);
   PUSH_IVAL( read (fd, buf, count) )
   return 0;
 }
@@ -270,7 +271,7 @@ int C_read ()
 int C_write ()
 {
   /* stack: ( fd buf count  -- length | write count bytes from buf to fd ) */
-  long int fd, count;
+  int fd, count;
   void* buf;
 
   DROP
@@ -287,7 +288,7 @@ int C_write ()
 int C_ioctl ()
 {
   /* stack: ( fd request addr -- err | device control function ) */
-  long int fd, request;
+  int fd, request;
   char* argp;
 
   DROP
@@ -1042,12 +1043,12 @@ int C_chdir ()
   /* stack: ( ^path -- n | set working directory to ^path; return error code ) */
 
   char* cp;
-  long int nc;
+  int nc;
 
   DROP
   CHK_ADDR
   cp = (char*) TOS;
-  nc = *cp;
+  nc = (int) (*cp);
   strncpy (temp_str, cp+1, nc);
   temp_str[nc] = 0;
   PUSH_IVAL( chdir(temp_str) )
