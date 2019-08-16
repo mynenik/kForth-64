@@ -1,5 +1,13 @@
-include ans-words
-include strings
+\ wl-info.4th
+\
+\ Requires:
+\
+\   ans-words
+\   strings
+\
+\ Example of Use:
+\
+\   hex forth-wordlist wl-info cr .s
 
 \ kForth-specific implementation of Forth-2012 NAME>STRING
 \  (15.6.2.1909.40 in Tools Ext)
@@ -27,8 +35,4 @@ include strings
 \   Name, Precedence, xt/cfa, pfa 
 : wl-info ( wid -- )
    ['] word-info swap traverse-wordlist ;
-
-hex
-forth-wordlist wl-info
-cr .s
 
