@@ -28,6 +28,7 @@ WordTemplate ForthWords[] =
     { "SET-CURRENT", OP_SETCURRENT, NONDEFERRED },
     { "GET-ORDER",   OP_GETORDER,      0 },
     { "SEARCH-WORDLIST", OP_SEARCHWORDLIST, 0 },
+	{ "TRAVERSE-WORDLIST", OP_TRAVERSE_WORDLIST, 0 },
     { "ALSO",      OP_ALSO,         NONDEFERRED },
     { "ONLY",      OP_ONLY,         NONDEFERRED },
     { "PREVIOUS",  OP_PREVIOUS,     NONDEFERRED },

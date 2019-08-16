@@ -678,6 +678,7 @@ L_call:
 L_push_r:
 	PUSH_R
 	NEXT
+
 L_pop_r:
 	POP_R
 	NEXT
@@ -733,6 +734,7 @@ L_twopop_r:
 	movq %rbx, GlobalTp(%rip)
 	xor %rax, %rax				
 	NEXT
+
 L_puship:
 	mov %rbp, %rax
 	movq GlobalRp(%rip), %rbx
@@ -745,6 +747,7 @@ L_puship:
 	decq GlobalRtp(%rip)
 	xor %rax, %rax
 	NEXT
+
 L_execute:	
 	mov %rbp, %rcx
 	movq GlobalRp(%rip), %rbx
@@ -765,6 +768,7 @@ L_execute:
 	INC_DTSP
 	xor %rax, %rax
 	NEXT
+
 L_definition:
 	mov %rbp, %rbx
 	movq $WSIZE, %rax
@@ -784,6 +788,7 @@ L_definition:
 	mov %rcx, %rbp
 	xor %rax, %rax
 	NEXT
+
 L_rfetch:
 	movq GlobalRp(%rip), %rbx
 	addq $WSIZE, %rbx
@@ -800,6 +805,7 @@ L_rfetch:
 	DEC_DTSP
 	xor %rax, %rax
 	NEXT
+
 L_tworfetch:
 	movq GlobalRp(%rip), %rbx
 	addq $WSIZE, %rbx
@@ -823,6 +829,7 @@ L_tworfetch:
 	movq %rbx, GlobalTp(%rip)
 	xor %rax, %rax				
 	NEXT
+
 L_rpfetch:
 	LDSP
 	movq GlobalRp(%rip), %rax
@@ -849,6 +856,7 @@ L_spfetch:
 	movq %rbx, GlobalTp(%rip)
 	xor %rax, %rax 
 	NEXT
+
 L_i:
 	movq GlobalRtp(%rip), %rbx
 	movb 3(%rbx), %al
@@ -865,6 +873,7 @@ L_i:
 	STSP
 	xor %rax, %rax
 	NEXT
+
 L_j:
 	movq GlobalRtp(%rip), %rbx
 	movb 6(%rbx), %al

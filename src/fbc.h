@@ -353,6 +353,7 @@
 #define OP_PREVIOUS             343
 #define OP_FORTH                344
 #define OP_ASSEMBLER            345
+#define OP_TRAVERSE_WORDLIST		346
 
 #define OP_DEFINED              350
 #define OP_UNDEFINED            351

@@ -76,6 +76,8 @@ T{ -20 31 -10 gd7 -> 31 21 11 1 -9 -19 6 }T
 T{ -20 29 -10 gd7 -> 29 19 9 -1 -11 5 }T
 
 \ ----------------------------------------------------------------------------
+COMMENT Skipping tests of DO +LOOP with large and small increments
+0 [IF]
 TESTING DO +LOOP with large and small increments
 
 \ Contributed by Andrew Haley
@@ -92,8 +94,8 @@ T{ : GD8 BUMP ! DO 1+ BUMP @ +LOOP ; -> }T
 T{ 0 MAX-UINT 0 USTEP GD8 -> 256 }T
 T{ 0 0 MAX-UINT -USTEP GD8 -> 256 }T
 
-\ T{ 0 MAX-INT MIN-INT STEP GD8 -> 256 }T
-\ T{ 0 MIN-INT MAX-INT -STEP GD8 -> 256 }T
+T{ 0 MAX-INT MIN-INT STEP GD8 -> 256 }T
+T{ 0 MIN-INT MAX-INT -STEP GD8 -> 256 }T
 
 \ Two's complement arithmetic, wraps around modulo wordsize
 \ Only tested if the Forth system does wrap around, use of conditional
@@ -108,32 +110,36 @@ MAX-UINT 1+ 0=       CONSTANT +UWRAP?
    >R IF GD8 ELSE 2DROP 2DROP R@ THEN -> R> }T
 ;
 
-\ T{ 0 0 0  USTEP +UWRAP? 256 GD9
-\ T{ 0 0 0 -USTEP -UWRAP?   1 GD9
-\ T{ 0 MIN-INT MAX-INT  STEP +WRAP? 1 GD9
-\ T{ 0 MAX-INT MIN-INT -STEP -WRAP? 1 GD9
-
+T{ 0 0 0  USTEP +UWRAP? 256 GD9
+T{ 0 0 0 -USTEP -UWRAP?   1 GD9
+T{ 0 MIN-INT MAX-INT  STEP +WRAP? 1 GD9
+T{ 0 MAX-INT MIN-INT -STEP -WRAP? 1 GD9
+[THEN]
 \ ------------------------------------------------------------------------------
+COMMENT Skipping DO +LOOP tests with maximum and minimum increments
+0 [IF]
 TESTING DO +LOOP with maximum and minimum increments
 
 : (-MI) MAX-INT DUP NEGATE + 0= IF MAX-INT NEGATE ELSE -32767 THEN ;
 (-MI) CONSTANT -MAX-INT
 
-\ T{ 0 1 0 MAX-INT GD8  -> 1 }T
-\ T{ 0 -MAX-INT NEGATE -MAX-INT OVER GD8  -> 2 }T
+T{ 0 1 0 MAX-INT GD8  -> 1 }T
+T{ 0 -MAX-INT NEGATE -MAX-INT OVER GD8  -> 2 }T
 
-\ T{ 0 MAX-INT  0 MAX-INT GD8  -> 1 }T
-\ T{ 0 MAX-INT  1 MAX-INT GD8  -> 1 }T
-\ T{ 0 MAX-INT -1 MAX-INT GD8  -> 2 }T
-\ T{ 0 MAX-INT DUP 1- MAX-INT GD8  -> 1 }T
+T{ 0 MAX-INT  0 MAX-INT GD8  -> 1 }T
+T{ 0 MAX-INT  1 MAX-INT GD8  -> 1 }T
+T{ 0 MAX-INT -1 MAX-INT GD8  -> 2 }T
+T{ 0 MAX-INT DUP 1- MAX-INT GD8  -> 1 }T
 
-\ T{ 0 MIN-INT 1+   0 MIN-INT GD8  -> 1 }T
-\ T{ 0 MIN-INT 1+  -1 MIN-INT GD8  -> 1 }T
-\ T{ 0 MIN-INT 1+   1 MIN-INT GD8  -> 2 }T
-\ T{ 0 MIN-INT 1+ DUP MIN-INT GD8  -> 1 }T
-
+T{ 0 MIN-INT 1+   0 MIN-INT GD8  -> 1 }T
+T{ 0 MIN-INT 1+  -1 MIN-INT GD8  -> 1 }T
+T{ 0 MIN-INT 1+   1 MIN-INT GD8  -> 2 }T
+T{ 0 MIN-INT 1+ DUP MIN-INT GD8  -> 1 }T
+[THEN]
 \ ------------------------------------------------------------------------------
-TESTING +LOOP setting I to an arbitrary value
+COMMENT Skipping test of +LOOP setting I to an arbitrary value
+0 [IF]
+\ TESTING +LOOP setting I to an arbitrary value
 
 \ The specification for +LOOP permits the loop index I to be set to any value
 \ including a value outside the range given to the corresponding  DO.
@@ -151,22 +157,22 @@ TESTING +LOOP setting I to an arbitrary value
 ;
 
 : PL1 20 1 DO I 18 I 3 SET-I +LOOP ;
-\ T{ PL1 -> 1 2 3 18 19 }T
+T{ PL1 -> 1 2 3 18 19 }T
 : PL2 20 1 DO I 20 I 2 SET-I +LOOP ;
-\ T{ PL2 -> 1 2 }T
+T{ PL2 -> 1 2 }T
 : PL3 20 5 DO I 19 I 2 SET-I DUP 1 = IF DROP 0 I 6 SET-I THEN +LOOP ;
-\ T{ PL3 -> 5 6 0 1 2 19 }T
+T{ PL3 -> 5 6 0 1 2 19 }T
 : PL4 20 1 DO I MAX-INT I 4 SET-I +LOOP ;
-\ T{ PL4 -> 1 2 3 4 }T
+T{ PL4 -> 1 2 3 4 }T
 : PL5 -20 -1 DO I -19 I -3 -SET-I +LOOP ;
-\ T{ PL5 -> -1 -2 -3 -19 -20 }T
+T{ PL5 -> -1 -2 -3 -19 -20 }T
 : PL6 -20 -1 DO I -21 I -4 -SET-I +LOOP ;
-\ T{ PL6 -> -1 -2 -3 -4 }T
+T{ PL6 -> -1 -2 -3 -4 }T
 : PL7 -20 -1 DO I MIN-INT I -5 -SET-I +LOOP ;
-\ T{ PL7 -> -1 -2 -3 -4 -5 }T
+T{ PL7 -> -1 -2 -3 -4 -5 }T
 : PL8 -20 -5 DO I -20 I -2 -SET-I DUP -1 = IF DROP 0 I -6 -SET-I THEN +LOOP ;
-\ T{ PL8 -> -5 -6 0 -1 -2 -20 }T
-
+T{ PL8 -> -5 -6 0 -1 -2 -20 }T
+[THEN]
 \ ------------------------------------------------------------------------------
 TESTING multiple RECURSEs in one colon definition
 
@@ -215,7 +221,6 @@ VARIABLE IT1 0 IT1 !
 T{ : IT3 IT2 ; IT1 @ -> 1234 }T
 
 \ ------------------------------------------------------------------------------
-
 COMMENT Skipping RECURSE tests with :NONAME
 0 [IF]
 Testing RECURSE with :NONAME

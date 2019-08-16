@@ -73,6 +73,7 @@ int CPP_previous();
 int CPP_order();
 int CPP_forth();
 int CPP_assembler();
+int CPP_traverse_wordlist();
 int CPP_colon();
 int CPP_semicolon();
 int CPP_lparen();

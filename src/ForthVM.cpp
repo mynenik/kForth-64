@@ -762,6 +762,34 @@ int CPP_assembler()
     SearchOrder[0] = &Voc_Assembler;
     return 0;
 }
+
+int CPP_traverse_wordlist()
+{
+	// Forth 2012 Tools Wordset: 15.6.2.2297
+	// stack: ( i*x xt wid -- j*x | execute xt for every word in wordlist)
+	// Execution of xt has stack effect ( k*x nt -- l*x flag )
+
+	DROP
+	CHK_ADDR
+	WordList* pWL = (WordList*) TOS;
+	DROP
+	CHK_ADDR
+	unsigned char* cfa = (unsigned char*) TOS;  // xt is same as cfa
+	WordIndex i;
+	int e;
+	if (pWL->size()) {
+	  for (i = pWL->end()-1; i >= pWL->begin(); --i) {
+	    TOS = (long int) i->WordName;
+	    DEC_DSP
+	    STD_ADDR
+	    e = vm(cfa);
+	    DROP
+	    long int b = (long int) TOS;
+	    if (b == 0) break;
+	  }
+   }
+	return 0;
+}
 //----------------------------------------------------------------
 
 int CPP_colon()
