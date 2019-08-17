@@ -74,6 +74,7 @@ int CPP_order();
 int CPP_forth();
 int CPP_assembler();
 int CPP_traverse_wordlist();
+int CPP_name_to_string();
 int CPP_colon();
 int CPP_semicolon();
 int CPP_lparen();

@@ -1,17 +1,8 @@
 \ wl-info.4th
 \
-\ Requires:
-\
-\   ans-words
-\   strings
-\
 \ Example of Use:
 \
 \   hex forth-wordlist wl-info cr .s
-
-\ kForth-specific implementation of Forth-2012 NAME>STRING
-\  (15.6.2.1909.40 in Tools Ext)
-: name>string ( nt -- caddr u ) dup strlen ;
 
 \ right justified output of a string in a field
 : $.R ( caddr1 u1 nfield -- | assume nfield > u1)

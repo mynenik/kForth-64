@@ -3,7 +3,7 @@
 // The C++ portion of the kForth Virtual Machine to 
 // execute Forth byte code.
 //
-// Copyright (c) 1996--2018 Krishna Myneni,
+// Copyright (c) 1996--2019 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -775,11 +775,11 @@ int CPP_traverse_wordlist()
 	DROP
 	CHK_ADDR
 	unsigned char* cfa = (unsigned char*) TOS;  // xt is same as cfa
-	WordIndex i;
+	static WordIndex i;
 	int e;
 	if (pWL->size()) {
 	  for (i = pWL->end()-1; i >= pWL->begin(); --i) {
-	    TOS = (long int) i->WordName;
+	    TOS = (long int) &i;  // this is the node token, nt
 	    DEC_DSP
 	    STD_ADDR
 	    e = vm(cfa);
@@ -788,7 +788,25 @@ int CPP_traverse_wordlist()
 	    if (b == 0) break;
 	  }
    }
-	return 0;
+	return e;
+}
+//----------------------------------------------------------------
+
+int CPP_name_to_string()
+{
+	// Forth 2012 Tools Wordset: 15.6.2.1909.40 NAME>STRING
+	// stack: ( nt -- c-addr u )
+	DROP
+	WordListEntry* p = *((WordListEntry**) TOS);
+	char* cp = (char*) p->WordName;
+	TOS = (long int) cp;
+	DEC_DSP
+	STD_ADDR
+	size_t len = strlen(cp);
+	TOS = (long int) len;
+	DEC_DSP
+	STD_IVAL
+	return 0;	
 }
 //----------------------------------------------------------------
 
