@@ -775,11 +775,14 @@ int CPP_traverse_wordlist()
 	DROP
 	CHK_ADDR
 	unsigned char* cfa = (unsigned char*) TOS;  // xt is same as cfa
-	static WordIndex i;
+	WordIndex i;
+	WordListEntry *w;
 	int e;
 	if (pWL->size()) {
 	  for (i = pWL->end()-1; i >= pWL->begin(); --i) {
-	    TOS = (long int) &i;  // this is the node token, nt
+	    // TOS = (long int) &i;  // this is the node token, nt
+	    w = *((WordListEntry**) &i);
+	    TOS = (long int) w;
 	    DEC_DSP
 	    STD_ADDR
 	    e = vm(cfa);
@@ -797,7 +800,8 @@ int CPP_name_to_string()
 	// Forth 2012 Tools Wordset: 15.6.2.1909.40 NAME>STRING
 	// stack: ( nt -- c-addr u )
 	DROP
-	WordListEntry* p = *((WordListEntry**) TOS);
+	// WordListEntry* p = *((WordListEntry**) TOS);
+	WordListEntry* p = (WordListEntry*) TOS;
 	char* cp = (char*) p->WordName;
 	TOS = (long int) cp;
 	DEC_DSP
