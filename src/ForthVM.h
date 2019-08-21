@@ -80,6 +80,7 @@ int CPP_semicolon();
 int CPP_lparen();
 int CPP_dotparen();
 int CPP_tick();
+int CPP_tobody();
 int CPP_defined();
 int CPP_undefined();
 int CPP_find();

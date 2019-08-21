@@ -50,7 +50,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad L_lt, L_eq, L_gt, L_question      # 60 -- 63
            .quad L_fetch, L_addr, L_base, L_call   # 64 -- 67
            .quad L_definition, L_erase, L_fval, L_calladdr # 68 -- 71
-           .quad L_tobody, L_ival, CPP_evaluate, C_key     # 72 -- 75
+           .quad CPP_tobody, L_ival, CPP_evaluate, C_key   # 72 -- 75
            .quad L_lshift, L_slashmod, L_ptr, CPP_dotr     # 76 -- 79
            .quad CPP_ddot, C_keyquery, L_rshift, CPP_dots  # 80 -- 83
            .quad C_accept, CPP_char, CPP_bracketchar, C_word  # 84 -- 87

@@ -473,15 +473,15 @@ ret1:
 retexit:
 	ret
 
-L_tobody:
-	LDSP
-	INC_DSP
-	mov (%rbx), %rcx	# code address
-	inc %rcx		# the data address is offset by one
-	mov (%rcx), %rcx
-	mov %rcx, (%rbx)
-	ret
-#
+# L_tobody:
+#	LDSP
+#	INC_DSP
+#	mov (%rbx), %rcx	# code address
+#	inc %rcx		# the data address is offset by one
+#	mov (%rcx), %rcx
+#	mov %rcx, (%rbx)
+#	ret
+
 # For precision delays, use US or MS instead of USLEEP
 # Use USLEEP when task can be put to sleep and reawakened by OS
 #
