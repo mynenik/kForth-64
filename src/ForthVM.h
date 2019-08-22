@@ -38,6 +38,8 @@
 
 #define DEFAULT_OUTPUT_FILENAME "kforth.out"
 
+int InitSystemVars ();
+int NullSystemVars ();
 int OpenForth ();
 void CloseForth ();
 bool InStringTable (char*);

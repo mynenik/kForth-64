@@ -282,6 +282,37 @@ bool SearchList::LocateCfa (void* cfa, WordListEntry* pWord)
 }
 //---------------------------------------------------------------
 
+int InitSystemVars ()
+{
+// Initialize the Forth system variables, and set the Pfa's for
+//   their words.
+
+    Base = 10;
+    State = FALSE;
+    Precision = 15;
+
+    WordIndex i;
+    i = Voc_Forth.IndexOf("STATE");
+    if (i->Pfa == NULL) i->Pfa = &State;  
+    i = Voc_Forth.IndexOf("BASE");
+    if (i->Pfa == NULL) i->Pfa = (void*) &Base;
+    i = Voc_Forth.IndexOf("PRECISION");
+    if (i->Pfa == NULL) i->Pfa = (void*) &Precision;
+    return 0;
+}
+//--------------------------------------------------------------- 
+
+int NullSystemVars ()
+{
+// Set Pfa's of system vars to NULL to prevent Forth system
+// shutdown from trying to free their memory.
+    (Voc_Forth.IndexOf("STATE"))->Pfa = NULL;
+    (Voc_Forth.IndexOf("BASE"))->Pfa = NULL;
+    (Voc_Forth.IndexOf("PRECISION"))->Pfa = NULL;
+    return 0;
+}
+//--------------------------------------------------------------- 
+
 int OpenForth ()
 {
 // Initialize the Forth system, and return the total number of words
@@ -315,9 +346,7 @@ int OpenForth ()
 
    // Other initialization
     vmEntryRp = BottomOfReturnStack;
-    Base = 10;
-    State = FALSE;
-    Precision = 15;
+    InitSystemVars();
     set_start_time();
     save_term();
     L_initfpu();
@@ -328,6 +357,9 @@ int OpenForth ()
 
 void CloseForth ()
 {
+
+    NullSystemVars();
+
     // Clean up the compiled words
     Vocabulary* pVoc;
 
@@ -1390,6 +1422,8 @@ int CPP_type ()
 
 int CPP_words ()
 {
+// Forth-2012: 15.6.1.2465 WORDS ( -- )
+// List the definition names in the first wordlist of the search order
   char *cp, field[16];
   int nc;
   Vocabulary* pVoc = SearchOrder.front();
