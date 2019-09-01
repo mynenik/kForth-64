@@ -748,7 +748,7 @@ L_puship:
 	xor %rax, %rax
 	NEXT
 
-L_execute:	
+L_execute_bc:	
 	mov %rbp, %rcx
 	movq GlobalRp(%rip), %rbx
 	mov %rcx, (%rbx)
@@ -768,6 +768,28 @@ L_execute:
 	INC_DTSP
 	xor %rax, %rax
 	NEXT
+
+L_execute:
+        mov %rbp, %rcx
+        movq GlobalRp(%rip), %rbx
+        mov %rcx, (%rbx)
+        movq $WSIZE, %rax
+        sub %rax, %rbx
+        movq %rbx, GlobalRp(%rip)
+        movq GlobalRtp(%rip), %rbx
+        movb $OP_ADDR, (%rbx)
+        dec %rbx
+        movq %rbx, GlobalRtp(%rip)
+        LDSP
+        add %rax, %rbx
+        STSP
+        mov (%rbx), %rax
+	mov (%rax), %rax
+        dec %rax
+        mov %rax, %rbp
+        INC_DTSP
+        xor %rax, %rax
+        NEXT
 
 L_definition:
 	mov %rbp, %rbx
@@ -1039,14 +1061,14 @@ L_2val:
 	LDSP
 	mov %rbp, %rcx
 	inc %rcx
-	mov (%rcx), %rax  # lower 64-bits
+	mov (%rcx), %rax  # top cell
 	addq $WSIZE, %rcx
-	mov (%rcx), %rdx  # upper 64-bits
+	mov (%rcx), %rdx  # bottom cell
 	addq $WSIZE-1, %rcx
 	mov %rcx, %rbp
-	mov %rax, (%rbx)
-	DEC_DSP
 	mov %rdx, (%rbx)
+	DEC_DSP
+	mov %rax, (%rbx)
 	DEC_DSP
 	STSP
 	STD_IVAL

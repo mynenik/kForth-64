@@ -37,8 +37,8 @@
 #define OP_CMOVEFROM             22
 #define OP_DOTPAREN              23
 #define OP_BRACKETSHARP          24
-#define OP_TOFILE                25
-#define OP_CONSOLE               26
+#define OP_EXECUTE_BC            25
+
 #define OP_SHARPBRACKET          27
 #define OP_SHARPS                28
 #define OP_SQUOTE                29
@@ -121,7 +121,7 @@
 #define OP_J                    106
 #define OP_BRACKETTICK          107
 #define OP_FVARIABLE            108
-#define OP_2STORE					109
+#define OP_2STORE		109
 #define OP_FIND                 110
 #define OP_CONSTANT             111
 #define OP_IMMEDIATE            112
@@ -133,8 +133,8 @@
 #define OP_VARIABLE             118
 #define OP_WORDS                119
 #define OP_DOES                 120
-#define OP_2VAL					121
-#define OP_2FETCH					122
+#define OP_2VAL			121
+#define OP_2FETCH		122
 #define OP_SEARCH               123
 #define OP_OR                   124
 #define OP_COMPARE              125
@@ -279,7 +279,7 @@
 #define OP_STATE                264
 #define OP_ALLOCATE             265
 #define OP_FREE                 266
-#define OP_RESIZE					267
+#define OP_RESIZE		267
 #define OP_CPUTEST              268
 #define OP_DSSTAR               269
 #define OP_COMPILECOMMA         270
@@ -291,7 +291,7 @@
 #define OP_RAISE                276
 #define OP_SETITIMER            277
 #define OP_GETITIMER            278
-#define OP_US2FETCH   			279
+#define OP_US2FETCH   		279
 #define OP_TOFLOAT              280
 #define OP_FSINCOS              281
 #define OP_FACOSH               282
@@ -306,26 +306,29 @@
 #define OP_DMIN                 291
 #define OP_DTWOSTAR             292
 #define OP_DTWODIV              293
-#define OP_UDDOT					294
+#define OP_UDDOT		294
 #define OP_WITHIN               295
 #define OP_2LITERAL             296
 #define OP_TONUMBER             297
 #define OP_NUMBERQUERY          298
 #define OP_SLITERAL             299
 
-#define OP_FLITERAL				300
-#define OP_2VARIABLE				301
-#define OP_2CONSTANT				302
+#define OP_FLITERAL		300
+#define OP_2VARIABLE		301
+#define OP_2CONSTANT		302
+
+#define OP_TOFILE               304
+#define OP_CONSOLE              305
 
 #define OP_SPACE                310
 #define OP_BLANK                311
 #define OP_SLASHSTRING          312
 #define OP_TRAILING             313
 #define OP_PARSE                314
-#define OP_DNE					315
-#define OP_DGT					316
-#define OP_DLE					317
-#define OP_DGE					318
+#define OP_DNE			315
+#define OP_DGT			316
+#define OP_DLE			317
+#define OP_DGE			318
 
 #define OP_DLOPEN               320
 #define OP_DLERROR              321
@@ -344,7 +347,7 @@
 #define OP_GETORDER             334
 #define OP_SETORDER             335
 #define OP_SEARCHWORDLIST       336
-#define OP_DEFINITIONS	       337
+#define OP_DEFINITIONS	        337
 #define OP_VOCABULARY           338
 
 #define OP_ONLY                 340                 
@@ -353,16 +356,17 @@
 #define OP_PREVIOUS             343
 #define OP_FORTH                344
 #define OP_ASSEMBLER            345
-#define OP_TRAVERSE_WORDLIST		346
-#define OP_NAME2STRING			347
-#define OP_NAME2INTERPRET		348
-#define OP_NAME2COMPILE			349
+#define OP_TRAVERSE_WORDLIST	346
+#define OP_NAME2STRING		347
+#define OP_NAME2INTERPRET	348
+#define OP_NAME2COMPILE		349
 
 #define OP_DEFINED              350
 #define OP_UNDEFINED            351
 #define OP_BRACKET_IF           352
 #define OP_BRACKET_ELSE         353
 #define OP_BRACKET_THEN         354
+#define OP_MYNAME               355
 
 #define OP_PRECISION            360
 #define OP_SET_PRECISION        361
@@ -370,10 +374,10 @@
 #define OP_FSDOT                363
 #define OP_FEDOT                364
 #define OP_FPICK                365
-#define OP_FEXPM1 				366
-#define OP_FLNP1					367
-#define OP_UDDOTR					368
-#define OP_DDOTR					369
+#define OP_FEXPM1 		366
+#define OP_FLNP1		367
+#define OP_UDDOTR		368
+#define OP_DDOTR		369
 
 #define OP_F2DROP               370
 #define OP_F2DUP                371

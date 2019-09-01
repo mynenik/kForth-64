@@ -9,7 +9,7 @@
 #ifndef __FORTHVM_H__
 #define __FORTHVM_H__
 
-#define MAX_V_ERR_MESSAGES 22
+#define MAX_V_ERR_MESSAGES 23
 
 // Virtual machine error codes
 
@@ -35,6 +35,7 @@
 #define E_V_BADSTACKADDR   19
 #define E_V_DIV_OVERFLOW   20
 #define E_V_DBL_OVERFLOW   21
+#define E_V_COMPILE_ONLY   22
 
 #define DEFAULT_OUTPUT_FILENAME "kforth.out"
 
@@ -77,6 +78,7 @@ int CPP_forth();
 int CPP_assembler();
 int CPP_traverse_wordlist();
 int CPP_name_to_string();
+int CPP_name_to_interpret();
 int CPP_colon();
 int CPP_semicolon();
 int CPP_lparen();
@@ -116,6 +118,7 @@ int CPP_fconstant();
 int CPP_char();
 int CPP_bracketchar();
 int CPP_brackettick();
+int CPP_myname();
 int CPP_compilecomma();
 int CPP_bracketcompile();
 int CPP_postpone();

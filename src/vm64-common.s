@@ -38,7 +38,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad C_close, C_read, C_write, C_ioctl # 12 -- 15
            .quad L_usleep, L_ms, C_msfetch, C_syscall  # 16 -- 19
            .quad L_fill, L_cmove, L_cmovefrom, CPP_dotparen # 20 -- 23
-           .quad C_bracketsharp, CPP_tofile, CPP_console, C_sharpbracket  # 24 -- 27
+           .quad C_bracketsharp, L_execute_bc, L_nop, C_sharpbracket  # 24 -- 27
            .quad C_sharps, CPP_squote, CPP_cr, L_bl    # 28 -- 31
            .quad CPP_spaces, L_store, CPP_cquote, C_sharp # 32 -- 35
            .quad C_sign, L_mod, L_and, CPP_tick    # 36 -- 39
@@ -108,7 +108,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad L_dtwostar, L_dtwodiv, CPP_uddot, L_within  # 292--295
            .quad CPP_twoliteral, C_tonumber, C_numberquery, CPP_sliteral  # 296--299
            .quad CPP_fliteral, CPP_twovariable, CPP_twoconstant, L_nop    # 300--303
-           .quad L_nop, L_nop, L_nop, L_nop            # 304--307
+           .quad CPP_tofile, CPP_console, L_nop, L_nop # 304--307
            .quad L_nop, L_nop, L_nop, L_blank          # 308--311
            .quad L_slashstring, C_trailing, C_parse, L_nop  # 312--315
            .quad L_nop, L_nop, L_nop, L_nop            # 316--319
@@ -119,8 +119,8 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad CPP_searchwordlist, CPP_definitions, CPP_vocabulary, L_nop  # 336--339
            .quad CPP_only, CPP_also, CPP_order, CPP_previous                 # 340--343
            .quad CPP_forth, CPP_assembler, CPP_traverse_wordlist, CPP_name_to_string # 344--347
-           .quad L_nop, L_nop, CPP_defined, CPP_undefined      # 348--351
-           .quad L_nop, L_nop, L_nop, L_nop            # 352--355
+           .quad CPP_name_to_interpret, L_nop, CPP_defined, CPP_undefined    # 348--351
+           .quad L_nop, L_nop, L_nop, CPP_myname       # 352--355
            .quad L_nop, L_nop, L_nop, L_nop            # 356--359
            .quad L_precision, L_setprecision, L_nop, CPP_fsdot   # 360--363
            .quad L_nop, L_nop, C_fexpm1, C_flnp1	      # 364--367
