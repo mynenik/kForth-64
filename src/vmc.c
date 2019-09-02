@@ -82,7 +82,7 @@ char key_query_char = 0;
 
 /*  signal dispatch table  */
 
-void* signal_xtmap [32] =
+void** signal_xtmap [32] =
 {
     NULL,              //  1  SIGHUP, Hangup
     NULL,              //  2  SIGINT, Interrupt
@@ -1296,7 +1296,7 @@ int C_forth_signal ()
        stack: ( xt n -- oldxt )  */
 
     int signum;
-    void *xt, *oldxt;
+    void **xt, **oldxt;
 
     DROP
     signum = TOS;
@@ -1304,7 +1304,7 @@ int C_forth_signal ()
     {
 	DROP
 	oldxt = signal_xtmap[signum-1];
-	xt = (void *) TOS;
+	xt = (void**) TOS;
 	switch ((long int) xt)
 	{
 	    case (long int) SIG_DFL:
@@ -1352,7 +1352,7 @@ static void forth_signal_handler (int signum)
 #endif
 
     // Lookup the execution token of Forth word for this signal.
-    void* xt = signal_xtmap[signum-1];
+    void** xt = signal_xtmap[signum-1];
 
     if (xt)
     {
@@ -1369,7 +1369,7 @@ static void forth_signal_handler (int signum)
 #endif
       STD_IVAL
       *GlobalSp-- = signum;
-      e = vm((byte*) xt);
+      e = vm((byte*) *xt);
       // printf ("\nvm returns %d", e);
       // if (e == E_V_QUIT) we need to do a longjmp
 
