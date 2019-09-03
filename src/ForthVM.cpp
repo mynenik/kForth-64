@@ -837,6 +837,7 @@ int CPP_traverse_wordlist()
 int CPP_name_to_string()
 {
    DROP
+   CHK_ADDR
    WordListEntry* pWord = (WordListEntry*) TOS;  // get nt from stack
    char* cp = (char*) pWord->WordName;
    TOS = (long int) cp;
@@ -854,11 +855,13 @@ int CPP_name_to_string()
 // Forth 2012 Tools Wordset 15.6.2.1909.20
 int CPP_name_to_interpret()
 {
-   INC_DSP
+   DROP
+   CHK_ADDR
    WordListEntry* pWord = (WordListEntry*) TOS;
-   void* xt = (void*) ((byte*) pWord + offsetof(struct WordListEntry, Cfa));
+   void** xt = (void**) ((byte*) pWord + offsetof(struct WordListEntry, Cfa));
    TOS = (long int) xt;
    DEC_DSP
+   STD_ADDR
    return 0;
 }
 
