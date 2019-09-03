@@ -1866,20 +1866,28 @@ int CPP_forget ()
 
   pTIB = ExtractName (pTIB, token);
   strupr(token);
+  WordListEntry* pWord = pCompilationWL->GetFromName( token );
 
-  WordListEntry* i = pCompilationWL->GetFromName( token );
-  WordListEntry* j = *(pCompilationWL->end());
-  if ( i < j )
-    {
-       while (j > i) {
-         --j;
-         pCompilationWL->RemoveLastWord();
-       }
+  if (pWord) {
+    vector<WordListEntry*>::iterator i = pCompilationWL->begin();
+    vector<WordListEntry*>::iterator j = pCompilationWL->end() - 1;
+
+    while (j > i) {
+      if (pWord == *j) break;
+      --j;
     }
+    i = j;
+    j = pCompilationWL->end();
+    // Remove all words from end() to i
+    while (i < j) {
+      --j;
+      pCompilationWL->RemoveLastWord();
+    }
+  }
   else
-    {
+  {
       *pOutStream << "No such word in the current wordlist: " << token << '\n';
-    }
+  }
   return 0;
 }
 //-------------------------------------------------------------------
