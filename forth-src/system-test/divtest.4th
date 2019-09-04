@@ -10,9 +10,12 @@
 \ Revised:  April 8, 2006
 \ Revised:  April 13, 2006
 \ Revised:  September 21, 2009  km
+\ Revised:  September 02, 2019  to support 64-bit Forth  km
 
 s" ans-words" included
 s" ttester"   included
+
+1 CELLS 8 = constant 64-BIT?
 
 \ Stack effects:
 
@@ -42,14 +45,14 @@ s" ttester"   included
 
 \ Dependences:
 
-\ UTS/MOD  udiv96by32
-\ UTM/     udiv96by32
-\ UM/MOD   udiv64by32
-\ STS/REM  sdiv96by32
-\ SM/REM   sdiv64by32
-\ FM/MOD   sdiv64by32
-\ */       sdiv64by32
-\ */MOD    sdiv64by32
+\ UTS/MOD  udiv96by32 / udiv192by64
+\ UTM/     udiv96by32 / udiv192by64
+\ UM/MOD   udiv64by32 / udiv128by64
+\ STS/REM  sdiv96by32 / sdiv192by64
+\ SM/REM   sdiv64by32 / sdiv128by64
+\ FM/MOD   sdiv64by32 / sdiv128by64
+\ */       sdiv64by32 / sdiv128by64
+\ */MOD    sdiv64by32 / sdiv128by64
 
 \ sdiv96by32   udiv96by32
 \ sdiv64by32   udiv64by32
@@ -96,7 +99,12 @@ TESTING   num.mi = denom, denom.sd = 32
 
 t{ -1 -2 0 -2 uts/mod -> 1 1 1 0 }t
 t{ -2 -2 0 -2 uts/mod -> 0 1 1 0 }t
+64-BIT? [IF]
+t{ fffffffffffffffd -2 0 -2 uts/mod -> fffffffffffffffd 0 1 0 }t
+[ELSE]
 t{ fffffffd -2 0 -2 uts/mod -> fffffffd 0 1 0 }t
+[THEN]
+
 
 TESTING   num.mi < denom, denom.sd = 32
 
@@ -110,16 +118,27 @@ TESTING num.mi.sd < denom.sd
 
 t{ -2 1 0   2 uts/mod -> 0 -1 0 0 }t
 t{ -1 1 0   2 uts/mod -> 1 -1 0 0 }t
+64-BIT? [IF]
+t{ fffffffffffffff0 3 0 10 uts/mod -> 0 3fffffffffffffff 0 0 }t
+t{ fffffffffffffff8 3 0 10 uts/mod -> 8 3fffffffffffffff 0 0 }t
+[ELSE]
 t{ fffffff0 3 0  10 uts/mod -> 0 3fffffff 0 0 }t
 t{ fffffff8 3 0  10 uts/mod -> 8 3fffffff 0 0 }t
+[THEN]
 t{ -2 1 0   2 uts/mod -> 0 -1 0 0 }t
 
 TESTING   num.mi < denom, denom.sd = 32
 
 t{ -2 1 0              -1 uts/mod -> 0  2  0  0 }t
+64-BIT? [IF]
+t{ 1000000000000001 efffffffffffffff 0 -1 uts/mod -> 1 f000000000000000 0 0 }t
+t{ 1000000000000000 efffffffffffffff 0 -1 uts/mod -> 0 f000000000000000 0 0 }t
+t{ 0fffffffffffffff efffffffffffffff 0 -1 uts/mod -> -2 efffffffffffffff 0 0 }t
+[ELSE]
 t{ 10000001 efffffff 0 -1 uts/mod -> 1 f0000000 0 0 }t
 t{ 10000000 efffffff 0 -1 uts/mod -> 0 f0000000 0 0 }t
 t{ 0fffffff efffffff 0 -1 uts/mod -> -2 efffffff 0 0 }t
+[THEN]
 
 \ udiv96by32to96
 
@@ -137,8 +156,13 @@ TESTING num.hi.sd < denom.sd
 
 t{ -2 -1 1  2 uts/mod -> 0 -1 -1 0 }t
 t{ -1 -1 1  2 uts/mod -> 1 -1 -1 0 }t
+64-BIT? [IF]
+t{ fffffffffffffff0 -1 3 10 uts/mod -> 0 -1 3fffffffffffffff 0 }t
+t{ fffffffffffffff8 -1 3 10 uts/mod -> 8 -1 3fffffffffffffff 0 }t
+[ELSE]
 t{ fffffff0 -1 3 10 uts/mod -> 0 -1 3fffffff 0 }t
 t{ fffffff8 -1 3 10 uts/mod -> 8 -1 3fffffff 0 }t
+[THEN]
 t{ -2 -1 1  2 uts/mod -> 0 -1 -1  0 }t
 t{  0 -2 1 -1 uts/mod -> 0  0  2  0 }t
 
@@ -234,16 +258,27 @@ TESTING num.mi.sd < denom.sd
 
 t{ -2 1 0   2 utm/ -> -1 0 }t
 t{ -1 1 0   2 utm/ -> -1 0 }t
+64-BIT? [IF]
+t{ fffffffffffffff0 3 0  10 utm/ -> 3fffffffffffffff 0 }t
+t{ fffffffffffffff8 3 0  10 utm/ -> 3fffffffffffffff 0 }t
+[ELSE]
 t{ fffffff0 3 0  10 utm/ -> 3fffffff 0 }t
 t{ fffffff8 3 0  10 utm/ -> 3fffffff 0 }t
+[THEN]
 t{ -2 1 0   2 utm/ -> -1 0 }t
 
 TESTING   num.mi < denom, denom.sd = 32
 
 t{ -2 1 0        -1 utm/ ->  2  0 }t
+64-BIT? [IF]
+t{ 1000000000000001 efffffffffffffff 0 -1 utm/ -> f000000000000000 0 }t
+t{ 1000000000000000 efffffffffffffff 0 -1 utm/ -> f000000000000000 0 }t
+t{ 0fffffffffffffff efffffffffffffff 0 -1 utm/ -> efffffffffffffff 0 }t
+[ELSE]
 t{ 10000001 efffffff 0 -1 utm/ -> f0000000 0 }t
 t{ 10000000 efffffff 0 -1 utm/ -> f0000000 0 }t
 t{ 0fffffff efffffff 0 -1 utm/ -> efffffff 0 }t
+[THEN]
 
 \ udiv96by32to96
 
@@ -270,8 +305,13 @@ TESTING num.hi.sd < denom.sd
 
 t{ -2 -1 1  2 utm/ -> -1 -1 }t
 t{ -1 -1 1  2 utm/ -> -1 -1 }t
+64-BIT? [IF]
+t{ fffffffffffffff0 -1 3 10 utm/ -> -1 3fffffffffffffff }t
+t{ fffffffffffffff8 -1 3 10 utm/ -> -1 3fffffffffffffff }t
+[ELSE]
 t{ fffffff0 -1 3 10 utm/ -> -1 3fffffff }t
 t{ fffffff8 -1 3 10 utm/ -> -1 3fffffff }t
+[THEN]
 t{ -2 -1 1  2 utm/ -> -1 -1 }t
 t{ 0 -2 1  -1 utm/ -> 0  2 }t
 [THEN]
