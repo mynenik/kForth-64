@@ -3,7 +3,8 @@
 \ Example of Use:
 \
 \   hex forth-wordlist wl-info cr .s
-
+\   hex forth-wordlist wl-data-words
+\
 \ right justified output of a string in a field
 : $.R ( caddr1 u1 nfield -- | assume nfield > u1)
    over - spaces type ;
@@ -27,4 +28,25 @@
 \   Name, Precedence, xt/cfa, pfa 
 : wl-info ( wid -- )
    dup ['] word-info swap traverse-wordlist drop ;
+
+\ Display name and data field address for a word only
+\ if it has a non-zero body address and non-zero xt.
+: data-word ( nt -- flag )
+   dup name>interpret 
+   ?dup IF
+     >body ?dup IF   
+       swap name>string cr 32 $.R     \ display the wordname
+       4 spaces 16 u.r   \ display the data field address
+     ELSE drop
+     THEN
+   ELSE drop
+   THEN
+   true ;
+
+: wl-data-words ( wid -- )
+   ['] data-word swap traverse-wordlist cr ;
+
+
+
+
 
