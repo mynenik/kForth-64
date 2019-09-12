@@ -283,7 +283,7 @@
 #define OP_CPUTEST              268
 #define OP_DSSTAR               269
 #define OP_COMPILECOMMA         270
-#define OP_BRACKETCOMPILE       271
+// #define OP_BRACKETCOMPILE       271
 #define OP_POSTPONE             272
 #define OP_NONDEFERRED          273
 #define OP_FORGET               274

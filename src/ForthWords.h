@@ -45,7 +45,6 @@ WordTemplate ForthWords[] =
     { "[DEFINED]", OP_DEFINED,      IMMEDIATE | NONDEFERRED },
     { "[UNDEFINED]", OP_UNDEFINED,  IMMEDIATE | NONDEFERRED },
     { "COMPILE,",  OP_COMPILECOMMA, NONDEFERRED },
-//    { "[COMPILE]", OP_BRACKETCOMPILE, IMMEDIATE },
     { "POSTPONE",  OP_POSTPONE,     IMMEDIATE },
     { "[",         OP_LBRACKET,     IMMEDIATE },
     { "]",         OP_RBRACKET,     IMMEDIATE },
