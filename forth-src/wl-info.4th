@@ -1,9 +1,15 @@
 \ wl-info.4th
 \
+\ Glossary:
+\
+\   WL-INFO     ( wid -- )  Display information about words in wordlist.
+\   WL-CREATED  ( wid -- )  Display CREATEd words in a wordlist.
+\   SO-CREATED  ( -- )      Display all CREATEd words in search order.
+\
 \ Example of Use:
 \
-\   hex forth-wordlist wl-info cr .s
-\   hex forth-wordlist wl-data-words
+\   hex forth-wordlist wl-info
+\   hex forth-wordlist wl-created
 \
 \ right justified output of a string in a field
 : $.R ( caddr1 u1 nfield -- | assume nfield > u1)
@@ -29,24 +35,27 @@
 : wl-info ( wid -- )
    dup ['] word-info swap traverse-wordlist drop ;
 
-\ Display name and data field address for a word only
-\ if it has a non-zero body address and non-zero xt.
-: data-word ( nt -- flag )
+\ Display name and body address for a CREATEd word only:
+\ i.e. has a non-zero xt and non-zero body address
+: created-word ( nt -- flag )
    dup name>interpret 
    ?dup IF
      >body ?dup IF   
        swap name>string cr 32 $.R     \ display the wordname
-       4 spaces 16 u.r   \ display the data field address
+       4 spaces 16 u.r   \ display the body address
      ELSE drop
      THEN
    ELSE drop
    THEN
    true ;
 
-: wl-data-words ( wid -- )
-   ['] data-word swap traverse-wordlist cr ;
+\ Display the CREATEd words in the specified wordlist
+: wl-created ( wid -- )
+   ['] created-word swap traverse-wordlist cr ;
 
-
+\ Display all CREATEd words in the search order
+: so-created ( -- )
+    get-order 0 do cr wl-created loop ;
 
 
 
