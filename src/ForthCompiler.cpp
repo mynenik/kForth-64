@@ -225,6 +225,34 @@ void CompileWord (WordListEntry d)
 }
 //----------------------------------------------------------------
 
+int ExecutionMethod (int Precedence)
+{
+    // Return execution method for a word, based on its Precedence and STATE
+
+    int ex = EXECUTE_NONE;
+
+    switch (Precedence)
+    {
+      case IMMEDIATE:
+        ex = EXECUTE_CURRENT_ONLY;
+	break;
+      case NONDEFERRED:
+        if (State)
+          pNewWord->Precedence |= NONDEFERRED ;
+	else
+          ex = EXECUTE_UP_TO;
+        break;
+      case (NONDEFERRED + IMMEDIATE):
+        ex = State ? EXECUTE_CURRENT_ONLY : EXECUTE_UP_TO;
+        break;
+      default:
+        ;
+    }
+    return( ex );
+}
+//----------------------------------------------------------------
+
+
 int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 {
 // The FORTH Compiler
@@ -331,30 +359,10 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 		      ;
 		    }
 
-		  int execution_method = EXECUTE_NONE;
-
-		  switch (d.Precedence)
-		    {
-		      case IMMEDIATE:
-			execution_method = EXECUTE_CURRENT_ONLY;
-			break;
-		      case NONDEFERRED:
-			if (State)
-			  pNewWord->Precedence |= NONDEFERRED ;
-			else
-			  execution_method = EXECUTE_UP_TO;
-			break;
-		      case (NONDEFERRED + IMMEDIATE):
-			execution_method = State ? EXECUTE_CURRENT_ONLY :
-			  EXECUTE_UP_TO;
-			break;
-		      default:
-			;
-		    }
-
+		  int ex_meth = ExecutionMethod((int) d.Precedence);
 		  vector<byte> SingleOp;
 		  
-		  switch (execution_method)
+		  switch (ex_meth)
 		    {
 		    case EXECUTE_UP_TO:
 		      // Execute the opcode vector immediately up to and

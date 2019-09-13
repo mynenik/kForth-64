@@ -198,20 +198,35 @@ T{ -1 MELSE -> 1 3 5 }T
 \ ------------------------------------------------------------------------------
 TESTING IMMEDIATE with CONSTANT  VARIABLE and CREATE [ ... DOES> ]
 
+\ Some tests in this section are modified for kForth, which does not have
+\ :NONAME and the comma operator.
+
 T{ 123 CONSTANT IW1 IMMEDIATE IW1 -> 123 }T
 T{ : IW2 IW1 LITERAL ; IW2 -> 123 }T
 T{ VARIABLE IW3 IMMEDIATE 234 IW3 ! IW3 @ -> 234 }T
 T{ : IW4 IW3 [ @ ] LITERAL ; IW4 -> 234 }T
-T{ :NONAME [ 345 ] IW3 [ ! ] ; DROP IW3 @ -> 345 }T
+
+\ T{ :NONAME [ 345 ] IW3 [ ! ] ; DROP IW3 @ -> 345 }T
+T{ : NONAME [ 345 ] IW3 [ ! ] ; IW3 @ -> 345 }T
+
 \ T{ CREATE IW5 456 , IMMEDIATE -> }T
+T{ CREATE IW5 456 1 CELLS ?ALLOT ! IMMEDIATE -> }T
+
 \ T{ :NONAME IW5 [ @ IW3 ! ] ; DROP IW3 @ -> 456 }T
+T{ : NONAME IW5 [ @ IW3 ! ] ; IW3 @ -> 456 }T
+
 \ T{ : IW6 CREATE , IMMEDIATE DOES> @ 1+ ; -> }T
-\ T{ 111 IW6 IW7 IW7 -> 112 }T
-\ T{ : IW8 IW7 LITERAL 1+ ; IW8 -> 113 }T
+T{ : IW6 CREATE 1 CELLS ?ALLOT ! IMMEDIATE DOES> @ 1+ ; -> }T
+
+T{ 111 IW6 IW7 IW7 -> 112 }T
+T{ : IW8 IW7 LITERAL 1+ ; IW8 -> 113 }T
+
 \ T{ : IW9 CREATE , DOES> @ 2 + IMMEDIATE ; -> }T
+T{ : IW9 CREATE 1 CELLS ?ALLOT ! DOES> @ 2 + IMMEDIATE ; -> }T
+
 : FIND-IW BL WORD FIND NIP ;  ( -- 0 | 1 | -1 )
-\ T{ 222 IW9 IW10 FIND-IW IW10 -> -1 }T   \ IW10 is not immediate
-\ T{ IW10 FIND-IW IW10 -> 224 1 }T        \ IW10 becomes immediate
+T{ 222 IW9 IW10 FIND-IW IW10 -> -1 }T   \ IW10 is not immediate
+T{ IW10 FIND-IW IW10 -> 224 1 }T        \ IW10 becomes immediate
 
 \ ------------------------------------------------------------------------------
 TESTING that IMMEDIATE doesn't toggle a flag
