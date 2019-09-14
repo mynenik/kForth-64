@@ -1803,7 +1803,7 @@ int CPP_postpone ()
 
 	  if (wc == OP_IVAL)
 	    {
-	      pCurrentOps->push_back(OP_IVAL);
+	      pCurrentOps->push_back(wc);
 	      OpsPushInt (*((long int*) pWord->Pfa));
 	      pCurrentOps->push_back(OP_LITERAL);
 	    }
@@ -1813,6 +1813,14 @@ int CPP_postpone ()
 	      OpsPushInt ((long int) pWord->Pfa);
 	      pCurrentOps->push_back(OP_LITERAL);
 	    }
+          else if (wc == OP_2VAL)
+            {
+              pCurrentOps->push_back(wc);
+              OpsPushInt (*((long int*) pWord->Pfa + 1));
+              OpsPushInt (*((long int*) pWord->Pfa));
+              pCurrentOps->push_back(OP_LITERAL);
+              pCurrentOps->push_back(OP_LITERAL);
+            }
 	  else
 	    {
 	      pCurrentOps->push_back(OP_IVAL);
