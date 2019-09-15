@@ -81,6 +81,7 @@ int CPP_name_to_string();
 int CPP_name_to_interpret();
 int CPP_colon();
 int CPP_semicolon();
+int CPP_compilename();
 int CPP_lparen();
 int CPP_dotparen();
 int CPP_tick();

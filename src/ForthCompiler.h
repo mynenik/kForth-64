@@ -83,10 +83,10 @@ public:
 };
 
 
-bool IsForthWord (char*, WordListEntry*);
+WordListEntry* IsForthWord (char*);
 int  ForthCompiler (vector<byte>*, long int*);
 int  ExecutionMethod (int);
-void CompileWord (WordListEntry);
+// void CompileWord (WordListEntry*);
 void OutputForthByteCode (vector<byte>*);
 void SetForthInputStream (istream&);
 void SetForthOutputStream (ostream&);

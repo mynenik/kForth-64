@@ -32,6 +32,7 @@ using std::ofstream;
 using std::vector;
 using std::stack;
 #include "ForthCompiler.h"
+#include "kfmacros.h"
 
 const int IMMEDIATE   = PRECEDENCE_IMMEDIATE;
 const int NONDEFERRED = PRECEDENCE_NON_DEFERRED;
@@ -66,6 +67,7 @@ extern "C" {
   int CPP_nondeferred();
   int CPP_source();
   int CPP_refill();
+  int CPP_compilename();
 
   // Provided by vmc.c
   void strupr (char*);
@@ -82,6 +84,9 @@ extern "C"  long int Base;
 extern "C"  long int State;  // TRUE = compile, FALSE = interpret
 extern "C"  char* pTIB; 
 extern "C"  char TIB[];  // contains current line of input
+#ifndef __FAST__
+extern "C"  byte*     GlobalTp;
+#endif
 
 // Provided by vm-common.s
 extern "C"  long int JumpTable[];
@@ -115,7 +120,6 @@ vector<byte>* pCurrentOps;
 WordListEntry* pNewWord;
 //---------------------------------------------------------------
 
-
 const char* C_ErrorMessages[] =
 {
 	"",
@@ -134,16 +138,14 @@ const char* C_ErrorMessages[] =
 };
 //---------------------------------------------------------------
 
-bool IsForthWord (char* name, WordListEntry* pE)
+WordListEntry* IsForthWord (char* name)
 {
 // Locate and Return a copy of the dictionary entry
 //   with the specified name.  Return True if found,
 //   False otherwise. A copy of the entry is returned
 //   in *pE.
     WordListEntry* pWord = SearchOrder.LocateWord (name);
-    bool b = (bool) pWord;
-    if (b) *pE = *pWord;
-    return( b );
+    return( pWord );
 }
 //---------------------------------------------------------------
 
@@ -183,48 +185,6 @@ void SetForthOutputStream (ostream& OutStream)
 }
 //---------------------------------------------------------------
 
-void CompileWord (WordListEntry d)
-{
-  // Compile a word into the current opcode vector
-
-  byte* bp;
-  int wc = (d.WordCode >> 8) ? OP_CALLADDR : d.WordCode;
-  pCurrentOps->push_back(wc);
-  switch (wc) 
-    {
-    case OP_CALLADDR:
-      bp = (byte*) d.Cfa;
-      OpsPushInt(*((long int*)(bp+1)));
-      break;
-
-    case OP_PTR:
-    case OP_ADDR:
-      OpsPushInt((long int) d.Pfa);
-      break;
-	  
-    case OP_DEFINITION:
-      OpsPushInt((long int) d.Cfa);
-      break;
-
-    case OP_IVAL:
-      OpsPushInt(*((long int*)d.Pfa));			
-      break;
-
-    case OP_2VAL:
-      OpsPushInt(*((long int*)d.Pfa));
-      OpsPushInt(*((long int*)d.Pfa + 1));
-      break;
-
-    case OP_FVAL:
-      OpsPushDouble(*((double*) d.Pfa));
-      break;
-
-    default:
-      ;
-    }
-}
-//----------------------------------------------------------------
-
 int ExecutionMethod (int Precedence)
 {
     // Return execution method for a word, based on its Precedence and STATE
@@ -252,7 +212,6 @@ int ExecutionMethod (int Precedence)
 }
 //----------------------------------------------------------------
 
-
 int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 {
 // The FORTH Compiler
@@ -271,7 +230,7 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
   int i, j;
   long int ival, *sp;
   vector<byte>::iterator ib1, ib2;
-  WordListEntry d;
+  WordListEntry* pWord;
   byte opval, *ip, *tp;
 
   if (debug) cout << ">Compiler Sp: " << GlobalSp << " Rp: " << GlobalRp << endl;
@@ -309,12 +268,13 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 	      pTIB = ExtractName (pTIB, WordToken);
 	      if (*pTIB == ' ' || *pTIB == '\t') ++pTIB; // go past next ws char
 	      strupr(WordToken);
-
-	      if (IsForthWord(WordToken, &d))
+              pWord = SearchOrder.LocateWord(WordToken);
+	      if (pWord)
 		{
-		  CompileWord(d);		  
+                  PUSH_ADDR((long int) pWord)
+		  CPP_compilename();		  
 
-		  if (d.WordCode == OP_UNLOOP)
+		  if (pWord->WordCode == OP_UNLOOP)
 		    {
 		      if (dostack.empty())
 			{
@@ -322,7 +282,7 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 			  goto endcompile;
 			}
 		    }
-		  else if (d.WordCode == OP_LOOP || d.WordCode == OP_PLUSLOOP)
+		  else if (pWord->WordCode == OP_LOOP || pWord->WordCode == OP_PLUSLOOP)
 		    {
 		      if (dostack.empty())
 			{
@@ -359,7 +319,7 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 		      ;
 		    }
 
-		  int ex_meth = ExecutionMethod((int) d.Precedence);
+		  int ex_meth = ExecutionMethod((int) pWord->Precedence);
 		  vector<byte> SingleOp;
 		  
 		  switch (ex_meth)
@@ -376,8 +336,8 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 		      break;
 
 		    case EXECUTE_CURRENT_ONLY:
-		      i = ((d.WordCode == OP_DEFINITION) || (d.WordCode == OP_IVAL) || 
-			   (d.WordCode == OP_ADDR) || (d.WordCode >> 8)) ? WSIZE+1 : 1; 
+		      i = ((pWord->WordCode == OP_DEFINITION) || (pWord->WordCode == OP_IVAL) || 
+			   (pWord->WordCode == OP_ADDR) || (pWord->WordCode >> 8)) ? WSIZE+1 : 1; 
 		      ib1 = pOpCodes->end() - i;
 		      for (j = 0; j < i; j++) SingleOp.push_back(*(ib1+j));
 		      SingleOp.push_back(OP_RET);

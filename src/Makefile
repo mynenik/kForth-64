@@ -25,7 +25,7 @@
 # Invoke "make debug" if you want to create an executable
 # that contains debugging information for the GNU debugger (gdb).
 
-VERSION = 0.0.5
+VERSION = 0.1.0
 DEF_DIR_VAR=KFORTH_DIR
 BUILD_DATE=`date +%F`
 DEBUG = 
@@ -44,7 +44,7 @@ CPPFLAGS = -c -Wall
 CFLAGS = -c -Wall
 FAST = -D__FAST__
 OBJS = kforth.o ForthVM.o ForthCompiler.o vm64.o vmc.o
-FOBJS = kforth-fast.o ForthVM-fast.o ForthCompiler.o vm64-fast.o vmc-fast.o
+FOBJS = kforth-fast.o ForthVM-fast.o ForthCompiler-fast.o vm64-fast.o vmc-fast.o
 LIBS = -lreadline -lncurses -ldl -lm
 
 all:	
@@ -73,8 +73,11 @@ kforth-fast.o: kforth.cpp ForthVM.h ForthCompiler.h
 	${CPP} ${CPPFLAGS} ${DEBUG} -DVERSION=\"${VERSION}\" \
 	-DBUILD_DATE=\"${BUILD_DATE}\" ${FAST} -o kforth-fast.o kforth.cpp
 
-ForthCompiler.o: ForthCompiler.cpp ForthCompiler.h fbc.h ForthWords.h
+ForthCompiler.o: ForthCompiler.cpp ForthCompiler.h fbc.h ForthWords.h kfmacros.h
 	${CPP} ${CPPFLAGS} ${DEBUG} ForthCompiler.cpp
+
+ForthCompiler-fast.o: ForthCompiler.cpp ForthCompiler.h fbc.h ForthWords.h kfmacros.h
+	${CPP} ${CPPFLAGS} ${DEBUG} ${FAST} ForthCompiler.cpp
 
 ForthVM.o: ForthVM.cpp ForthVM.h fbc.h ForthCompiler.h kfmacros.h
 	${CPP} ${CPPFLAGS} -DDIR_ENV_VAR=\"${DEF_DIR_VAR}\" \
@@ -95,8 +98,6 @@ vm64.o: vm64.s vm64-common.s
 
 vm64-fast.o: vm64-fast.s vm64-common.s
 	as -o vm64-fast.o vm64-fast.s
-
-
 
 # end of makefile
 
