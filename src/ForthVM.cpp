@@ -862,6 +862,30 @@ int CPP_name_to_interpret()
     return 0;
 }
 
+// NAME>COMPILE  ( nt -- xt-word|nt-word xt1|xt2 )
+// Return the compilation semantics for nt
+// Forth 2012 Tools Wordset
+int CPP_name_to_compile()
+{
+    DROP
+    CHK_ADDR
+    WordListEntry* nt = (WordListEntry*) TOS;
+    DEC_DSP
+    DEC_DTSP
+    WordListEntry* p;
+    if (nt->Precedence & PRECEDENCE_IMMEDIATE) {
+      CPP_name_to_interpret();
+      p = SearchOrder.LocateWord( "EXECUTE" );
+    }
+    else {
+      p = SearchOrder.LocateWord( "COMPILE-NAME" );
+    }
+    PUSH_ADDR( (long int) p )
+    CPP_name_to_interpret();
+
+    return 0;
+}
+
 // CREATE ( "name" -- )
 // Parse name and create a definition with default execution semantics
 // Forth 2012 Core Wordset 6.1.1000
