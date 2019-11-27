@@ -1,13 +1,30 @@
 \ xchars.4th
 \
-\ Words from the optional xchar wordset in Forth 20xx.
+\ Words from the optional xchar wordset in Forth 2012.
 \ ( see http://forth-standard.org/standard/xchar )
 \
 \ The words below are standard words in the reference
 \ implementation form, from the documentation, adapted
 \ for kForth.
 \
-\ 2017-05-09
+\ Glossary
+\
+\   CHAR    ( "name" -- xchar )
+\   [CHAR]  ( "name" -- rt:xchar )
+\   X-SIZE  ( xc-addr u1 -- u2 )
+\   XC-SIZE ( xchar -- u )
+\   XC!+    ( xchar xc-addr -- xcaddr' )
+\   XC!+?   ( xchar xc-addr1 u1 -- xc-addr2 u2 flag )
+\   XC@+    ( xc-addr1 -- xc-addr2 xchar )
+\   XCHAR-  ( xc-addr1 -- xc-addr2 )
+\   XCHAR+  ( xc-addr1 -- xc-addr2 )
+\   XEMIT   ( xchar -- )
+\   XKEY    ( -- xchar )
+\   XC-LEN  ( xc-addr u1 -- u2 )
+\ 
+\ Revisions:
+\   2017-05-09  created using reference implementation
+\   2019-11-27  added: CHAR  [CHAR] XCHAR-
 \
 BASE @
 
@@ -83,6 +100,16 @@ HEX
      3F AND R> OR
    REPEAT R> DROP
 ;
+
+\ Backward-compatible CHAR which works for xchars
+: CHAR ( "name" -- xchar )  BL WORD COUNT DROP XC@+ NIP ;
+
+\ Backward-compatible [CHAR] which works for xchars
+: [CHAR] ( "name" -- rt:xchar )  CHAR POSTPONE LITERAL ; IMMEDIATE
+
+\ Backup to address of previous xchar 
+: XCHAR- ( xc-addr1 -- xc-addr2 )
+    BEGIN 1 CHARS - DUP C@ C0 AND 80 <> UNTIL ;
 
 \ Add size of xchar stored at xc-addr1 to this address, giving xc-addr2.
 
