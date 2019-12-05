@@ -274,51 +274,6 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
                   PUSH_ADDR((long int) pWord)
 		  CPP_compilename();		  
 
-		  if (pWord->WordCode == OP_UNLOOP)
-		    {
-		      if (dostack.empty())
-			{
-			  ecode = E_C_NODO;
-			  goto endcompile;
-			}
-		    }
-		  else if (pWord->WordCode == OP_LOOP || pWord->WordCode == OP_PLUSLOOP)
-		    {
-		      if (dostack.empty())
-			{
-			  ecode = E_C_NODO;
-			  goto endcompile;
-			}
-		      i = dostack[dostack.size() - 1];
-		      if (leavestack.size())
-			{
-			  do
-			    {
-			      j = leavestack[leavestack.size() - 1];
-			      if (j > i)
-				{
-				  ival = pOpCodes->size() - j + 1;
-				  OpsCopyInt(j, ival); // write relative jump count
-				  leavestack.pop_back();
-				}
-			    } while ((j > i) && (leavestack.size())) ;
-			}
-		      dostack.pop_back();
-		      if (querydostack.size())
-			{
-			  j = querydostack[querydostack.size() - 1];
-			  if (j >= i)
-			    {
-			      CPP_then();
-			      querydostack.pop_back();
-			    }
-			}
-		    }
-		  else
-		    {
-		      ;
-		    }
-
 		  int ex_meth = ExecutionMethod((int) pWord->Precedence);
 		  vector<byte> SingleOp;
 		  

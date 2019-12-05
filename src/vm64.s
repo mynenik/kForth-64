@@ -913,7 +913,7 @@ L_j:
 	xor %rax, %rax
 	NEXT
 
-L_loop:
+L_rtloop:
 	movq GlobalRtp(%rip), %rbx
 	inc %rbx
 	movb (%rbx), %al
@@ -929,19 +929,18 @@ L_loop:
 	mov (%rbx), %rax
 	inc %rax
 	cmp %rcx, %rax	
-	jz L_unloop
-loop1:	
+	jz L_rtunloop
 	mov %rax, (%rbx)	# set loop counter to next value
 	mov %rdx, %rbp		# set instruction ptr to start of loop
 	xor %rax, %rax
 	NEXT
 
-L_unloop:
+L_rtunloop:
 	UNLOOP
 	xor %rax, %rax
 	NEXT
 
-L_plusloop:
+L_rtplusloop:
 	push %rbp
 	movq GlobalRtp(%rip), %rbx
 	inc %rbx

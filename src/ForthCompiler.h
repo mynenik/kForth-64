@@ -51,7 +51,7 @@ struct WordTemplate
 
 struct WordListEntry
 {
-  char WordName[32];
+  char WordName[128];
   word WordCode;
   byte Precedence;
   void* Cfa;

@@ -245,9 +245,9 @@
 #define OP_JZ                   230
 #define OP_JNZ                  231
 #define OP_JMP                  232
-#define OP_LOOP                 233
-#define OP_PLUSLOOP             234
-#define OP_UNLOOP               235
+#define OP_RTLOOP               233
+#define OP_RTPLUSLOOP           234
+#define OP_RTUNLOOP             235
 #define OP_EXECUTE              236
 #define OP_RECURSE              237
 #define OP_RET                  238
@@ -319,6 +319,9 @@
 
 #define OP_TOFILE               304
 #define OP_CONSOLE              305
+#define OP_LOOP                 306
+#define OP_PLUSLOOP             307
+#define OP_UNLOOP               308
 
 #define OP_SPACE                310
 #define OP_BLANK                311

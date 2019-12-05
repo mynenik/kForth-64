@@ -651,7 +651,7 @@ L_j:
 	xorl %eax, %eax
 	NEXT
 
-L_loop:
+L_rtloop:
 	movl GlobalRp, %ebx
 	movl $WSIZE, %eax
 	addl %eax, %ebx
@@ -662,21 +662,20 @@ L_loop:
 	movl (%ebx), %eax
 	incl %eax
 	cmpl %ecx, %eax	
-	jz L_unloop
-loop1:	
+	jz L_rtunloop
 	movl %eax, (%ebx)	# set loop counter to next value
 	movl %edx, %ebp		# set instruction ptr to start of loop
 	movl GlobalSp, %ebx
 	xorl %eax, %eax
 	NEXT
 
-L_unloop:  
+L_rtunloop:  
 	UNLOOP
 	movl GlobalSp, %ebx
 	xorl %eax, %eax
 	NEXT
 
-L_plusloop:
+L_rtplusloop:
 	pushl %ebp
 	movl $WSIZE, %eax
 	addl %eax, %ebx

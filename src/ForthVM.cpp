@@ -1087,7 +1087,7 @@ int CPP_postpone ()
 // Forth 2012 Programming Tools wordset 15.6.1.2465
 int CPP_words ()
 {
-    char *cp, field[16];
+    char *cp, field[64];
     int nc;
     Vocabulary* pVoc = SearchOrder.front();
     *pOutStream << pVoc->size() << " words.\n";
@@ -1097,7 +1097,7 @@ int CPP_words ()
     for (i = pVoc->begin(); i < pVoc->end(); i++)
     {
       pWord = *(i);
-      memset (field, 32, 16);
+      memset (field, 32, 64);
       field[15] = '\0';
       cp = pWord->WordName;
       nc = strlen(cp);
@@ -2086,12 +2086,77 @@ int CPP_querydo ()
 }
 //------------------------------------------------------------------
 
+int CPP_loop ()
+{
+  if (dostack.empty()) return( E_V_NO_DO );
+  pCurrentOps->push_back(OP_RTLOOP);  // run-time loop
+
+  int i, j, ival;
+  i = dostack[dostack.size() - 1];
+  if (leavestack.size()) {
+    do {
+      j = leavestack[leavestack.size() - 1];
+      if (j > i) {
+        ival = pCurrentOps->size() - j + 1;
+        OpsCopyInt(j, ival); // write relative jump count
+        leavestack.pop_back();
+      }
+    } while ((j > i) && (leavestack.size())) ;
+  }
+  dostack.pop_back();
+
+  if (querydostack.size()) {
+    j = querydostack[querydostack.size() - 1];
+    if (j >= i) {
+      CPP_then();
+      querydostack.pop_back();
+    }
+  }
+  return 0;  
+}
+
+int CPP_plusloop ()
+{
+  if (dostack.empty()) return( E_V_NO_DO );
+  pCurrentOps->push_back(OP_RTPLUSLOOP);  // run-time +loop
+
+  int i, j, ival;
+  i = dostack[dostack.size() - 1];
+  if (leavestack.size()) {
+    do {
+      j = leavestack[leavestack.size() - 1];
+      if (j > i) {
+        ival = pCurrentOps->size() - j + 1;
+        OpsCopyInt(j, ival); // write relative jump count
+        leavestack.pop_back();
+      }
+    } while ((j > i) && (leavestack.size())) ;
+  }
+  dostack.pop_back();
+
+  if (querydostack.size()) {
+    j = querydostack[querydostack.size() - 1];
+    if (j >= i) {
+      CPP_then();
+      querydostack.pop_back();
+    }
+  }
+  return 0;
+}
+
+int CPP_unloop ()
+{
+  if (dostack.empty()) return( E_V_NO_DO );
+  pCurrentOps->push_back(OP_RTUNLOOP);  // run-time unloop
+  return 0;
+}
+
 int CPP_leave ()
 {
   // stack: ( -- | generate opcodes to jump out of the current loop )
 
   if (dostack.empty()) return E_V_NO_DO;
-  pCurrentOps->push_back(OP_UNLOOP);
+  pCurrentOps->push_back(OP_RTUNLOOP);
   pCurrentOps->push_back(OP_JMP);
   leavestack.push_back(pCurrentOps->size());
   OpsPushInt(0);
