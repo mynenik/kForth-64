@@ -9,34 +9,6 @@
 #ifndef __FORTHVM_H__
 #define __FORTHVM_H__
 
-#define MAX_V_ERR_MESSAGES 23
-
-// Virtual machine error codes
-
-#define E_V_NOERROR         0
-#define E_V_NOTADDR         1
-#define E_V_NOTIVAL         2
-#define E_V_BADTYPE         3
-#define E_V_DIV_ZERO        4
-#define E_V_RET_STK_CORRUPT 5
-#define E_V_BADCODE         6
-#define E_V_STK_UNDERFLOW   7
-#define E_V_QUIT            8
-#define E_V_REALLOT         9
-#define E_V_CREATE         10
-#define E_V_NO_EOS         11
-#define E_V_NO_DO          12
-#define E_V_NO_BEGIN       13
-#define E_V_ELSE_NO_IF     14
-#define E_V_THEN_NO_IF     15
-#define E_V_ENDOF_NO_OF    16
-#define E_V_NO_CASE        17
-#define E_V_OPENFILE       18
-#define E_V_BADSTACKADDR   19
-#define E_V_DIV_OVERFLOW   20
-#define E_V_DBL_OVERFLOW   21
-#define E_V_COMPILE_ONLY   22
-
 #define DEFAULT_OUTPUT_FILENAME "kforth.out"
 
 int InitSystemVars ();

@@ -17,14 +17,15 @@
 .equ OP_RET,	238
 .equ SIGN_MASK,	0x80000000
 	
-// Error Codes
+// Error Codes must be same as those in VMerrors.h
 
-.equ E_NOT_ADDR,	1
-.equ E_DIV_ZERO,	4
-.equ E_RET_STK_CORRUPT,	5
-.equ E_UNKNOWN_OP,	6
-.equ E_DIV_OVERFLOW,   20
-	
+.equ E_DIV_ZERO,        -10
+.equ E_QUIT,            -56
+.equ E_NOT_ADDR,        -256
+.equ E_RET_STK_CORRUPT, -258
+.equ E_BAD_OPCODE,      -259
+.equ E_DIV_OVERFLOW,    -270
+
 .data
 NDPcw: .quad 0
 FCONST_180: .double 180.
@@ -108,9 +109,9 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad L_dtwostar, L_dtwodiv, CPP_uddot, L_within  # 292--295
            .quad CPP_twoliteral, C_tonumber, C_numberquery, CPP_sliteral  # 296--299
            .quad CPP_fliteral, CPP_twovariable, CPP_twoconstant, L_nop    # 300--303
-           .quad CPP_tofile, CPP_console, CPP_loop, CPP_plusloop # 304--307
-           .quad CPP_unloop, L_nop, L_nop, L_blank          # 308--311
-           .quad L_slashstring, C_trailing, C_parse, L_nop  # 312--315
+           .quad CPP_tofile, CPP_console, CPP_loop, CPP_plusloop  # 304--307
+           .quad CPP_unloop, L_nop, L_nop, L_blank                # 308--311
+           .quad L_slashstring, C_trailing, C_parse, C_parsename  # 312--315
            .quad L_nop, L_nop, L_nop, L_nop            # 316--319
            .quad C_dlopen, C_dlerror, C_dlsym, C_dlclose # 320--323
            .quad C_usec, CPP_alias, C_system, C_chdir    # 324--327
@@ -123,8 +124,14 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad L_nop, L_nop, L_nop, CPP_myname       # 352--355
            .quad L_nop, L_nop, L_nop, L_nop            # 356--359
            .quad L_precision, L_setprecision, L_nop, CPP_fsdot   # 360--363
-           .quad L_nop, L_nop, C_fexpm1, C_flnp1	      # 364--367
-           .quad L_nop, L_nop, L_f2drop, L_f2dup	      # 368--371
+           .quad L_nop, L_nop, C_fexpm1, C_flnp1	    # 364--367
+           .quad L_nop, L_nop, L_f2drop, L_f2dup	    # 368--371
+           .quad L_nop, L_nop, L_nop, L_nop                 # 372--375
+           .quad L_nop, L_nop, L_nop, L_nop                 # 376--379
+           .quad L_nop, L_nop, L_nop, L_nop                 # 380--383
+           .quad L_nop, L_nop, L_nop, L_nop                 # 384--387
+           .quad L_nop, L_nop, L_nop, L_nop                 # 388--391
+           .quad L_nop, L_nop, L_nop, L_nop                 # 392--395
 .text
 	.align WSIZE
 .global JumpTable
@@ -313,7 +320,7 @@ L_initfpu:
 	ret
 
 L_nop:
-	mov $E_UNKNOWN_OP, %rax   # unknown operation
+	mov $E_BAD_OPCODE, %rax   # unknown operation
 	ret
 L_quit:
 	mov BottomOfReturnStack(%rip), %rax	# clear the return stacks
@@ -323,7 +330,7 @@ L_quit:
 	mov BottomOfReturnTypeStack(%rip), %rax
 	mov %rax, GlobalRtp(%rip)
   .endif
-	movq $8, %rax		# exit the virtual machine
+	movq $E_QUIT, %rax	# exit the virtual machine
 	ret
 L_abort:
 	mov BottomOfStack(%rip), %rax

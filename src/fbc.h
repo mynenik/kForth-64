@@ -328,11 +328,11 @@
 #define OP_SLASHSTRING          312
 #define OP_TRAILING             313
 #define OP_PARSE                314
-#define OP_DNE			315
-#define OP_DGT			316
-#define OP_DLE			317
-#define OP_DGE			318
-
+#define OP_PARSENAME            315
+#define OP_DNE			316
+#define OP_DGT			317
+#define OP_DLE			318
+#define OP_DGE			319
 #define OP_DLOPEN               320
 #define OP_DLERROR              321
 #define OP_DLSYM                322
@@ -393,6 +393,13 @@
 #define OP_ZMUL                 378
 #define OP_ZDIV                 379
 #define OP_ZABS                 380
+
+#define OP_XSIZE                390
+#define OP_XCSIZE               391
+#define OP_XCHARPLUS            392
+#define OP_XCFETCHPLUS          393  
+#define OP_XCSTOREPLUS          394
+#define OP_XCSTOREPLUSQUERY     395
 
 #define OP_DIV_FLOORED          400
 #define OP_MOD_FLOORED          401

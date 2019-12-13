@@ -20,7 +20,7 @@
 #define DEC_DTSP  --GlobalTp;
 #define INC2_DTSP  GlobalTp += 2;
 #define IS_ADDR   (*GlobalTp == OP_ADDR)
-#define CHK_ADDR  if (*GlobalTp != OP_ADDR) return E_V_NOTADDR;
+#define CHK_ADDR  if (*GlobalTp != OP_ADDR) return E_V_NOT_ADDR;
 #define STD_IVAL  *GlobalTp-- = OP_IVAL;
 #define STD_ADDR  *GlobalTp-- = OP_ADDR;
 #define DROP      ++GlobalSp; ++GlobalTp;

@@ -25,7 +25,7 @@
 # Invoke "make debug" if you want to create an executable
 # that contains debugging information for the GNU debugger (gdb).
 
-VERSION = 0.1.1
+VERSION = 0.1.2
 DEF_DIR_VAR=KFORTH_DIR
 BUILD_DATE=`date +%F`
 DEBUG = 
@@ -45,7 +45,8 @@ CFLAGS = -c -fpie -Wall
 FAST = -D__FAST__
 OBJS = kforth.o ForthVM.o ForthCompiler.o vm64.o vmc.o
 FOBJS = kforth-fast.o ForthVM-fast.o ForthCompiler-fast.o vm64-fast.o vmc-fast.o
-LIBS = -pie -lreadline -lncurses -ldl -lm
+# LIBS = -pie -lreadline -lncurses -ldl -lm
+LIBS = -pie -lreadline -ldl -lm
 
 all:	
 	make kforth64
@@ -65,25 +66,27 @@ clean:
 debug:
 	make kforth64 "DEBUG = -g"
 
-kforth.o: kforth.cpp ForthVM.h ForthCompiler.h
+kforth.o: kforth.cpp ForthVM.h ForthCompiler.h VMerrors.h
 	${CPP} ${CPPFLAGS} ${DEBUG} -DVERSION=\"${VERSION}\" \
 	-DBUILD_DATE=\"${BUILD_DATE}\" kforth.cpp
 
-kforth-fast.o: kforth.cpp ForthVM.h ForthCompiler.h
+kforth-fast.o: kforth.cpp ForthVM.h ForthCompiler.h VMerrors.h
 	${CPP} ${CPPFLAGS} ${DEBUG} -DVERSION=\"${VERSION}\" \
 	-DBUILD_DATE=\"${BUILD_DATE}\" ${FAST} -o kforth-fast.o kforth.cpp
 
-ForthCompiler.o: ForthCompiler.cpp ForthCompiler.h fbc.h ForthWords.h kfmacros.h
+ForthCompiler.o: ForthCompiler.cpp ForthCompiler.h fbc.h ForthWords.h \
+	VMerrors.h kfmacros.h
 	${CPP} ${CPPFLAGS} ${DEBUG} ForthCompiler.cpp
 
-ForthCompiler-fast.o: ForthCompiler.cpp ForthCompiler.h fbc.h ForthWords.h kfmacros.h
+ForthCompiler-fast.o: ForthCompiler.cpp ForthCompiler.h fbc.h ForthWords.h \
+	VMerrors.h kfmacros.h
 	${CPP} ${CPPFLAGS} ${DEBUG} ${FAST} ForthCompiler.cpp
 
-ForthVM.o: ForthVM.cpp ForthVM.h fbc.h ForthCompiler.h kfmacros.h
+ForthVM.o: ForthVM.cpp ForthVM.h fbc.h ForthCompiler.h VMerrors.h kfmacros.h
 	${CPP} ${CPPFLAGS} -DDIR_ENV_VAR=\"${DEF_DIR_VAR}\" \
         ${DEBUG} ForthVM.cpp
 
-ForthVM-fast.o: ForthVM.cpp ForthVM.h fbc.h ForthCompiler.h kfmacros.h
+ForthVM-fast.o: ForthVM.cpp ForthVM.h fbc.h ForthCompiler.h VMerrors.h kfmacros.h
 	${CPP} ${CPPFLAGS} -DDIR_ENV_VAR=\"${DEF_DIR_VAR}\" \
         ${DEBUG} ${FAST} -o ForthVM-fast.o ForthVM.cpp
 

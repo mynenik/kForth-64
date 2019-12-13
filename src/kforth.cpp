@@ -56,9 +56,9 @@ extern "C" {
 #include "fbc.h"
 #include "ForthCompiler.h"
 #include "ForthVM.h"
+#include "VMerrors.h"
 
 extern vector<WordList> Dictionary;
-extern char* C_ErrorMessages[];
 
 extern "C" long int* JumpTable;
 extern "C" long int* BottomOfStack;
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 	    delete pSS;
 	    pSS = NULL;
 
-        } while (ec == E_C_ENDOFSTREAM) ;   // test for premature end of input
+        } while (ec == E_V_END_OF_STREAM) ; // test for premature end of input
                                             //   that spans multiple lines
         if (ec) {
 	    cout << "Line " << line_num << ": "; PrintVM_Error(ec);

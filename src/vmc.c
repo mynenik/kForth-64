@@ -11,6 +11,8 @@ vmc.c
 
 */
 
+#define _GNU_SOURCE
+
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/timeb.h>
@@ -27,24 +29,18 @@ vmc.c
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#define _GNU_SOURCE
 #include <math.h>
 #include "fbc.h"
+#include "VMerrors.h"
 #include "kfmacros.h"
 
 #define WSIZE 8
 #define TRUE -1
 #define FALSE 0
-#define E_V_NOTADDR 1
-#define E_V_BADCODE 6
-#define E_V_STK_UNDERFLOW   7
-#define E_V_QUIT  8
-#define E_V_DBL_OVERFLOW   21
 
 #define byte unsigned char
 
-
-/*  Provided by ForthVM.cpp  */
+//  Provided by ForthVM.cpp
 extern long int* GlobalSp;
 extern byte* GlobalIp;
 extern long int* GlobalRp;
@@ -56,6 +52,8 @@ extern byte* GlobalRtp;
 extern byte* BottomOfTypeStack;
 extern byte* BottomOfReturnTypeStack;
 #endif
+
+// Provided by vmxx-common.s
 extern long int Base;
 extern long int State;
 extern char* pTIB;
@@ -65,7 +63,7 @@ extern char TIB[];
 extern char NumberBuf[];
 extern char ParseBuf[];
 
-/*  Provided by vm.s/vm-fast.s  */
+//  Provided by vmxx.s/vmxx-fast.s
 int L_dnegate();
 int L_dplus();
 int L_dminus();
@@ -118,7 +116,7 @@ void** signal_xtmap [32] =
     NULL
 };
 
-static void forth_signal_handler (int); 
+static void forth_signal_handler (int, siginfo_t*, void*); 
 
 // powA  is copied from the source of the function pow() in paranoia.c,
 //   at  http://www.math.utah.edu/~beebe/software/ieee/ 
@@ -643,10 +641,11 @@ int C_word ()
   return 0;
 }
 
-
+// PARSE  ( char "ccc<char>" -- c-addr u )
+// Parse text delimited by char; return string address and count.
+// Forth 2012 Core Extensions wordset 6.2.2008
 int C_parse ()
 {
-  /* stack: ( n -- a u | parse string delimited by char n ) */
   DROP
   char delim = TOS;
   char *dp = ParseBuf;
@@ -666,6 +665,23 @@ int C_parse ()
   PUSH_IVAL(count)
   return 0;
 }
+
+// PARSE-NAME  ( "<spaces>name<space>" -- c-addr u )
+// Skip leading spaces and parse name delimited by space;
+//   return string address and count.
+// Forth 2012 Core Extensions wordset 6.2.2020
+int C_parsename ()
+{
+  long int count = 0;
+  char *cp;
+  cp = ExtractName(pTIB, ParseBuf);
+  count = strlen(ParseBuf);
+  PUSH_ADDR((long int) pTIB)
+  PUSH_IVAL(count)
+  pTIB = cp;
+  return 0;
+}
+
 /*----------------------------------------------------------*/
 
 int C_trailing ()
@@ -1296,6 +1312,7 @@ int C_forth_signal ()
        stack: ( xt n -- oldxt )  */
 
     int signum;
+    struct sigaction action;
     void **xt, **oldxt;
 
     DROP
@@ -1304,36 +1321,42 @@ int C_forth_signal ()
     {
 	DROP
 	oldxt = signal_xtmap[signum-1];
+	memset( &action, 0, sizeof(struct sigaction));
+	action.sa_flags = SA_SIGINFO;
+	action.sa_sigaction = forth_signal_handler;
 	xt = (void**) TOS;
 	switch ((long int) xt)
 	{
 	    case (long int) SIG_DFL:
 		// Reset the default signal handler if xt = 0
-		signal (signum, SIG_DFL);
+		//   signal (signum, SIG_DFL);
+		sigaction( 0, &action, NULL );
 		xt = 0;
 		break;
 	    case (long int) SIG_IGN:
 		// Ignore the signal if xt = 1
-		signal (signum, SIG_IGN);
+		//   signal (signum, SIG_IGN);
+		sigaction( 1, &action, NULL );
 		xt = 0;
 		break;
 	    default:
 		// All other xt s must be valid addresses to opcodes
 		CHK_ADDR
-		signal (signum, forth_signal_handler);
+		// signal (signum, forth_signal_handler);
+		sigaction( signum, &action, NULL );
 		break;
 	}
         signal_xtmap[signum-1] = xt;
         PUSH_ADDR( (long int) oldxt )
     }
     else
-	return E_V_BADCODE;
+	return E_V_BAD_OPCODE;
 
     return 0;
 }
 /*-----------------------------------------------------*/
 
-static void forth_signal_handler (int signum)
+static void forth_signal_handler (int signum, siginfo_t* si, void* vcontext)
 {
     /* Take the required action for the signal by looking up 
        and executing the appropriate Forth word which has been 
@@ -1356,6 +1379,16 @@ static void forth_signal_handler (int signum)
 
     if (xt)
     {
+      // Handle special signals requiring additional register level
+      // manipulation, beyond executing the Forth handler, e.g. SIGSEGV
+      if (signum == SIGSEGV) {
+        ucontext_t* context = (ucontext_t*) vcontext;
+        context->uc_mcontext.gregs[REG_RIP]++;
+        context->uc_mcontext.gregs[REG_RBP] = (unsigned long int) *xt;
+        printf("Segmentation Fault\n");
+        GlobalIp = (byte*) *xt;
+      }
+
       // We must also offset the stack pointers so the handler will not
       //   overwrite intermediate stack values in the primary vm(). An offset 
       //   of 16 elements should be safe (worst case is L_utmslash, which
@@ -1367,8 +1400,7 @@ static void forth_signal_handler (int signum)
       GlobalTp -= 16;
       GlobalRtp -= 16;
 #endif
-      STD_IVAL
-      *GlobalSp-- = signum;
+      PUSH_IVAL(signum);
       e = vm((byte*) *xt);
       // printf ("\nvm returns %d", e);
       // if (e == E_V_QUIT) we need to do a longjmp

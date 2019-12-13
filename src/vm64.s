@@ -439,7 +439,7 @@ next:
 	movq GlobalIp(%rip), %rbp      # resync ip (possibly changed in call)
 	inc %rbp		 # increment the Forth instruction ptr
 	movq %rbp, GlobalIp(%rip)
-	cmpb $0, %al		 # check for error
+	cmpq $0, %rax		 # check for error
 	jz next        
 exitloop:
 	cmpq $OP_RET, %rax       # return from vm?

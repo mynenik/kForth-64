@@ -39,6 +39,7 @@ WordTemplate ForthWords[] =
     { "VOCABULARY", OP_VOCABULARY,  NONDEFERRED },
     { "ASSEMBLER", OP_ASSEMBLER,    NONDEFERRED },
     { "PARSE",     OP_PARSE,        NONDEFERRED },
+    { "PARSE-NAME", OP_PARSENAME,   NONDEFERRED },
     { "WORD",      OP_WORD,         NONDEFERRED },
     { "FIND",      OP_FIND,         0 },
     { "'",         OP_TICK,         NONDEFERRED },

@@ -25,6 +25,7 @@ using namespace std;
 #include "fbc.h"
 #include "ForthCompiler.h"
 #include "ForthVM.h"
+#include "VMerrors.h"
 #include "kfmacros.h"
 
 #define STACK_SIZE 32768
@@ -109,6 +110,117 @@ extern "C" {
 extern "C" long int JumpTable[];
 extern "C" void dump_return_stack(void); 
 
+const char* V_ThrowMessages[] = {
+  "",                                    // E_V_NOERROR
+  "",                                    // E_V_ABORT
+  "",                                    // E_V_ABORTQUOTE
+  "Stack overflow",                      // E_V_STK_OVERFLOW
+  "Stack underflow",                     // E_V_STK_UNDERFLOW
+  "Return stack overflow",               // E_V_RET_STK_OVERFLOW
+  "Return stack underflow",              // E_V_RET_STK_UNDERFLOW
+  "Do-Loop nesting too deep",            // E_V_DO_NESTING
+  "Dictionary overflow",                 // E_V_DICT_OVERFLOW
+  "Invalid memory address",              // E_V_INVALID_ADDR
+  "Division by zero",                    // E_V_DIV_ZERO
+  "Result out of range",                 // E_V_OUT_OF_RANGE
+  "Argument type mismatch",              // E_V_ARGTYPE_MISMATCH
+  "Undefined word",                      // E_V_UNDEFINED_WORD
+  "Interpreting a compile-only word",    // E_V_COMPILE_ONLY
+  "Invalid FORGET",                      // E_V_INVALID_FORGET
+  "Attempt to use zero-length string as a name", // E_V_ZEROLENGTH_NAME
+  "Pictured numeric output string overflow", // E_V_OUTSTR_OVERFLOW
+  "Parsed string overflow",              // E_V_PARSE_OVERFLOW
+  "Definition name too long",            // E_V_DEFNAME_TOOLONG
+  "Write to a read-only location",       // E_V_READONLY
+  "Unsupported operation",               // E_V_UNSUPPORTED
+  "Control structure mismatch",          // E_V_CONTROL_MISMATCH
+  "Address alignment exception",         // E_V_ADDR_ALIGN
+  "Invalid numeric argument",            // E_V_INVALID_ARG
+  "Return stack imbalance",              // E_V_RET_STK_BALANCE
+  "Loop parameters unavailable",         // E_V_LOOP_PARAMS
+  "Invalid recursion",                   // E_V_INVALID_RECURSE
+  "User interrupt",                      // E_V_USER_INTERRUPT
+  "Compiler nesting",                    // E_V_COMPILER_NESTING
+  "Obsolescent feature",                 // E_V_OBSCOLESCENT
+  ">BODY used on non-CREATEd definition", // E_V_TOBODY
+  "Invalid name argument",               // E_V_INVALID_NAMEARG
+  "Block read exception",                // E_V_BLK_READ
+  "Block write exception",               // E_V_BLK_WRITE
+  "Invalid block number",                // E_V_INVALID_BLKNUM
+  "Invalid file position",               // E_V_INVALID_FILEPOS
+  "File I/O exception",                  // E_V_FILE_IO
+  "Non-existent file",                   // E_V_FILE_NOEXIST
+  "Unexpected end of file",              // E_V_EOF
+  "Invalid BASE for floating point conversion", // E_V_INVALID_BASE
+  "Loss of precision",                   // E_V_PRECISION_LOSS
+  "Floating-point divide by zero",       // E_V_FDIVZERO
+  "Floating-point result out of range",  // E_V_FPRANGE
+  "Floating-point stack overflow",       // E_V_FP_STK_OVERFLOW
+  "Floating-point stack underflow",      // E_V_FP_STK_UNDERFLOW
+  "Floating-point invalid argument",     // E_V_FP_INVALID_ARG
+  "Compilation word list deleted",       // E_V_WLCOMP_DELETED
+  "Invalid POSTPONE",                    // E_V_INVALID_POSTPONE
+  "Search-order overflow",               // E_V_SO_OVERFLOW
+  "Search-order underflow",              // E_V_SO_UNDERFLOW
+  "Compilation word list changed",       // E_V_WLCOMP_CHANGED
+  "Control-flow stack overflow",         // E_V_CF_STK_OVERFLOW
+  "Exception stack overflow",            // E_V_EX_STK_OVERFLOW
+  "Floating-point underflow",            // E_V_FP_UNDERFLOW
+  "Floating-point unidentified fault",   // E_V_FP_FAULT
+  "",                                    // E_V_QUIT
+  "Exception in sending or receiving a character", // E_V_EXC_TXRXCHAR
+  "[IF], [ELSE], or [THEN] exception",   // E_V_EXC_BRACKETCTL
+  "ALLOCATE",                            // E_V_ALLOCATE
+  "FREE",                                // E_V_FREE
+  "RESIZE",                              // E_V_RESIZE
+  "CLOSE-FILE",                          // E_V_CLOSE_FILE
+  "CREATE-FILE",                         // E_V_CREATE_FILE
+  "DELETE-FILE",                         // E_V_DELETE_FILE
+  "FILE-POSITION",                       // E_V_FILE_POSITION
+  "FILE-SIZE",                           // E_V_FILE_SIZE
+  "FILE-STATUS",                         // E_V_FILE_STATUS
+  "FLUSH-FILE",                          // E_V_FLUSH_FILE
+  "OPEN-FILE",                           // E_V_OPEN_FILE
+  "READ-FILE",                           // E_V_READ_FILE
+  "READ-LINE",                           // E_V_READ_LINE
+  "RENAME-FILE",                         // E_V_RENAME_FILE
+  "REPOSITION-FILE",                     // E_V_REPOSITION_FILE
+  "RESIZE-FILE",                         // E_V_RESIZE_FILE
+  "WRITE-FILE",                          // E_V_WRITE_FILE
+  "WRITE-LINE",                          // E_V_WRITE_LINE
+  "Malformed xchar",                     // E_V_BAD_XCHAR
+  "SUBSTITUTE",                          // E_V_SUBSTITUTE
+  "REPLACES"                             // E_V_REPLACES
+};
+
+const char* V_SysDefinedMessages[] =  {
+  "Not data type ADDR",                  // E_V_NOT_ADDR
+  "Not data type IVAL",                  // E_V_NOT_IVAL
+  "Return stack corrupt",                // E_V_RET_STK_CORRUPT
+  "Invalid opcode",                      // E_V_BAD_OPCODE
+  "Allot failed -- cannot reassign pfa", // E_V_REALLOT
+  "Cannot create word",                  // E_V_CREATE
+  "End of string not found",             // E_V_NO_EOS
+  "No matching DO",                      // E_V_NO_DO
+  "No matching BEGIN",                   // E_V_NO_BEGIN
+  "ELSE without matching IF",            // E_V_ELSE_NO_IF
+  "THEN without matching IF",            // E_V_THEN_NO_IF
+  "ENDOF without matching OF",           // E_V_ENDOF_NO_OF
+  "ENDCASE without matching CASE",       // E_V_NO_CASE
+  "Address outside of stack space",      // E_V_BAD_STACK_ADDR
+  "Division overflow",                   // E_V_DIV_OVERFLOW
+  "Unsigned double number overflow",     // E_V_DBL_OVERFLOW
+  "Incomplete IF...THEN structure",      // E_V_INCOMPLETE_IF
+  "Incomplete BEGIN structure",          // E_V_INCOMPLETE_BEGIN
+  "Incomplete DO loop",                  // E_V_INCOMPLETE_LOOP
+  "Incomplete CASE structure",           // E_V_INCOMPLETE_CASE
+  "End of definition with no beginning", // E_V_END_OF_DEF
+  "Not allowed inside colon definition", // E_V_NOT_IN_DEF
+  "Unexpected end of input stream",      // E_V_END_OF_STREAM
+  "Unexpected end of string",            // E_V_END_OF_STRING
+  "VM returned unknown error"            // E_V_VM_UNKNOWN_ERROR
+};
+
 // The Dictionary
 
 vector<Vocabulary*> Dictionary;          // a collection of vocabularies
@@ -135,32 +247,6 @@ bool FileOutput = FALSE;
 vector<byte>* pPreviousOps;    // copy of ptr to old opcode vector for [ and ]
 vector<byte> tempOps;          // temporary opcode vector for [ and ]
 
-const char* V_ErrorMessages[] =
-{
-	"",
-	"Not data type ADDR",
-	"Not data type IVAL",
-	"Invalid data type",	
-	"Divide by zero",
-	"Return stack corrupt",
-	"Invalid opcode", 
-        "Stack underflow",
-	"",
-	"Allot failed --- cannot reassign pfa",
-	"Cannot create word",
-	"End of string not found",
-	"No matching DO",
-	"No matching BEGIN",
-	"ELSE without matching IF",
-	"THEN without matching IF",
-	"ENDOF without matching OF",
-	"ENDCASE without matching CASE",
-	"Cannot open file",
-	"Address outside of stack space",
-	"Division overflow",
-        "Unsigned double number overflow",
-	"Compile only word"
-};
 //---------------------------------------------------------------
 
 void WordList::RemoveLastWord ()
@@ -489,19 +575,14 @@ int OpsCompileDouble ()
 
 void PrintVM_Error (long int ec)
 {
-    int ei = ec & 0xFF;
-    int imax = (ec >> 8) ? MAX_C_ERR_MESSAGES : MAX_V_ERR_MESSAGES;
-    const char *pMsg;
-    char elabel[12];
-    
+    int ei = labs(ec);
+    int imax = (ei >> 8) ? MAX_V_SYS_DEFINED : MAX_V_RESERVED;
+    const char *pMsg = (ei >> 8) ? V_SysDefinedMessages[ei-256] : 
+	V_ThrowMessages[ei];
+    ei = (ei >> 8) ? ei-256: ei;
+
     if ((ei >= 0) && (ei < imax))
-    {
-	pMsg = (ec >> 8) ? C_ErrorMessages[ei] : V_ErrorMessages[ei];
-	if (ec >> 8)  strcpy(elabel, "Compiler"); 
-	else strcpy(elabel, "VM");
-	*pOutStream << elabel << " Error(" << ei << "): " <<
-	    pMsg << endl;
-   }
+	*pOutStream << " VM Error(" << ec << "): " << pMsg << endl;
 }
 //---------------------------------------------------------------
 
@@ -534,7 +615,7 @@ if (debug)  {
 
   ecode = vm (ip);
 
-  if (ecode & 0xff)
+  if (ecode)
     {
       if (debug) cout << "vm Error: " << ecode << endl; // "  Offending OpCode: " << ((int) *(GlobalIp-1)) << endl;
       ClearControlStacks();
@@ -946,10 +1027,10 @@ int CPP_semicolon()
     {
       // Check for incomplete control structures
 		    
-      if (ifstack.size())                          ecode = E_C_INCOMPLETEIF;
-      if (beginstack.size() || whilestack.size())  ecode = E_C_INCOMPLETEBEGIN;
-      if (dostack.size() || leavestack.size())     ecode = E_C_INCOMPLETELOOP;
-      if (casestack.size() || ofstack.size())      ecode = E_C_INCOMPLETECASE;
+      if (ifstack.size())                          ecode = E_V_INCOMPLETE_IF;
+      if (beginstack.size() || whilestack.size())  ecode = E_V_INCOMPLETE_BEGIN;
+      if (dostack.size() || leavestack.size())     ecode = E_V_INCOMPLETE_LOOP;
+      if (casestack.size() || ofstack.size())      ecode = E_V_INCOMPLETE_CASE;
       if (ecode) return ecode;
 
       // Add a new entry into the dictionary
@@ -987,7 +1068,7 @@ int CPP_semicolon()
     }
   else
     {
-      ecode = E_C_ENDOFDEF;
+      ecode = E_V_END_OF_DEF;
       // goto endcompile;
     }
     
@@ -1468,7 +1549,7 @@ int CPP_tick ()
         PUSH_ADDR( ((long int) p) )
     }
     else
-	e = E_C_UNKNOWNWORD;
+	e = E_V_UNDEFINED_WORD;
     
     return e;
 }
@@ -1599,7 +1680,7 @@ int CPP_allocate()
 
 #ifndef __FAST__
   if (*GlobalTp != OP_IVAL)
-    return E_V_NOTIVAL;  // need an int
+    return E_V_NOT_IVAL;  // need an int
 #endif
 
   unsigned int requested = TOS;
@@ -1649,7 +1730,7 @@ int CPP_allot ()
     return E_V_STK_UNDERFLOW;
 #ifndef __FAST__
   if (*GlobalTp != OP_IVAL)
-    return E_V_BADTYPE;  // need an int
+    return E_V_NOT_IVAL;  // need an int
 #endif
 
   WordListEntry* pWord = *(pCompilationWL->end() - 1);
@@ -1714,7 +1795,7 @@ int CPP_alias ()
       bp[WSIZE+1] = OP_RET;
     }
     else
-      return E_C_UNKNOWNWORD;
+      return E_V_UNDEFINED_WORD;
 
     return 0;
 }
@@ -2507,7 +2588,7 @@ int CPP_evaluate ()
 
 	  --linecount;
 	  ec = ForthCompiler(pOps, &linecount);
-	  if ( State && (ec == E_C_ENDOFSTREAM)) ec = 0;
+	  if ( State && (ec == E_V_END_OF_STREAM)) ec = 0;
 
 	  // Restore the opcode vector, the input stream, and the input buffer
 
@@ -2535,7 +2616,7 @@ int CPP_included()
   DROP
   char *cp = (char*) TOS;
 
-  if ((nc < 0) || (nc > 255)) return E_V_OPENFILE;
+  if ((nc < 0) || (nc > 255)) return E_V_OPEN_FILE;
 
   memcpy (filename, cp, nc);
   filename[nc] = 0;
@@ -2563,7 +2644,7 @@ int CPP_included()
   if (f.fail()) 
     {
       *pOutStream << endl << filename << endl;
-      return (E_V_OPENFILE);
+      return (E_V_OPEN_FILE);
     }
 
   vector<byte> ops, *pOldOps;
@@ -2655,7 +2736,7 @@ int CPP_spstore()
     CHK_ADDR
     long int* p = (long int*) TOS; --p;
     if ((p > BottomOfStack) || (p < ForthStack))
-	return E_V_BADSTACKADDR;  // new SP must be within its stack space
+	return E_V_BAD_STACK_ADDR;  // new SP must be within its stack space
     int n = (int) (p - ForthStack);
 
     GlobalSp = ForthStack + n;
@@ -2674,7 +2755,7 @@ int CPP_rpstore()
     CHK_ADDR
     long int* p = (long int*) TOS; --p;
     if ((p > BottomOfReturnStack) || (p < ForthReturnStack))
-	return E_V_BADSTACKADDR;  // new RP must be within its stack space
+	return E_V_BAD_STACK_ADDR;  // new RP must be within its stack space
 
     int n = (int) (p - ForthReturnStack);
     GlobalRp = ForthReturnStack + n;
