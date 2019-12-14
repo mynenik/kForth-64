@@ -69,6 +69,7 @@ int L_dplus();
 int L_dminus();
 int L_udmstar();
 int L_utmslash();
+int L_quit();
 int vm(byte*);
 
 struct timeval ForthStartTime;
@@ -1323,26 +1324,25 @@ int C_forth_signal ()
 	oldxt = signal_xtmap[signum-1];
 	memset( &action, 0, sizeof(struct sigaction));
 	action.sa_flags = SA_SIGINFO;
-	action.sa_sigaction = forth_signal_handler;
 	xt = (void**) TOS;
 	switch ((long int) xt)
 	{
 	    case (long int) SIG_DFL:
 		// Reset the default signal handler if xt = 0
-		//   signal (signum, SIG_DFL);
-		sigaction( 0, &action, NULL );
+	        action.sa_sigaction = SIG_DFL;
+		sigaction( signum, &action, NULL );
 		xt = 0;
 		break;
 	    case (long int) SIG_IGN:
 		// Ignore the signal if xt = 1
-		//   signal (signum, SIG_IGN);
-		sigaction( 1, &action, NULL );
+	        action.sa_sigaction = SIG_IGN;
+		sigaction( signum, &action, NULL );
 		xt = 0;
 		break;
 	    default:
 		// All other xt s must be valid addresses to opcodes
 		CHK_ADDR
-		// signal (signum, forth_signal_handler);
+	        action.sa_sigaction = forth_signal_handler;
 		sigaction( signum, &action, NULL );
 		break;
 	}
@@ -1373,45 +1373,53 @@ static void forth_signal_handler (int signum, siginfo_t* si, void* vcontext)
 #ifndef __FAST__ 
     unsigned char* tp = GlobalTp, *rtp = GlobalRtp;
 #endif
+    ucontext_t* context = (ucontext_t*) vcontext;
 
     // Lookup the execution token of Forth word for this signal.
     void** xt = signal_xtmap[signum-1];
+    if (xt == 0) return;
 
-    if (xt)
-    {
-      // Handle special signals requiring additional register level
-      // manipulation, beyond executing the Forth handler, e.g. SIGSEGV
-      if (signum == SIGSEGV) {
-        ucontext_t* context = (ucontext_t*) vcontext;
-        context->uc_mcontext.gregs[REG_RIP]++;
-        context->uc_mcontext.gregs[REG_RBP] = (unsigned long int) *xt;
-        printf("Segmentation Fault\n");
-        GlobalIp = (byte*) *xt;
-      }
+    // Handle special signals requiring immediate exit from the VM,
+    // without execution of Forth handler, e.g. SIGSEGV
+    switch (signum) {
+      case SIGSEGV:
+	printf("Segmentation fault\n");
+        context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) L_quit;
+	return;
 
-      // We must also offset the stack pointers so the handler will not
+      case SIGINT:
+	printf("Interrupted by user\n");
+	context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) L_quit;
+	return;
+
+      case SIGFPE:
+        printf("Floating point exception\n");
+        context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) L_quit;
+        return;
+
+      default:
+	break;
+     }
+
+      // We must offset the stack pointers so the Forth handler will not
       //   overwrite intermediate stack values in the primary vm(). An offset 
       //   of 16 elements should be safe (worst case is L_utmslash, which
       //   uses about 12 elements above the current stack position for 
       //   intermediate calculations).
-      GlobalSp -= 16;
-      GlobalRp -= 16;
+      GlobalSp -= 16; GlobalRp -= 16;
 #ifndef __FAST__ 
-      GlobalTp -= 16;
-      GlobalRtp -= 16;
+      GlobalTp -= 16; GlobalRtp -= 16;
 #endif
       PUSH_IVAL(signum);
       e = vm((byte*) *xt);
-      // printf ("\nvm returns %d", e);
-      // if (e == E_V_QUIT) we need to do a longjmp
+      if (e == E_V_QUIT) {
+        context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) L_quit;
+        return;
+      }
 
-      // Restore the stack pointers
-      GlobalSp = sp;
-      GlobalRp = rp;
+      // Restore data stack and return stack pointers
+      GlobalSp = sp; GlobalRp = rp;
 #ifndef __FAST__ 
-      GlobalTp = tp;
-      GlobalRtp = rtp;
+      GlobalTp = tp; GlobalRtp = rtp;
 #endif
-    }
-
 }
