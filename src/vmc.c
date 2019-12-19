@@ -52,12 +52,14 @@ extern byte* GlobalRtp;
 extern byte* BottomOfTypeStack;
 extern byte* BottomOfReturnTypeStack;
 #endif
+extern int CPP_bye();
 
 // Provided by vmxx-common.s
 extern long int Base;
 extern long int State;
 extern char* pTIB;
 extern long int NumberCount;
+extern long int JumpTable[];
 extern char WordBuf[];
 extern char TIB[];
 extern char NumberBuf[];
@@ -70,6 +72,7 @@ int L_dminus();
 int L_udmstar();
 int L_utmslash();
 int L_quit();
+int L_abort();
 int vm(byte*);
 
 struct timeval ForthStartTime;
@@ -1329,13 +1332,13 @@ int C_forth_signal ()
 	{
 	    case (long int) SIG_DFL:
 		// Reset the default signal handler if xt = 0
-	        action.sa_sigaction = SIG_DFL;
+	        action.sa_sigaction = (void*) SIG_DFL;
 		sigaction( signum, &action, NULL );
 		xt = 0;
 		break;
 	    case (long int) SIG_IGN:
 		// Ignore the signal if xt = 1
-	        action.sa_sigaction = SIG_IGN;
+	        action.sa_sigaction = (void*) SIG_IGN;
 		sigaction( signum, &action, NULL );
 		xt = 0;
 		break;
@@ -1373,53 +1376,83 @@ static void forth_signal_handler (int signum, siginfo_t* si, void* vcontext)
 #ifndef __FAST__ 
     unsigned char* tp = GlobalTp, *rtp = GlobalRtp;
 #endif
+    byte opcode;
+    void* pCode;
+    char* msg;
     ucontext_t* context = (ucontext_t*) vcontext;
 
     // Lookup the execution token of Forth word for this signal.
     void** xt = signal_xtmap[signum-1];
     if (xt == 0) return;
 
-    // Handle special signals requiring immediate exit from the VM,
-    // without execution of Forth handler, e.g. SIGSEGV
-    switch (signum) {
-      case SIGSEGV:
-	printf("Segmentation fault\n");
-        context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) L_quit;
-	return;
+    opcode = *((byte*) (*xt));
+    if ((opcode == OP_QUIT) || (opcode == OP_ABORT) || (opcode == OP_BYE)) {
+      // Handle special signals requiring immediate exit from the VM,
+      // without execution of Forth handler, e.g. SIGSEGV
+      pCode = (void*) JumpTable[opcode];
+      switch (signum) {
+        case SIGSEGV:
+          msg = "Segmentation fault\n";
+          write(1, msg, 19);
+          context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) pCode;
+          return;
+        case SIGINT:
+	  msg = "Interrupted by user\n";
+          write(1, msg, 20);
+          context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) pCode;
+          return;
+        case SIGFPE:
+          msg = "Floating point exception\n";
+          write(1, msg, 25);
+          context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) pCode;
+          return;
+        case SIGBUS:
+          msg = "Bus error\n";
+          write(1, msg, 10);
+          context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) pCode;
+          return;
+        case SIGILL:
+          msg = "Illegal instruction\n";
+          write(1, msg, 20);
+          context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) pCode;
+          return;
+        case SIGQUIT:
+          msg = "SIGQUIT\n";
+          write(1, msg, 8);
+          context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) pCode;
+          return;
+        case SIGABRT:
+          msg = "SIGABRT\n";
+          write(1, msg, 8);
+          context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) pCode;
+          return;
+        default:
+          msg = "Signal received\n";
+          write(1, msg, 16);
+          context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) pCode;
+          return;
+	  break;
+       }
+    }
 
-      case SIGINT:
-	printf("Interrupted by user\n");
-	context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) L_quit;
-	return;
-
-      case SIGFPE:
-        printf("Floating point exception\n");
-        context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) L_quit;
-        return;
-
-      default:
-	break;
-     }
-
-      // We must offset the stack pointers so the Forth handler will not
-      //   overwrite intermediate stack values in the primary vm(). An offset 
-      //   of 16 elements should be safe (worst case is L_utmslash, which
-      //   uses about 12 elements above the current stack position for 
-      //   intermediate calculations).
-      GlobalSp -= 16; GlobalRp -= 16;
+    // We must offset the stack pointers so the Forth handler will not
+    //   overwrite intermediate stack values in the primary vm(). An offset 
+    //   of 16 elements should be safe (worst case is L_utmslash, which
+    //   uses about 12 elements above the current stack position for 
+    //   intermediate calculations).
+    GlobalSp -= 16; GlobalRp -= 16;
 #ifndef __FAST__ 
-      GlobalTp -= 16; GlobalRtp -= 16;
+    GlobalTp -= 16; GlobalRtp -= 16;
 #endif
-      PUSH_IVAL(signum);
-      e = vm((byte*) *xt);
-      if (e == E_V_QUIT) {
-        context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) L_quit;
-        return;
-      }
+    PUSH_IVAL(signum);
+    e = vm((byte*) *xt);
+    if (e == E_V_QUIT) {
+      context->uc_mcontext.gregs[REG_RIP] = (unsigned long int) L_quit;
+    }
 
-      // Restore data stack and return stack pointers
-      GlobalSp = sp; GlobalRp = rp;
+    // Restore data stack and return stack pointers
+    GlobalSp = sp; GlobalRp = rp;
 #ifndef __FAST__ 
-      GlobalTp = tp; GlobalRtp = rtp;
+    GlobalTp = tp; GlobalRtp = rtp;
 #endif
 }
