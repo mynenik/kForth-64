@@ -112,28 +112,38 @@ int main(int argc, char *argv[])
 	cout << "Bottom of Stack:     " << BottomOfStack << endl;
 	cout << "Bottom of Ret Stack: " << BottomOfReturnStack << endl;
     }
-    if ( ! pSS) cout << "\nReady!\n";
+
+    SetForthOutputStream (cout);
+    long int line_num = 0, ec = 0;
+    vector<byte> op;
+
+    if (pSS) {
+      SetForthInputStream(*pSS);
+      ec = ForthCompiler (&op, &line_num);
+      if (ec) {
+        PrintVM_Error(ec); exit(ec);
+      }
+      delete pSS; pSS = NULL;
+      op.erase(op.begin(), op.end());
+      cout << prompt ;
+    }
+    else
+        cout << "\nReady!\n";
 
 //----------------  the interpreter main loop
 
-    SetForthOutputStream (cout);
 
     char s[256], *input_line;
-    long int line_num = 0;
-    long int ec = 0;
-    vector<byte> op;
 
     while (1) {
         // Obtain commands and execute
         do {
-	    if (! pSS) {
-		if ((input_line = readline(NULL)) == NULL) CPP_bye();
-		if (strlen(input_line)) add_history(input_line);
-		strncpy(s, input_line, 255);
-		free(input_line);
+	    if ((input_line = readline(NULL)) == NULL) CPP_bye();
+	    if (strlen(input_line)) add_history(input_line);
+	    strncpy(s, input_line, 255);
+	    free(input_line);
 	       
-            	pSS = new istringstream(s);
-	    }
+            pSS = new istringstream(s);
 	    SetForthInputStream (*pSS);
 	    echo_off();
             ec = ForthCompiler (&op, &line_num);
