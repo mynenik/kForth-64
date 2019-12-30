@@ -53,29 +53,33 @@
 \       2012-01-27  fixed stack diagram for getcwd; mmap with 6 args
 \                   needs to use syscall 90 with 1 structure arg  KM
 \       2015-08-01  added MAP_ANONYMOUS  km
-
+\       2019-12-29  updated for use on both 64-bit and 32-bit systems  km
 BASE @
 DECIMAL
 
 Module: syscalls
 Begin-Module
 
-1 cells 8 = [IF]
+Public:
+: 64bit? 1 cells 8 = ;
+: 32bit? 1 cells 4 = ;
+
+64bit? [IF]
 
 \ From /usr/include/asm/unistd_64.h
-0 constant NR_READ
-1 constant NR_WRITE
-2 constant NR_OPEN
-3 constant NR_CLOSE
-4 constant NR_STAT
-5 constant NR_FSTAT
-6 constant NR_LSTAT
-7 constant NR_POLL
-8 constant NR_LSEEK
-9 constant NR_MMAP
-10 constant NR_MPROTECT
-11 constant NR_MUNMAP
-12 constant NR_BRK
+0 constant NR_read
+1 constant NR_write
+2 constant NR_open
+3 constant NR_close
+4 constant NR_stat
+5 constant NR_fstat
+6 constant NR_lstat
+7 constant NR_poll
+8 constant NR_lseek
+9 constant NR_mmap
+10 constant NR_mprotect
+11 constant NR_munmap
+12 constant NR_brk
 13 constant NR_rt_sigaction
 14 constant NR_rt_sigprocmask
 15 constant NR_rt_sigreturn
@@ -627,12 +631,17 @@ Public:
 : setdomainname ( aname nlen -- n ) NR_SETDOMAINNAME syscall2 ;
 : syslog  ( ntype abufp nlen -- n ) NR_SYSLOG syscall3 ;
 : uselib  ( alibrary -- n )  NR_USELIB syscall1 ;
-: socketcall ( ncall aargs -- n )  NR_SOCKETCALL syscall2 ;
 
+32bit? [IF]
+: socketcall ( ncall aargs -- n )  NR_SOCKETCALL syscall2 ;
+[THEN]
 
 \ File system handling
 : mount   ( asrc atarget afilesystype umountflags adata -- n ) NR_MOUNT syscall5 ;
+
+32bit? [IF]
 : umount  ( atarget -- n ) NR_UMOUNT syscall1 ;
+[THEN]
 : umount2 ( atarget nflags -- n ) NR_UMOUNT2 syscall2 ;
 : ustat   ( ndev aubuf -- n ) NR_USTAT syscall2 ;
 : statfs  ( apath astatfsbuf -- n ) NR_STATFS syscall2 ;
@@ -642,7 +651,9 @@ Public:
  
 
 \ System time calls
+32bit? [IF]
 : stime        ( atime -- n ) NR_STIME syscall1 ;
+[THEN]
 : time         ( atime -- ntime ) NR_TIME syscall1 ;
 : nanosleep    ( areq arem -- n ) NR_NANOSLEEP syscall2 ;
 : gettimeofday ( atimeval atimezone -- n )  NR_GETTIMEOFDAY syscall2 ;
@@ -652,7 +663,9 @@ Public:
 \ Process handling
 : fork    ( -- pid ) NR_FORK syscall0 ;
 : getpid  ( -- u | get process id ) NR_GETPID syscall0 ;
+32bit? [IF]
 : waitpid ( pid astatus noptions -- pid ) NR_WAITPID syscall3 ;
+[THEN]
 : ptrace  ( nrequest pid addr adata -- n ) NR_PTRACE syscall4 ;
 : brk     ( addr -- n ) NR_BRK syscall1 ;
 : acct    ( afilename -- n ) NR_ACCT syscall1 ;
@@ -661,7 +674,11 @@ Public:
 : kill    ( npid nsig -- n ) NR_KILL syscall2 ;
 : chroot  ( apath -- n ) NR_CHROOT syscall1 ;
 : ioperm  ( ufrom unum nturnon -- n ) NR_IOPERM syscall3 ;
+
+32bit? [IF]
 : nice ( ninc -- n ) NR_NICE syscall1 ;
+[THEN]
+
 : getpriority ( nwhich nwho -- n ) NR_GETPRIORITY syscall2 ;
 : setpriority ( nwhich nwho nprio -- n ) NR_SETPRIORITY syscall3 ;
 : setuid   ( nuid -- n ) NR_SETUID syscall1 ;
@@ -716,7 +733,10 @@ Public:
     !    \ addr
     mmap_args NR_MMAP syscall1 ;
 
+32bit? [IF]
 : mmap2      ( addr  nlength  nprot  nflags  nfd  noffset -- n ) NR_MMAP2 syscall6 ;
+[THEN]
+
 : munmap     ( addr nlen -- n )  NR_MUNMAP syscall2 ;
 : msync      ( addr nlen nflags -- n )  NR_MSYNC syscall3 ;
 : mlock      ( addr nlen -- n )  NR_MLOCK syscall2 ;
@@ -775,7 +795,10 @@ O_SYNC constant  O_FSYNC
                   [ELSE] : close close ; [THEN]
 [undefined] lseek [IF] : lseek ( fd offs type -- offs ) NR_LSEEK syscall3 ; 
                   [ELSE] : lseek  lseek ; [THEN]
+
+32bit? [IF]
 : llseek ( fd offshigh offslow aresult nwhence -- n ) NR_LLSEEK syscall5 ;
+[THEN]
 
 [undefined] ioctl [IF] : ioctl ( fd  request argp -- error ) 
                             NR_IOCTL syscall3 ; 
@@ -833,11 +856,14 @@ O_SYNC constant  O_FSYNC
 \ Signal handling system calls
 : alarm       ( useconds -- u ) NR_ALARM syscall1 ;
 : pause       ( -- n ) NR_PAUSE syscall0 ;
+
+32bit? [IF]
 : signal      ( nsignum ahandler -- n ) NR_SIGNAL syscall2 ;
 : sigaction   ( nsignum asigact aoldact -- n ) NR_SIGACTION syscall3 ;
 : sigsuspend  ( amask -- n ) NR_SIGSUSPEND syscall1 ;
 : sigpending  ( aset -- n ) NR_SIGPENDING syscall1 ;
 : sigprocmask ( nhow aset aoldset -- n ) NR_SIGPROCMASK syscall3 ;
+[THEN]
 
 : setitimer   ( nwhich anewval aoldval -- n ) NR_SETITIMER syscall3 ;
 : getitimer   ( nwhich acurrval -- n ) NR_GETITIMER syscall2 ;
