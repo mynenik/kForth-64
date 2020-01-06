@@ -39,8 +39,6 @@ its source package, on a GNU/Linux system:
     make
     readline
     readline-devel
-    ncurses
-    ncurses-devel
     patchutils
 
 Some or all of these packages may already be installed on your GNU/Linux
@@ -56,7 +54,7 @@ To build:
    build results in two executables, `kforth64` and `kforth64-fast`.
 
 3. Move the executables into the search path. It is recommended to move
-   the kForth-32 executables to `/usr/local/bin` . You must be root to do this.
+   the kForth-64 executables to `/usr/local/bin` . You must be root to do this.
 
 4. Specify the default directory in which kforth64 will search for Forth source
    files not found in the current directory. The environment variable `KFORTH_DIR`
@@ -77,15 +75,9 @@ libraries of Forth words and applications written in Forth. Within the
 different categories of Forth libraries or applications. These include:
 
 `system-test/`     A set of automated tests to validate the Forth system against
-                   the Forth-94 standard
-
-`fsl/`             modules from the Forth Scientific Library, including test code;
-                   also note the subdirs, `fsl/extras/` and `fsl/demo/`
+                   the Forth-2012 standard
 
 `games/`           console games written in Forth
-
-`libs/`            Forth interfaces to C and Fortran shared object libraries, such
-                   as X11 and the GNU Multiprecision Library, gmp.
 
 `benchmarks/`      simple benchmarks to compare the relative speed of Forth systems
 
@@ -97,6 +89,9 @@ Important system-level files in the `forth-src/` subdirectory include,
 * `files.4th`       Standard Forth words for file i/o
 * `ansi.4th`        ANSI terminal control
 * `dump.4th`        Forth `DUMP` utility
+* `modules.fs`      A framework for modular programming in Forth
+* `serial.4th`      Low-level serial port interface
 * `syscalls.4th`    Operating System calls
-* `tester.4th`      Test harness used by much of the test code
+* `socket.4th`      Sockets interface
+* `ttester.4th`     Test harness used by the automated test code
 
