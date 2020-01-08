@@ -3,7 +3,7 @@ vmc.c
 
   C portion of the kForth Virtual Machine
 
-  Copyright (c) 1998--2019 Krishna Myneni, 
+  Copyright (c) 1998--2020 Krishna Myneni, 
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the GNU
@@ -576,8 +576,10 @@ return False.
 
 int isBaseDigit (int c)
 {
-   return ( (isdigit(c) && ((c - 48) < Base)) || 
-	    (isalpha(c) && (Base > 10) && ((c - 55) < Base)) );
+   int u = toupper(c);
+
+   return ( (isdigit(u) && ((u - 48) < Base)) || 
+	    (isalpha(u) && (Base > 10) && ((u - 55) < Base)) );
 }
 /*---------------------------------------------------------*/
 
