@@ -2,7 +2,7 @@
 //
 // The kForth environment
 //
-// Copyright (c) 1998--2019 Krishna Myneni, 
+// Copyright (c) 1998--2020 Krishna Myneni, 
 //   <krishna.myneni@ccreweb.org>
 // 
 // This software is provided under the terms of the GNU 
@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 
     if (argc < 2) {
 	cout << "kForth-64 v " << version << "\t (Build: " << build << ")" << endl;
-	cout << "Copyright (c) 1998--2019 Krishna Myneni" << endl;
+	cout << "Copyright (c) 1998--2020 Krishna Myneni" << endl;
         cout << "Contributions by: dpw gd mu bk abs tn cmb bg dnw imss" << endl;
 	cout << "Provided under the GNU Affero General Public License, v3.0 or later" 
 	  << endl << endl;

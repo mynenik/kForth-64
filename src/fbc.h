@@ -2,7 +2,7 @@
 //
 //  Forth Byte Codes (FBC) for kForth
 //
-//  Copyright (c) 1996--2019 Krishna Myneni,
+//  Copyright (c) 1996--2020 Krishna Myneni,
 //    <krishna.myneni@ccreweb.org>
 //
 //  This software is provided under the terms of the GNU
@@ -370,6 +370,8 @@
 #define OP_BRACKET_ELSE         353
 #define OP_BRACKET_THEN         354
 #define OP_MYNAME               355
+#define OP_CATCH                356
+#define OP_THROW                357
 
 #define OP_PRECISION            360
 #define OP_SET_PRECISION        361
@@ -401,13 +403,19 @@
 #define OP_XCSTOREPLUS          394
 #define OP_XCSTOREPLUSQUERY     395
 
-#define OP_DIV_FLOORED          400
-#define OP_MOD_FLOORED          401
-#define OP_SLASHMOD_FLOORED     402
-#define OP_STARSLASH_FLOORED    403
-#define OP_STARSLASHMOD_FLOORED 404
-#define OP_MSLASH_FLOORED       405
-#define OP_MSTARSLASH_FLOORED   406
+#define OP_BOOL_NOT             400
+#define OP_BOOL_AND             401
+#define OP_BOOL_OR              402
+#define OP_BOOL_XOR             403
+#define OP_BOOLEAN_QUERY        404
+
+#define OP_DIV_FLOORED          410
+#define OP_MOD_FLOORED          411
+#define OP_SLASHMOD_FLOORED     412
+#define OP_STARSLASH_FLOORED    413
+#define OP_STARSLASHMOD_FLOORED 414
+#define OP_MSLASH_FLOORED       415
+#define OP_MSTARSLASH_FLOORED   416
 
 
 #endif

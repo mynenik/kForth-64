@@ -2,7 +2,7 @@
 //
 // The intrinsic Forth word list for kForth
 //
-// Copyright (c) 2008--2019 Krishna Myneni,
+// Copyright (c) 2008--2020 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org> 
 //
 // This software is provided under the terms of the GNU
@@ -265,6 +265,11 @@ WordTemplate ForthWords[] =
     { "XOR",       OP_XOR,          0 },
     { "NOT",       OP_NOT,          0 },
     { "INVERT",    OP_NOT,          0 },
+    { "BOOLEAN?",  OP_BOOLEAN_QUERY, 0 },
+    { ".NOT.",     OP_BOOL_NOT,     0 },
+    { ".AND.",     OP_BOOL_AND,     0 },
+    { ".OR.",      OP_BOOL_OR,      0 },
+    { ".XOR.",     OP_BOOL_XOR,     0 },
     { "LSHIFT",    OP_LSHIFT,       0 },
     { "RSHIFT",    OP_RSHIFT,       0 },
     { "+",         OP_ADD,          0 },

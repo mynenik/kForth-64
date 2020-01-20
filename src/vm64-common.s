@@ -2,7 +2,7 @@
 //
 // Common declarations and data for kForth 64-bit Virtual Machine
 //
-// Copyright (c) 1998--2019 Krishna Myneni,
+// Copyright (c) 1998--2020 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -10,7 +10,8 @@
 //
 
 .equ WSIZE,	8
-
+.equ TRUE,     -1
+.equ FALSE,     0
 .equ OP_ADDR,	65
 .equ OP_FVAL,	70
 .equ OP_IVAL,	73
@@ -19,12 +20,13 @@
 	
 // Error Codes must be same as those in VMerrors.h
 
-.equ E_DIV_ZERO,        -10
-.equ E_QUIT,            -56
-.equ E_NOT_ADDR,        -256
-.equ E_RET_STK_CORRUPT, -258
-.equ E_BAD_OPCODE,      -259
-.equ E_DIV_OVERFLOW,    -270
+.equ E_DIV_ZERO,          -10
+.equ E_ARG_TYPE_MISMATCH, -12
+.equ E_QUIT,              -56
+.equ E_NOT_ADDR,          -256
+.equ E_RET_STK_CORRUPT,   -258
+.equ E_BAD_OPCODE,        -259
+.equ E_DIV_OVERFLOW,      -270
 
 .data
 NDPcw: .quad 0
@@ -132,6 +134,9 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad L_nop, L_nop, L_nop, L_nop                 # 384--387
            .quad L_nop, L_nop, L_nop, L_nop                 # 388--391
            .quad L_nop, L_nop, L_nop, L_nop                 # 392--395
+           .quad L_nop, L_nop, L_nop, L_nop                 # 396--399
+           .quad L_bool_not, L_bool_and, L_bool_or, L_bool_xor  # 400--403 
+           .quad L_boolean_query, L_nop, L_nop, L_nop       # 404--407
 .text
 	.align WSIZE
 .global JumpTable
@@ -304,6 +309,10 @@ E_div_zero:
 E_div_overflow:
 	mov $E_DIV_OVERFLOW, %rax
 	ret
+
+E_arg_type_mismatch:
+        mov $E_ARG_TYPE_MISMATCH, %eax
+        ret
 
 L_cputest:
 	ret

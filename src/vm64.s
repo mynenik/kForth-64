@@ -2,7 +2,7 @@
 //
 // The assembler portion of kForth 64-bit Virtual Machine
 //
-// Copyright (c) 1998--2019 Krishna Myneni,
+// Copyright (c) 1998--2020 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU 
@@ -414,6 +414,37 @@
 	sub %rax, %rbx
 	mov %rdx, (%rbx)
 	xor %rax, %rax	
+.endm
+
+.macro BOOLEAN_QUERY
+        DUP
+        REL_ZERO setz
+        SWAP
+        LDSP
+        movq $TRUE, (%rbx)
+        DEC_DSP
+        DEC_DTSP
+        STSP
+        REL_DYADIC sete
+        _OR
+.endm
+
+.macro TWO_BOOLEANS
+        OVER
+        OVER
+        LDSP
+        BOOLEAN_QUERY
+        SWAP
+        LDSP
+        BOOLEAN_QUERY
+        _AND
+.endm
+
+.macro  CHECK_BOOLEAN
+        LDSP
+        DROP
+        cmpq $TRUE, (%rbx)
+        jnz E_arg_type_mismatch
 .endm
 
 // VIRTUAL MACHINE 
@@ -1110,6 +1141,35 @@ L_not:
 L_xor:
 	_XOR
 	NEXT
+
+L_boolean_query:
+        BOOLEAN_QUERY
+        NEXT
+
+L_bool_not:
+        DUP
+        BOOLEAN_QUERY
+        CHECK_BOOLEAN
+        _NOT
+        NEXT
+
+L_bool_and:
+        TWO_BOOLEANS
+        CHECK_BOOLEAN
+        _AND
+        NEXT
+
+L_bool_or:
+        TWO_BOOLEANS
+        CHECK_BOOLEAN
+        _OR
+        NEXT
+
+L_bool_xor:
+        TWO_BOOLEANS
+        CHECK_BOOLEAN
+        _XOR
+        NEXT
 
 L_eq:
 	REL_DYADIC sete
