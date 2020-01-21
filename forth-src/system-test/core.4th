@@ -602,8 +602,10 @@ COMMENT SKIPPING ALIGN tests
 ALIGN 1 ALLOT HERE ALIGN HERE 3 CELLS ALLOT
 CONSTANT A-ADDR  CONSTANT UA-ADDR
 ***************************************************** )
-(
-{ UA-ADDR ALIGNED -> A-ADDR }
+CREATE HERE1 1 ?ALLOT  CREATE HERE2 3 CELLS ?ALLOT
+CONSTANT A-ADDR CONSTANT UA-ADDR
+\ { UA-ADDR ALIGNED -> A-ADDR }
+
 {    1 A-ADDR C!  A-ADDR C@ ->    1 }
 { 1234 A-ADDR  !  A-ADDR  @ -> 1234 }
 { 123 456 A-ADDR 2!  A-ADDR 2@ -> 123 456 }
@@ -611,7 +613,7 @@ CONSTANT A-ADDR  CONSTANT UA-ADDR
 { 3 A-ADDR CELL+ C!  A-ADDR CELL+ C@ -> 3 }
 { 1234 A-ADDR CELL+ !  A-ADDR CELL+ @ -> 1234 }
 { 123 456 A-ADDR CELL+ 2!  A-ADDR CELL+ 2@ -> 123 456 }
-)
+
 
 : BITS \ X -- U 
    0 SWAP BEGIN DUP WHILE DUP MSB AND IF >R 1+ R> THEN 2* REPEAT DROP ;
@@ -770,8 +772,6 @@ TESTING DEFINING WORDS: : ; CONSTANT VARIABLE CREATE DOES> >BODY
 { 123 V1 ! -> }
 { V1 @ -> 123 }
 
-COMMENT SKIPPING NOP CREATE DOES> WEIRD tests.
-( ********************************************************
 { : NOP : POSTPONE ; ; -> }
 { NOP NOP1 NOP NOP2 -> }
 { NOP1 -> }
@@ -781,11 +781,15 @@ COMMENT SKIPPING NOP CREATE DOES> WEIRD tests.
 { : DOES1 DOES> @ 1 + ; -> }
 { : DOES2 DOES> @ 2 + ; -> }
 
+0 constant HERE   \ kForth-specific
 
 { CREATE CR1 -> }
 { CR1 -> HERE }
 { ' CR1 >BODY -> HERE }
-{ 1 , -> }
+
+\ { 1 , -> }
+{ 1 1 CELLS ?ALLOT ! -> }
+
 { CR1 @ -> 1 }
 { DOES1 -> }
 { CR1 -> 2 }
@@ -798,7 +802,6 @@ COMMENT SKIPPING NOP CREATE DOES> WEIRD tests.
 { ' W1 >BODY -> HERE }
 { W1 -> HERE 1 + }
 { W1 -> HERE 2 + }
-************************************************************ )
 
 \ ------------------------------------------------------------------------
 TESTING EVALUATE
