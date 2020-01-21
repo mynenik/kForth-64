@@ -45,6 +45,7 @@
 \   2009-11-26  removed D2* and D2/, now intrinsic  km
 \   2010-12-23  added $ucase and revised [ELSE] to use $ucase  km
 \   2011-02-05  km  removed [DEFINED] and [UNDEFINED], now intrinsic 
+\   2020-01-21  km  added SYNONYM
 BASE @
 DECIMAL
 \ ============== From the CORE wordset
@@ -115,6 +116,10 @@ CREATE PAD 512 ALLOT
    0= IF POSTPONE [ELSE] THEN ;  IMMEDIATE
 
 : [THEN]  ( -- )  ;  IMMEDIATE
+
+\ Forth-2012 Programming Tools 15.6.2.2264
+: SYNONYM ( "<newname>" "<oldname>" -- )
+   CREATE ' 1 CELLS ?ALLOT ! DOES> A@ EXECUTE ; 
 
 
 \ ============= From the EXCEPTION wordset
