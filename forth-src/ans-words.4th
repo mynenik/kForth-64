@@ -17,7 +17,7 @@
 \     ansi.4th 
 \     dump.4th
 \
-\ Copyright (c) 2002--2011 Krishna Myneni, Creative Consulting
+\ Copyright (c) 2002--2020 Krishna Myneni, Creative Consulting
 \   for Research and Education
 \
 \ Provided under the GNU Lesser General Public License (LGPL)
@@ -46,6 +46,7 @@
 \   2010-12-23  added $ucase and revised [ELSE] to use $ucase  km
 \   2011-02-05  km  removed [DEFINED] and [UNDEFINED], now intrinsic 
 \   2020-01-21  km  added SYNONYM
+\   2020-01-25  km  revised defn. of VALUE for improved efficiency.
 BASE @
 DECIMAL
 \ ============== From the CORE wordset
@@ -58,8 +59,7 @@ DECIMAL
 CREATE PAD 512 ALLOT
 
 : TO ' >BODY STATE @ IF POSTPONE LITERAL POSTPONE ! ELSE ! THEN ; IMMEDIATE
-: VALUE CREATE 1 CELLS ?ALLOT ! DOES> @ ;
-
+: VALUE CREATE 1 CELLS ?ALLOT ! IMMEDIATE DOES> POSTPONE LITERAL POSTPONE @ ;
 
 \ ============ From the FLOATING EXT wordset
 

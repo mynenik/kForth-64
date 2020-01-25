@@ -191,16 +191,14 @@
 .endm
 	
 // Dyadic Logic operators 
-	
+// Regs: rax, rbx; In/Out: none 	
 .macro LOGIC_DYADIC op
 	LDSP
-	movq $WSIZE, %rcx
-	add %rcx, %rbx
+	movq $WSIZE, %rax
+	add %rax, %rbx
 	STSP
 	mov (%rbx), %rax
-	add %rcx, %rbx
-	\op (%rbx), %rax
-	mov %rax, (%rbx)
+	\op %rax, WSIZE(%rbx)
 	movq GlobalTp(%rip), %rax
 	inc %rax
 	movq %rax, GlobalTp(%rip)
