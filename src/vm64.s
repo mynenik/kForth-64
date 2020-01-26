@@ -222,8 +222,7 @@
 // use algorithm from DNW's vm-osxppc.s
 .macro _ABS	
 	LDSP
-	INC_DSP
-	mov (%rbx), %rcx
+	mov WSIZE(%rbx), %rcx
 	xor %rax, %rax
 	cmp %rax, %rcx
 	setl %al
@@ -231,7 +230,7 @@
 	mov %rax, %rdx
 	xor %rcx, %rdx
 	sub %rax, %rdx
-	mov %rdx, (%rbx)
+	mov %rdx, WSIZE(%rbx)
 	xor %rax, %rax
 .endm
 	
@@ -243,12 +242,11 @@
 	add %rcx, %rbx
 	STSP
 	mov (%rbx), %rax
-	add %rcx, %rbx
-	cmp %rax, (%rbx)
+	cmp %rax, WSIZE(%rbx)
 	movq $0, %rax
 	\setx %al
 	neg %rax
-	mov %rax, (%rbx)
+	mov %rax, WSIZE(%rbx)
 	movq GlobalTp(%rip), %rax
 	inc %rax
 	movq %rax, GlobalTp(%rip)

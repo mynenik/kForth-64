@@ -16,9 +16,11 @@
 \                    since this condition is ambiguous per DPANS94.
 \        Revised:  April 16, 2017  km; fixed mispelling, FFLOOR to FLOOR
 \                    in comment line.
+\        Revised:  January 26, 2020  km; fixed DU< tests for 64-bit.
 s" ans-words.4th" included
 s" ttester.4th" included
-\ s" div-test.4th" included
+
+: 64bit? 1 cells 8 = ;
 
 : cell-  ( n -- n' )  1 cells - ;
 
@@ -122,7 +124,11 @@ t{  4999 1 5000 1 du< -> true  }t
 hex
 t{ -1 maxint 0 -1 du< -> true }t
 t{ -1 minint 0 -1 du<  -> true }t
+64bit? [IF]
+t{ -1 minint 0 9000000000000000 du< -> true }t
+[ELSE]
 t{ -1 minint 0 90000000 du< -> true }t
+[THEN]
 
 testing CMOVE  CMOVE>  FILL  ERASE
 
@@ -414,6 +420,7 @@ t{  0  3 -1  3 dmin ->  0  3 }t
 t{ -1  2  0  3 dmin -> -1  2 }t
 t{ -1  3  0  3 dmin ->  0  3 }t
 
+64bit? invert [IF]
 COMMENT Uncomment lines in regress.4th to test errors.
 
 \ Use stolerance for single precision floating point 
@@ -441,17 +448,6 @@ t{ 1e  1e  2e fwithin -> true  }t
 t{ 2e  .5e 2e fwithin -> false }t
 t{ .5e 1e  2e fwithin -> false }t
 t{ 3e  1e  2e fwithin -> false }t
-
-\ Commented out definition of FNEARLY ; Floating point number 
-\ comparisons are directly supported by ttester.4th.  
-\ 2010-04-22 km
-0 [IF]
-: fnearly  ( x y -- flag )
-  2dup tolerance f-   ( x y y-tol)
-  2swap tolerance f+  ( x y-tol y+tol)
-  fwithin
-;
-[THEN]
 
 0e rel-near f!
 tolerance abs-near f!
@@ -687,3 +683,4 @@ t{ 0e   fsincos -> 0e 1e rr}t
 t{ pi/2 fsincos -> 1e 0e rr}t
 t{ 45e deg>rad fsincos ->  1/sqrt2  1/sqrt2  rr}t
 
+[THEN] \ 64bit? ...
