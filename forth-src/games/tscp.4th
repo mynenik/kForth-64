@@ -100,11 +100,8 @@ ply      nodes  time score  pv
 \ =================================================
 
 \ ============= ANS Forth definitions =============
-\ uncomment this section for use with ANS Forth
-(
-: a@ @ ;
-: ?allot HERE SWAP ALLOT ;
-)
+[UNDEFINED] A@ [IF] synonym a@ @ [THEN]
+[UNDEFINED] ?ALLOT [IF] : ?allot HERE SWAP ALLOT ; [THEN]
 \ ============= end ANS Forth definitions =========
 
 : table ( v1 ... vn n -- )
@@ -1374,19 +1371,19 @@ VARIABLE lastScore
 \ More accurate is GetTickCount
 \ Define as appropriate for your Forth dialect
 
-(
+
 [UNDEFINED] ms@ [IF]
   [DEFINED] ?MS [IF]
   : ms@ ?MS ;           \ iForth
   [ELSE]
   [DEFINED] utime [IF]
-  : ms@ utime DROP ;    \ gforth
+  : ms@ utime 1000 um/mod nip ;  \ gforth
   [ELSE]
   5 CONSTANT npms
   : ms@  nodes @ npms / ;
   [THEN] [THEN]
 [THEN]
-)
+
 
 : .searchHeader ." ply    nodes    time score pv" CR ;
 
