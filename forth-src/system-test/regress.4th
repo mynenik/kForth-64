@@ -17,6 +17,7 @@
 \        Revised:  April 16, 2017  km; fixed mispelling, FFLOOR to FLOOR
 \                    in comment line.
 \        Revised:  January 26, 2020  km; fixed DU< tests for 64-bit.
+\        Revised:  January 29. 2020  km; added tests for UW@ SW@ UL@ SL@ L!
 s" ans-words.4th" included
 s" ttester.4th" included
 
@@ -66,14 +67,29 @@ t{ -1  2  2  within  ->  false }t
 t{ -1  2 -1  within  ->  false }t
 t{  0 -1  1  within  ->  true  }t
 
-testing W@  W!
+testing UW@ SW@ W! UL@ SL@ L!
 
-variable scratch
+2variable scratch
 
 t{ 1ffff scratch w! -> }t
-t{ scratch w@ -> -1 }t
-t{ -1   scratch w! scratch w@ -> -1 }t
-t{ 7fff scratch w! scratch w@ -> 7fff }t
+t{ scratch uw@ -> ffff }t
+t{ scratch sw@ -> -1 }t
+t{ 0 s>d scratch 2! ->  }t
+t{ -1 scratch w! -> }t
+t{ scratch sw@ -> -1 }t
+t{ scratch 2+ uw@ -> 0 }t
+t{ scratch 2+ sw@ -> 0 }t
+t{ 7fff scratch w! scratch sw@ -> 7fff }t
+
+t{ 0 s>d scratch 2! -> }t
+t{ 1ffffffff scratch l! -> }t
+t{ scratch ul@ -> ffffffff }t
+t{ scratch sl@ -> -1 }t
+t{ 0 s>d scratch 2! -> }t
+t{ -1 scratch l! -> }t
+t{ scratch sl@ -> -1 }t
+t{ scratch 4 + ul@ -> 0 }t
+t{ scratch 4 + sl@ -> 0 }t
 
 testing <= >= -ROT 2ROT
 

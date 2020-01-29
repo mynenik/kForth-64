@@ -184,7 +184,7 @@
 #define OP_TWOMINUS             169
 #define OP_CFETCH               170
 #define OP_CSTORE               171
-#define OP_WFETCH               172
+#define OP_SWFETCH              172
 #define OP_WSTORE               173
 #define OP_DFFETCH              174
 #define OP_DFSTORE              175
@@ -408,6 +408,10 @@
 #define OP_BOOL_OR              402
 #define OP_BOOL_XOR             403
 #define OP_BOOLEAN_QUERY        404
+#define OP_UWFETCH              405
+#define OP_ULFETCH              406
+#define OP_SLFETCH              407
+#define OP_LSTORE               408
 
 #define OP_DIV_FLOORED          410
 #define OP_MOD_FLOORED          411

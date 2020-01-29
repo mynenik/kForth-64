@@ -1591,15 +1591,15 @@ L_store:
 	movb (%rbx), %al
 	cmpb $OP_ADDR, %al
 	jnz E_not_addr
-	movq $WSIZE, %rax
+	INC2_DTSP
 	LDSP
+	movq $WSIZE, %rax
 	add %rax, %rbx
 	mov (%rbx), %rcx	# address to store to in rcx
 	add %rax, %rbx
-	mov (%rbx), %rdx	# value to store in rdx
+	mov (%rbx), %rax	# value to store in rax
+	mov %rax, (%rcx)
 	STSP
-	mov %rdx, (%rcx)
-	INC2_DTSP
 	xor %rax, %rax
 	NEXT
 
@@ -1664,21 +1664,33 @@ L_cstore:
 	xor %rax, %rax
 	NEXT	
 
-L_wfetch:
+L_swfetch:
 	movq GlobalTp(%rip), %rcx
 	movb 1(%rcx), %al
 	cmpb $OP_ADDR, %al
 	jnz E_not_addr
 	movb $OP_IVAL, 1(%rcx)
 	LDSP
-	movq WSIZE(%rbx), %rbx
-	movw (%rbx), %ax
+	movq WSIZE(%rbx), %rcx
+	movw (%rcx), %ax
 	cwde
 	cdqe
-	LDSP
 	movq %rax, WSIZE(%rbx)
 	xor %rax, %rax
 	NEXT
+
+L_uwfetch:
+        movq GlobalTp(%rip), %rcx
+        movb 1(%rcx), %al
+        cmpb $OP_ADDR, %al
+        jnz E_not_addr
+        movb $OP_IVAL, 1(%rcx)
+        LDSP
+        movq WSIZE(%rbx), %rcx
+        movw (%rcx), %ax
+        movq %rax, WSIZE(%rbx)
+        xor %rax, %rax
+        NEXT
 
 L_wstore:
 	movq $WSIZE, %rax
@@ -1700,6 +1712,51 @@ L_wstore:
 	INC_DTSP
 	xor %rax, %rax
 	NEXT
+
+L_slfetch:
+        movq GlobalTp(%rip), %rcx
+        movb 1(%rcx), %al
+        cmpb $OP_ADDR, %al
+        jnz E_not_addr
+        movb $OP_IVAL, 1(%rcx)
+        LDSP
+        movq WSIZE(%rbx), %rcx
+        movl (%rcx), %eax
+        cdqe
+        movq %rax, WSIZE(%rbx)
+        xor %rax, %rax
+        NEXT
+
+L_ulfetch:
+        movq GlobalTp(%rip), %rcx
+        movb 1(%rcx), %al
+        cmpb $OP_ADDR, %al
+        jnz E_not_addr
+        movb $OP_IVAL, 1(%rcx)
+        LDSP
+        movq WSIZE(%rbx), %rcx
+        movl (%rcx), %eax
+        movq %rax, WSIZE(%rbx)
+        xor %rax, %rax
+        NEXT
+
+L_lstore:
+        movq GlobalTp(%rip), %rcx
+	inc  %rcx
+        movb (%rcx), %al
+        cmpb $OP_ADDR, %al
+        jnz E_not_addr
+        INC2_DTSP
+        LDSP
+        movq $WSIZE, %rax
+        addq %rax, %rbx
+        mov (%rbx), %rcx  # address in rcx
+        addq %rax, %rbx
+        mov (%rbx), %rax  # value in rax
+        movl %eax, (%rcx)
+        STSP
+        xor %rax, %rax
+        NEXT
 
 L_sffetch:
 	movq $WSIZE, %rax

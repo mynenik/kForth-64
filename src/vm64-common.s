@@ -78,7 +78,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad L_inc, L_dec, L_abs, L_neg        # 160 -- 163
            .quad L_min, L_max, L_twostar, L_twodiv # 164 -- 167
            .quad L_twoplus, L_twominus, L_cfetch, L_cstore  # 168 -- 171
-           .quad L_wfetch, L_wstore, L_dffetch, L_dfstore  # 172 -- 175
+           .quad L_swfetch, L_wstore, L_dffetch, L_dfstore  # 172 -- 175
            .quad L_sffetch, L_sfstore, L_spfetch, L_plusstore # 176 -- 179
            .quad L_fadd, L_fsub, L_fmul, L_fdiv    # 180 -- 183
            .quad L_fabs, L_fneg, C_fpow, L_fsqrt   # 184 -- 187
@@ -136,7 +136,8 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad L_nop, L_nop, L_nop, L_nop                 # 392--395
            .quad L_nop, L_nop, L_nop, L_nop                 # 396--399
            .quad L_bool_not, L_bool_and, L_bool_or, L_bool_xor  # 400--403 
-           .quad L_boolean_query, L_nop, L_nop, L_nop       # 404--407
+           .quad L_boolean_query, L_uwfetch, L_ulfetch, L_slfetch  # 404--407
+           .quad L_lstore, L_nop, L_nop, L_nop                  # 408--411
 .text
 	.align WSIZE
 .global JumpTable
