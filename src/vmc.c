@@ -287,6 +287,21 @@ int C_write ()
   return 0;
 }
 
+// FSYNC ( fd -- ior )
+// Flush all buffered data written to file to the storage device
+// Low-level interface for implementation of standard Forth
+// word, FLUSH-FILE (Forth 94/Forth 2012)
+int C_fsync ()
+{
+  /* stack: ( fd -- ior )  */
+  int fd;
+  DROP
+  fd = TOS;
+  PUSH_IVAL( fsync(fd) )
+  return 0;
+}
+  
+
 int C_ioctl ()
 {
   /* stack: ( fd request addr -- err | device control function ) */

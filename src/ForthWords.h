@@ -316,6 +316,7 @@ WordTemplate ForthWords[] =
     { "CLOSE",     OP_CLOSE,        0 },
     { "READ",      OP_READ,         0 },
     { "WRITE",     OP_WRITE,        0 },
+    { "FSYNC",     OP_FSYNC,        0 },
     { "IOCTL",     OP_IOCTL,        0 },
     { "FILL",      OP_FILL,         0 },
     { "ERASE",     OP_ERASE,        0 },

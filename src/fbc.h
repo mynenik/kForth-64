@@ -38,7 +38,7 @@
 #define OP_DOTPAREN              23
 #define OP_BRACKETSHARP          24
 #define OP_EXECUTE_BC            25
-
+#define OP_FSYNC                 26
 #define OP_SHARPBRACKET          27
 #define OP_SHARPS                28
 #define OP_SQUOTE                29
