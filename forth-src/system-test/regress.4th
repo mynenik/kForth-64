@@ -81,10 +81,12 @@ t{ scratch 2+ uw@ -> 0 }t
 t{ scratch 2+ sw@ -> 0 }t
 t{ 7fff scratch w! scratch sw@ -> 7fff }t
 
-t{ 0 s>d scratch 2! -> }t
-t{ 1ffffffff scratch l! -> }t
+t{ ffffffff scratch l! -> }t
+t{ 1 scratch 4 + l! -> }t
 t{ scratch ul@ -> ffffffff }t
 t{ scratch sl@ -> -1 }t
+t{ scratch 2+ ul@ -> 1ffff }t
+t{ scratch 2+ sl@ -> 1ffff }t
 t{ 0 s>d scratch 2! -> }t
 t{ -1 scratch l! -> }t
 t{ scratch sl@ -> -1 }t
