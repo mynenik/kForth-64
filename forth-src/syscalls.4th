@@ -4,7 +4,7 @@
 \
 \ !!! see WARNING below !!!  
 \
-\ Copyright (c) 2004--2019 Krishna Myneni,
+\ Copyright (c) 2004--2020 Krishna Myneni,
 \ Provided under the GNU General Public License
 \
 \ Notes:
@@ -54,6 +54,7 @@
 \                   needs to use syscall 90 with 1 structure arg  KM
 \       2015-08-01  added MAP_ANONYMOUS  km
 \       2019-12-29  updated for use on both 64-bit and 32-bit systems  km
+\       2020-01-30  conditional definition of FSYNC (now intrinsic) km
 BASE @
 DECIMAL
 
@@ -734,9 +735,8 @@ Public:
     mmap_args NR_MMAP syscall1 ;
 
 32bit? [IF]
-: mmap2      ( addr  nlength  nprot  nflags  nfd  noffset -- n ) NR_MMAP2 syscall6 ;
-[THEN]
-
+: mmap2      ( addr  nlength  nprot  nflags  nfd  noffset -- n ) 
+    NR_MMAP2 syscall6 ; [THEN]
 : munmap     ( addr nlen -- n )  NR_MUNMAP syscall2 ;
 : msync      ( addr nlen nflags -- n )  NR_MSYNC syscall3 ;
 : mlock      ( addr nlen -- n )  NR_MLOCK syscall2 ;
@@ -744,7 +744,8 @@ Public:
 : mprotect   ( addr nlen nprot -- n ) NR_MPROTECT syscall3 ;
 : mlockall   ( nflags -- n ) NR_MLOCKALL syscall1 ;
 : munlockall ( -- n )  NR_MUNLOCKALL syscall0 ;
-: mremap     ( aoldaddress noldsize nnewsize nflags -- anewmem ) NR_MREMAP syscall4 ;
+: mremap     ( aoldaddress noldsize nnewsize nflags -- anewmem ) 
+    NR_MREMAP syscall4 ;
 
 
 \ File i/o and handling
@@ -783,26 +784,26 @@ O_SYNC constant  O_FSYNC
  3  constant  F_GETFL    \ Get file status flags.
  4  constant  F_SETFL    \ Set file status flags.
 
-[undefined] read  [IF] : read ( fd buf count -- n) NR_READ syscall3 ; 
-                  [ELSE] : read read ; [THEN]
-[undefined] write [IF] : write ( fd buf count -- n) NR_WRITE syscall3 ;
-                  [ELSE] : write write ; [THEN]
+[UNDEFINED] read  [IF] 
+: read ( fd buf count -- n) NR_READ syscall3 ; [THEN]
+[UNDEFINED] write [IF] 
+: write ( fd buf count -- n) NR_WRITE syscall3 ; [THEN]
+
 \ Change name of OPEN system call to sys_open to avoid name collision
 \   with kForth's OPEN 
 : sys_open ( addr  flags mode -- fd | file descriptor is returned)
 	NR_OPEN syscall3 ;
-[undefined] close [IF] : close ( fd -- flag )  NR_CLOSE syscall1 ; 
-                  [ELSE] : close close ; [THEN]
-[undefined] lseek [IF] : lseek ( fd offs type -- offs ) NR_LSEEK syscall3 ; 
-                  [ELSE] : lseek  lseek ; [THEN]
+[UNDEFINED] close [IF] 
+: close ( fd -- flag )  NR_CLOSE syscall1 ; [THEN]
+[UNDEFINED] lseek [IF] 
+: lseek ( fd offs type -- offs ) NR_LSEEK syscall3 ; [THEN]
 
 32bit? [IF]
-: llseek ( fd offshigh offslow aresult nwhence -- n ) NR_LLSEEK syscall5 ;
-[THEN]
+: llseek ( fd offshigh offslow aresult nwhence -- n ) 
+    NR_LLSEEK syscall5 ; [THEN]
 
-[undefined] ioctl [IF] : ioctl ( fd  request argp -- error ) 
-                            NR_IOCTL syscall3 ; 
-                  [ELSE] : ioctl  ioctl ; [THEN]
+[UNDEFINED] ioctl [IF] 
+: ioctl ( fd  request argp -- error ) NR_IOCTL syscall3 ; [THEN]
 
 : creat    ( apath mode -- n )        NR_CREAT  syscall2 ;
 : link     ( aoldpath anewpath -- n ) NR_LINK   syscall2 ;
@@ -810,8 +811,8 @@ O_SYNC constant  O_FSYNC
 : symlink  ( aoldpath anewpath -- n )  NR_SYMLINK syscall2 ;
 : readlink ( apath abuf nbufsiz -- nsize )  NR_READLINK syscall3 ;
 
-[undefined] chdir [IF] : chdir ( apath -- n ) NR_CHDIR syscall1 ; 
-                  [ELSE] : chdir  chdir ; [THEN]
+[UNDEFINED] chdir [IF] 
+: chdir ( apath -- n ) NR_CHDIR syscall1 ; [THEN]
 : fchdir ( fd -- n )  NR_FCHDIR syscall1 ;
 : getcwd ( abuf nsize -- n ) NR_GETCWD syscall2 ;
 \ Use getdents instead of readdir syscall
@@ -831,7 +832,8 @@ O_SYNC constant  O_FSYNC
 : lchown ( apath nowner ngroup -- n )  NR_LCHOWN syscall3 ;
 : access ( apathname nmode -- n ) NR_ACCESS syscall2 ;
 
-: fsync ( fd -- n )  NR_FSYNC syscall1 ;
+[UNDEFINED] fsync [IF] 
+: fsync ( fd -- n )  NR_FSYNC syscall1 ; [THEN]
 : fcntl ( fd ncmd arg -- n )  NR_FCNTL syscall3 ;
 : flock ( fd nop -- n )  NR_FLOCK syscall2 ;
 : stat  ( apath  astatbuf  -- n )  NR_STAT  syscall2 ;
@@ -845,7 +847,8 @@ O_SYNC constant  O_FSYNC
 : rmdir  ( apathname -- n )         NR_RMDIR  syscall1 ;
 
 
-: select ( nfds areadfds awritefds aexceptfds atimeout -- n ) NR_SELECT syscall5 ;
+: select ( nfds areadfds awritefds aexceptfds atimeout -- n ) 
+    NR_SELECT syscall5 ;
 : pipe ( afdarray -- n )  NR_PIPE syscall1 ;
  
 \ dup and dup2 syscalls
@@ -880,6 +883,4 @@ O_SYNC constant  O_FSYNC
 End-Module
 
 BASE !
-
-
 
