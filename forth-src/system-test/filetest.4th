@@ -196,18 +196,18 @@ T{ SOURCE-ID DUP -1 = SWAP 0= OR -> FALSE }T
 
 \ ------------------------------------------------------------------------------
 
-COMMENT SKIPPING RENAME-FILE FILE-STATUS FLUSH-FILE tests
-( ******************************************************** 
-TESTING RENAME-FILE FILE-STATUS FLUSH-FILE
+TESTING RENAME-FILE FLUSH-FILE
 
 : fn3 S" fatest3.txt" ;
 : >end fid1 @ FILE-SIZE DROP fid1 @ REPOSITION-FILE ;
 
-
 T{ fn3 DELETE-FILE DROP -> }T
 T{ fn1 fn3 RENAME-FILE 0= -> TRUE }T
-T{ fn1 FILE-STATUS SWAP DROP 0= -> FALSE }T
-T{ fn3 FILE-STATUS SWAP DROP 0= -> TRUE }T  \ Return value is undefined
+
+COMMENT SKIPPING FILE-STATUS tests
+\ T{ fn1 FILE-STATUS SWAP DROP 0= -> FALSE }T
+\ T{ fn3 FILE-STATUS SWAP DROP 0= -> TRUE }T  \ Return value is undefined
+
 T{ fn3 R/W OPEN-FILE SWAP fid1 ! -> 0 }T
 T{ >end -> 0 }T
 T{ S" Final line" fid1 @ WRITE-LINE -> 0 }T
@@ -216,11 +216,7 @@ T{ fid1 @ CLOSE-FILE -> 0 }T
 
 \ Tidy the test folder
 T{ fn3 DELETE-FILE DROP -> }T
-*********************************************************** )
 
-\ We must manually delete file fn1 since the above code is commented out.
-\ km, 2010-04-22
-T{ fn1 DELETE-FILE DROP -> }T
 \ ------------------------------------------------------------------------------
 
 CR .( End of File-Access word tests) CR
