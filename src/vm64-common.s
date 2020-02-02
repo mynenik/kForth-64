@@ -112,7 +112,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad CPP_twoliteral, C_tonumber, C_numberquery, CPP_sliteral  # 296--299
            .quad CPP_fliteral, CPP_twovariable, CPP_twoconstant, L_nop    # 300--303
            .quad CPP_tofile, CPP_console, CPP_loop, CPP_plusloop  # 304--307
-           .quad CPP_unloop, L_nop, L_nop, L_blank                # 308--311
+           .quad CPP_unloop, CPP_noname, L_nop, L_blank           # 308--311
            .quad L_slashstring, C_trailing, C_parse, C_parsename  # 312--315
            .quad L_nop, L_nop, L_nop, L_nop            # 316--319
            .quad C_dlopen, C_dlerror, C_dlsym, C_dlclose # 320--323

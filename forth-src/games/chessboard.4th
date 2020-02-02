@@ -73,11 +73,10 @@ object class
        method   cp-init
 end-class chess-piece
 
-: noname ( o -- col row )  dup cp-col @ swap cp-row @ ;
+:noname ( o -- col row )  dup cp-col @ swap cp-row @ ;
+chess-piece defines cp-getpos
 
-' noname chess-piece defines cp-getpos
-
-: noname ( o -- )
+:noname ( o -- )
     dup cp-getpos grid>cellcolors background drop
     dup cp-fg @ foreground
     CP_SIZE 0 do
@@ -85,12 +84,10 @@ end-class chess-piece
       dup cp-picture a@ CP_SIZE i * + CP_SIZE type
     loop
     drop ;
+chess-piece defines cp-draw
 
-' noname chess-piece defines cp-draw
-
-: noname ( col row o -- )  dup >r cp-row ! r> cp-col ! ;
-
-' noname chess-piece defines cp-init
+:noname ( col row o -- )  dup >r cp-row ! r> cp-col ! ;
+chess-piece defines cp-init
 
 : make-shape ( a1 u1 a2 u2 ... an un "name" -- )
     CREATE CP_SIZE dup * ?allot 
@@ -133,44 +130,44 @@ make-shape rook-shape
 chess-piece class
 end-class pawn
 
-: noname ( col row o -- ) >r pawn-shape r@ cp-picture ! r> 
+:noname ( col row o -- ) >r pawn-shape r@ cp-picture ! r> 
 	 [ chess-piece :: cp-init ] literal execute ;
-' noname pawn defines cp-init   
+pawn defines cp-init   
 
 chess-piece class
 end-class king
 
-: noname ( col row o -- ) >r king-shape r@ cp-picture ! r>
+:noname ( col row o -- ) >r king-shape r@ cp-picture ! r>
 	 [ chess-piece :: cp-init ] literal execute ;
-' noname king defines cp-init   
+king defines cp-init   
 
 chess-piece class
 end-class queen
 
-: noname ( col row o -- ) >r queen-shape r@ cp-picture ! r>
+:noname ( col row o -- ) >r queen-shape r@ cp-picture ! r>
 	 [ chess-piece :: cp-init ] literal execute ;
-' noname queen defines cp-init   
+queen defines cp-init   
 
 chess-piece class
 end-class bishop
 
-: noname ( col row o -- ) >r bishop-shape r@ cp-picture ! r>
+:noname ( col row o -- ) >r bishop-shape r@ cp-picture ! r>
 	 [ chess-piece :: cp-init ] literal execute ;
-' noname bishop defines cp-init   
+bishop defines cp-init   
 
 chess-piece class
 end-class knight
 
-: noname ( col row o -- ) >r knight-shape r@ cp-picture ! r>
+:noname ( col row o -- ) >r knight-shape r@ cp-picture ! r>
 	 [ chess-piece :: cp-init ] literal execute ;
-' noname knight defines cp-init   
+knight defines cp-init   
 
 chess-piece class
 end-class rook
 
-: noname ( col row o -- ) >r rook-shape r@ cp-picture ! r>
+:noname ( col row o -- ) >r rook-shape r@ cp-picture ! r>
 	 [ chess-piece :: cp-init ] literal execute ;
-' noname rook defines cp-init   
+rook defines cp-init   
 
 
 \ Now we make and initialize the pieces

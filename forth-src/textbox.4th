@@ -12,6 +12,8 @@
 \	ansi.4th
 \	mini-oof.4th
 \
+\ Revisions:
+\   2020-02-02  km; use :NONAME  
 
 1 cells constant cell
 
@@ -29,13 +31,13 @@ object class
        method	tb-init
 end-class textbox
 
-: noname ( o -- )  dup tb-bkg @ background tb-fg @ foreground ;
-' noname textbox defines tb-setcolors
+:noname ( o -- )  dup tb-bkg @ background tb-fg @ foreground ;
+textbox defines tb-setcolors
 
-: noname ( n o -- col row )  >r r@ tb-row @ + r> tb-col @ swap ; 
-' noname textbox defines tb-linexy
+:noname ( n o -- col row )  >r r@ tb-row @ + r> tb-col @ swap ; 
+textbox defines tb-linexy
 
-: noname ( o -- ) 
+:noname ( o -- ) 
 	 >r
 	 r@ tb-setcolors 
 	 0 r@ tb-linexy at-xy
@@ -52,9 +54,9 @@ end-class textbox
 	 dup tb-bkg @ background 
 	 drop ;
 
-' noname textbox defines tb-draw
+textbox defines tb-draw
 
-: noname ( col row width height fg bkg border o -- )
+:noname ( col row width height fg bkg border o -- )
 	 >r 
 	 r@ tb-border !
 	 r@ tb-bkg !
@@ -64,7 +66,7 @@ end-class textbox
 	 r@ tb-row !
 	 r> tb-col ! ;
 
-' noname textbox defines tb-init
+textbox defines tb-init
 
 \ Demonstration of text boxes:
 

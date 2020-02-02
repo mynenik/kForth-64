@@ -1,6 +1,6 @@
 // ForthVM.h
 //
-// Copyright (c) 1996--2019, Krishna Myneni
+// Copyright (c) 1996--2020, Krishna Myneni
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -51,6 +51,7 @@ int CPP_assembler();
 int CPP_traverse_wordlist();
 int CPP_name_to_string();
 int CPP_name_to_interpret();
+int CPP_noname();
 int CPP_colon();
 int CPP_semicolon();
 int CPP_compilename();

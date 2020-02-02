@@ -995,6 +995,17 @@ int CPP_create ()
     }
 }
 
+// :NONAME ( -- )
+// Compile an anonymous definition
+// Forth 2012 Core
+int CPP_noname()
+{
+    State = TRUE;
+    pNewWord = NULL;
+    recursestack.erase(recursestack.begin(), recursestack.end());
+    return 0;
+}
+
 // :  ( "name" -- )
 // Parse name and create a definition for name
 // Forth 2012 Core Wordset 6.1.0450
@@ -1029,47 +1040,56 @@ int CPP_semicolon()
 		    
       if (ifstack.size())                          ecode = E_V_INCOMPLETE_IF;
       if (beginstack.size() || whilestack.size())  ecode = E_V_INCOMPLETE_BEGIN;
-      if (dostack.size() || leavestack.size())     ecode = E_V_INCOMPLETE_LOOP;
-      if (casestack.size() || ofstack.size())      ecode = E_V_INCOMPLETE_CASE;
+      if (dostack.size()    || leavestack.size())  ecode = E_V_INCOMPLETE_LOOP;
+      if (casestack.size()  || ofstack.size())     ecode = E_V_INCOMPLETE_CASE;
       if (ecode) return ecode;
 
-      // Add a new entry into the dictionary
       if (debug) OutputForthByteCode (pCurrentOps);
-      pNewWord->Cfa = new byte[pCurrentOps->size()];
-      // NewWord.Pfa = ;
+      byte* lambda = new byte[pCurrentOps->size()];
+      void* pLambda;
+
+      if (pNewWord) {
+        // Add a new entry into the dictionary
+        pNewWord->Cfa = lambda;
+        if (IsForthWord(pNewWord->WordName)) {
+            WordListEntry* wi = pCompilationWL->GetFromName( pNewWord->WordName );
+            if (wi)
+	        *pOutStream << pNewWord->WordName << " is redefined\n";
+        }
+        pCompilationWL->push_back(pNewWord);
+        pLambda = ((byte*) pNewWord + offsetof(struct WordListEntry, Cfa));
+      }
+      else {
+        // noname definition
+        pLambda = new byte* ;
+        *((byte**) pLambda) = lambda;
+        PUSH_ADDR( (long int) pLambda )
+      }
 
       // Resolve any self references (recursion)
 
-      byte *bp, *dest;
+      byte *bp = (byte*) pLambda;
       unsigned long int i;
       vector<byte>::iterator ib;
 
-      bp = ((byte*) pNewWord + offsetof(struct WordListEntry, Cfa));
       while (recursestack.size())
-	{
-	  i = recursestack[recursestack.size() - 1];
-	  ib = pCurrentOps->begin() + i;
-	  for (i = 0; i < sizeof(void*); i++) *ib++ = *(bp + i);
-	  recursestack.pop_back();
-	}
-
-      dest = (byte*) pNewWord->Cfa;
-      bp = (byte*) &(*pCurrentOps)[0]; // ->begin();
-      while ((vector<byte>::iterator) bp < pCurrentOps->end()) *dest++ = *bp++;
-
-      if (IsForthWord(pNewWord->WordName)) {
-          WordListEntry* wi = pCompilationWL->GetFromName( pNewWord->WordName );
-          if (wi)
-	      *pOutStream << pNewWord->WordName << " is redefined\n";
+      {
+         i = recursestack[recursestack.size() - 1];
+         ib = pCurrentOps->begin() + i;
+         for (i = 0; i < sizeof(void*); i++) *ib++ = *(bp + i);
+         recursestack.pop_back();
       }
-      pCompilationWL->push_back(pNewWord);
+
+      bp = (byte*) &(*pCurrentOps)[0]; // ->begin();
+      while ((vector<byte>::iterator) bp < pCurrentOps->end()) *lambda++ = *bp++;
+
+
       pCurrentOps->erase(pCurrentOps->begin(), pCurrentOps->end());
       State = FALSE;
     }
   else
     {
       ecode = E_V_END_OF_DEF;
-      // goto endcompile;
     }
     
   return ecode;
@@ -1156,8 +1176,10 @@ int CPP_postpone ()
         pCurrentOps->push_back(OP_CALLADDR);
         OpsPushInt((long int) CPP_compilename);
       }
-      if (State && (pWord->Precedence & PRECEDENCE_NON_DEFERRED)) 
-	pNewWord->Precedence |= PRECEDENCE_NON_DEFERRED;
+      if (State && (pWord->Precedence & PRECEDENCE_NON_DEFERRED)) {
+        if (pNewWord) 
+	  pNewWord->Precedence |= PRECEDENCE_NON_DEFERRED;
+      }
     }
     return 0;  
 }
@@ -1918,8 +1940,15 @@ int CPP_brackettick ()
 // experimental non-standard word MY-NAME
 int CPP_myname()
 {
-  PUSH_ADDR( ((long int) pNewWord) )
-  return 0;
+  int e = 0;
+
+  if (pNewWord) {
+    PUSH_ADDR( ((long int) pNewWord) )
+  }
+  else
+    e = E_V_INVALID_NAMEARG;
+
+  return e;
 }
 
 //-------------------------------------------------------------------
@@ -2249,12 +2278,18 @@ int CPP_abortquote ()
 {
   // stack: ( -- | generate opcodes to print message and abort )
 
-  long int nc = strlen(pNewWord->WordName);;
-  char* str = new char[nc + 3];
-  strcpy(str, pNewWord->WordName);
-  strcat(str, ": ");
-  StringTable.push_back(str);
-
+  char* str = NULL;
+  int nc;
+  if (pNewWord) {
+    nc = strlen(pNewWord->WordName);
+    str = new char[nc + 3];
+    strcpy(str, pNewWord->WordName);
+    strcat(str, ": ");
+    StringTable.push_back(str);
+  }
+  else {
+    nc = -2;
+  }
   pCurrentOps->push_back(OP_JZ);
   OpsPushInt(4*WSIZE+9);   // relative jump count                       
 
@@ -2270,7 +2305,6 @@ int CPP_abortquote ()
   pCurrentOps->push_back(OP_CR);
   pCurrentOps->push_back(OP_ABORT);
   return e;
-
 }
 //------------------------------------------------------------------
 

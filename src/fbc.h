@@ -312,7 +312,6 @@
 #define OP_TONUMBER             297
 #define OP_NUMBERQUERY          298
 #define OP_SLITERAL             299
-
 #define OP_FLITERAL		300
 #define OP_2VARIABLE		301
 #define OP_2CONSTANT		302
@@ -322,7 +321,7 @@
 #define OP_LOOP                 306
 #define OP_PLUSLOOP             307
 #define OP_UNLOOP               308
-
+#define OP_NONAME               309
 #define OP_SPACE                310
 #define OP_BLANK                311
 #define OP_SLASHSTRING          312

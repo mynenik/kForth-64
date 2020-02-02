@@ -58,6 +58,7 @@ WordTemplate ForthWords[] =
     { "ALIAS",     OP_ALIAS,        NONDEFERRED },
     { "FORGET",    OP_FORGET,       NONDEFERRED },
     { "COLD",      OP_COLD,         NONDEFERRED },
+    { ":NONAME",   OP_NONAME,       NONDEFERRED },
     { ":",         OP_COLON,        NONDEFERRED },
     { ";",         OP_SEMICOLON,    IMMEDIATE },
     { "ALLOCATE",  OP_ALLOCATE,     0 },     

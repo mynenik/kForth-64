@@ -34,10 +34,6 @@
 include ans-words
 include ttester
 
-0 INVERT                        CONSTANT MAX-UINT
-0 INVERT 1 RSHIFT               CONSTANT MAX-INT
-0 INVERT 1 RSHIFT INVERT        CONSTANT MIN-INT
-
 DECIMAL
 
 Testing DO +LOOP with run-time increment, negative increment, infinite loop
@@ -76,168 +72,6 @@ T{ -20 31 -10 gd7 -> 31 21 11 1 -9 -19 6 }T
 T{ -20 29 -10 gd7 -> 29 19 9 -1 -11 5 }T
 
 \ ----------------------------------------------------------------------------
-COMMENT Skipping tests of DO +LOOP with large and small increments
-0 [IF]
-TESTING DO +LOOP with large and small increments
-
-\ Contributed by Andrew Haley
-
-MAX-UINT 8 RSHIFT 1+ CONSTANT USTEP
-USTEP NEGATE CONSTANT -USTEP
-MAX-INT 7 RSHIFT 1+ CONSTANT STEP
-STEP NEGATE CONSTANT -STEP
-
-VARIABLE BUMP
-
-T{ : GD8 BUMP ! DO 1+ BUMP @ +LOOP ; -> }T
-
-T{ 0 MAX-UINT 0 USTEP GD8 -> 256 }T
-T{ 0 0 MAX-UINT -USTEP GD8 -> 256 }T
-
-T{ 0 MAX-INT MIN-INT STEP GD8 -> 256 }T
-T{ 0 MIN-INT MAX-INT -STEP GD8 -> 256 }T
-
-\ Two's complement arithmetic, wraps around modulo wordsize
-\ Only tested if the Forth system does wrap around, use of conditional
-\ compilation deliberately avoided
-
-MAX-INT 1+ MIN-INT = CONSTANT +WRAP?
-MIN-INT 1- MAX-INT = CONSTANT -WRAP?
-MAX-UINT 1+ 0=       CONSTANT +UWRAP?
-0 1- MAX-UINT =      CONSTANT -UWRAP?
-
-: GD9  ( n limit start step f result -- )
-   >R IF GD8 ELSE 2DROP 2DROP R@ THEN -> R> }T
-;
-
-T{ 0 0 0  USTEP +UWRAP? 256 GD9
-T{ 0 0 0 -USTEP -UWRAP?   1 GD9
-T{ 0 MIN-INT MAX-INT  STEP +WRAP? 1 GD9
-T{ 0 MAX-INT MIN-INT -STEP -WRAP? 1 GD9
-[THEN]
-\ ------------------------------------------------------------------------------
-COMMENT Skipping DO +LOOP tests with maximum and minimum increments
-0 [IF]
-TESTING DO +LOOP with maximum and minimum increments
-
-: (-MI) MAX-INT DUP NEGATE + 0= IF MAX-INT NEGATE ELSE -32767 THEN ;
-(-MI) CONSTANT -MAX-INT
-
-T{ 0 1 0 MAX-INT GD8  -> 1 }T
-T{ 0 -MAX-INT NEGATE -MAX-INT OVER GD8  -> 2 }T
-
-T{ 0 MAX-INT  0 MAX-INT GD8  -> 1 }T
-T{ 0 MAX-INT  1 MAX-INT GD8  -> 1 }T
-T{ 0 MAX-INT -1 MAX-INT GD8  -> 2 }T
-T{ 0 MAX-INT DUP 1- MAX-INT GD8  -> 1 }T
-
-T{ 0 MIN-INT 1+   0 MIN-INT GD8  -> 1 }T
-T{ 0 MIN-INT 1+  -1 MIN-INT GD8  -> 1 }T
-T{ 0 MIN-INT 1+   1 MIN-INT GD8  -> 2 }T
-T{ 0 MIN-INT 1+ DUP MIN-INT GD8  -> 1 }T
-[THEN]
-\ ------------------------------------------------------------------------------
-COMMENT Skipping test of +LOOP setting I to an arbitrary value
-0 [IF]
-\ TESTING +LOOP setting I to an arbitrary value
-
-\ The specification for +LOOP permits the loop index I to be set to any value
-\ including a value outside the range given to the corresponding  DO.
-
-\ SET-I is a helper to set I in a DO ... +LOOP to a given value
-\ n2 is the value of I in a DO ... +LOOP
-\ n3 is a test value
-\ If n2=n3 then return n1-n2 else return 1
-: SET-I  ( n1 n2 n3 -- n1-n2 | 1 )
-   OVER = IF - ELSE 2DROP 1 THEN
-;
-
-: -SET-I ( n1 n2 n3 -- n1-n2 | -1 )
-   SET-I DUP 1 = IF NEGATE THEN
-;
-
-: PL1 20 1 DO I 18 I 3 SET-I +LOOP ;
-T{ PL1 -> 1 2 3 18 19 }T
-: PL2 20 1 DO I 20 I 2 SET-I +LOOP ;
-T{ PL2 -> 1 2 }T
-: PL3 20 5 DO I 19 I 2 SET-I DUP 1 = IF DROP 0 I 6 SET-I THEN +LOOP ;
-T{ PL3 -> 5 6 0 1 2 19 }T
-: PL4 20 1 DO I MAX-INT I 4 SET-I +LOOP ;
-T{ PL4 -> 1 2 3 4 }T
-: PL5 -20 -1 DO I -19 I -3 -SET-I +LOOP ;
-T{ PL5 -> -1 -2 -3 -19 -20 }T
-: PL6 -20 -1 DO I -21 I -4 -SET-I +LOOP ;
-T{ PL6 -> -1 -2 -3 -4 }T
-: PL7 -20 -1 DO I MIN-INT I -5 -SET-I +LOOP ;
-T{ PL7 -> -1 -2 -3 -4 -5 }T
-: PL8 -20 -5 DO I -20 I -2 -SET-I DUP -1 = IF DROP 0 I -6 -SET-I THEN +LOOP ;
-T{ PL8 -> -5 -6 0 -1 -2 -20 }T
-[THEN]
-\ ------------------------------------------------------------------------------
-TESTING multiple RECURSEs in one colon definition
-
-: ACK ( m n -- u )    \ Ackermann function, from Rosetta Code
-   OVER 0= IF  NIP 1+ EXIT  THEN       \ ack(0, n) = n+1
-   SWAP 1- SWAP                        ( -- m-1 n )
-   DUP  0= IF  1+  RECURSE EXIT  THEN  \ ack(m, 0) = ack(m-1, 1)
-   1- OVER 1+ SWAP RECURSE RECURSE     \ ack(m, n) = ack(m-1, ack(m,n-1))
-;
-
-T{ 0 0 ACK ->  1 }T
-T{ 3 0 ACK ->  5 }T
-T{ 2 4 ACK -> 11 }T
-
-\ ------------------------------------------------------------------------------
-TESTING multiple ELSE's in an IF statement
-\ Discussed on comp.lang.forth and accepted as valid ANS Forth
-
-: MELSE IF 1 ELSE 2 ELSE 3 ELSE 4 ELSE 5 THEN ;
-T{ 0 MELSE -> 2 4 }T
-T{ -1 MELSE -> 1 3 5 }T
-
-\ ------------------------------------------------------------------------------
-TESTING IMMEDIATE with CONSTANT  VARIABLE and CREATE [ ... DOES> ]
-
-\ Some tests in this section are modified for kForth, which does not have
-\ :NONAME and the comma operator.
-
-T{ 123 CONSTANT IW1 IMMEDIATE IW1 -> 123 }T
-T{ : IW2 IW1 LITERAL ; IW2 -> 123 }T
-T{ VARIABLE IW3 IMMEDIATE 234 IW3 ! IW3 @ -> 234 }T
-T{ : IW4 IW3 [ @ ] LITERAL ; IW4 -> 234 }T
-
-\ T{ :NONAME [ 345 ] IW3 [ ! ] ; DROP IW3 @ -> 345 }T
-T{ : NONAME [ 345 ] IW3 [ ! ] ; IW3 @ -> 345 }T
-
-\ T{ CREATE IW5 456 , IMMEDIATE -> }T
-T{ CREATE IW5 456 1 CELLS ?ALLOT ! IMMEDIATE -> }T
-
-\ T{ :NONAME IW5 [ @ IW3 ! ] ; DROP IW3 @ -> 456 }T
-T{ : NONAME IW5 [ @ IW3 ! ] ; IW3 @ -> 456 }T
-
-\ T{ : IW6 CREATE , IMMEDIATE DOES> @ 1+ ; -> }T
-T{ : IW6 CREATE 1 CELLS ?ALLOT ! IMMEDIATE DOES> @ 1+ ; -> }T
-
-T{ 111 IW6 IW7 IW7 -> 112 }T
-T{ : IW8 IW7 LITERAL 1+ ; IW8 -> 113 }T
-
-\ T{ : IW9 CREATE , DOES> @ 2 + IMMEDIATE ; -> }T
-T{ : IW9 CREATE 1 CELLS ?ALLOT ! DOES> @ 2 + IMMEDIATE ; -> }T
-
-: FIND-IW BL WORD FIND NIP ;  ( -- 0 | 1 | -1 )
-T{ 222 IW9 IW10 FIND-IW IW10 -> -1 }T   \ IW10 is not immediate
-T{ IW10 FIND-IW IW10 -> 224 1 }T        \ IW10 becomes immediate
-
-\ ------------------------------------------------------------------------------
-TESTING that IMMEDIATE doesn't toggle a flag
-
-VARIABLE IT1 0 IT1 !
-: IT2 1234 IT1 ! ; IMMEDIATE IMMEDIATE
-T{ : IT3 IT2 ; IT1 @ -> 1234 }T
-
-\ ------------------------------------------------------------------------------
-COMMENT Skipping RECURSE tests with :NONAME
-0 [IF]
 Testing RECURSE with :NONAME
 
 T{ :NONAME ( n -- 0,1,..n ) DUP IF DUP >R 1- RECURSE R> THEN ;
@@ -261,7 +95,6 @@ T{  1 rn2 EXECUTE -> 0 }T
 T{  2 rn2 EXECUTE -> 11 0 }T
 T{  4 rn2 EXECUTE -> 33 22 11 0 }T
 T{ 25 rn2 EXECUTE -> 33 22 11 0 }T
-[THEN]
 
 \ -----------------------------------------------------------------------------
 

@@ -710,7 +710,7 @@ pawnBit 2sqBit OR CONSTANT pawn2sqBits
 VARIABLE histTop
 
 2 CELLS CONSTANT histSize
-: histSize* 3 LSHIFT ;
+: histSize* 2* CELLS ;
 
 CREATE hist_dat HIST_STACK histSize* ALLOT
 hist_dat HIST_STACK histSize* + ptr histMax

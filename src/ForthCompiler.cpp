@@ -180,8 +180,9 @@ int ExecutionMethod (int Precedence)
         ex = EXECUTE_CURRENT_ONLY;
 	break;
       case NONDEFERRED:
-        if (State)
-          pNewWord->Precedence |= NONDEFERRED ;
+        if (State) {
+          if (pNewWord) pNewWord->Precedence |= NONDEFERRED ;
+        }
 	else
           ex = EXECUTE_UP_TO;
         break;
