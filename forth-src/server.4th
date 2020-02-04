@@ -36,7 +36,7 @@
 \   2016-06-02  km  include the modules interface
 \   2019-12-20  km  display port number in server message
 \   2019-12-31  km  display connection message with client IP address
-
+\   2020-02-04  km  use UW@
 include ans-words
 include struct
 include struct-ext
@@ -80,7 +80,7 @@ variable clilen
 
     sockfd 5 listen ABORT" ERROR on listen"
     cr ." Listening on port " 
-    serv_addr sockaddr_in->sin_port w@ 65535 and ntohs . ." ..." cr
+    serv_addr sockaddr_in->sin_port uw@ ntohs . ." ..." cr
 
     sockaddr_in% %size clilen !
     sockfd cli_addr clilen sock_accept to newsockfd
