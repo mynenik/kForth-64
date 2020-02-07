@@ -3,7 +3,7 @@
 // A compiler to generate kForth Byte Code (FBC) from expressions
 //   or programs
 //
-// Copyright (c) 1998--2019 Krishna Myneni, 
+// Copyright (c) 1998--2020 Krishna Myneni, 
 // <krishna.myneni@ccreweb.org>
 //
 // Contributors:
@@ -266,12 +266,12 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 		    case EXECUTE_UP_TO:
 		      // Execute the opcode vector immediately up to and
 		      //   including the current opcode
-
 		      pOpCodes->push_back(OP_RET);
 		      if (debug) OutputForthByteCode (pOpCodes);
 		      ecode = ForthVM (pOpCodes, &sp, &tp);
 		      pOpCodes->erase(pOpCodes->begin(), pOpCodes->end());
-		      if (ecode) goto endcompile; 
+		      if (ecode) goto endcompile;
+                      pOpCodes = pCurrentOps;
 		      break;
 
 		    case EXECUTE_CURRENT_ONLY:

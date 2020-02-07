@@ -50,7 +50,7 @@ WordTemplate ForthWords[] =
     { "COMPILE-NAME", OP_COMPILENAME, NONDEFERRED },
     { "POSTPONE",  OP_POSTPONE,     IMMEDIATE },
     { "[",         OP_LBRACKET,     IMMEDIATE },
-    { "]",         OP_RBRACKET,     IMMEDIATE },
+    { "]",         OP_RBRACKET,     NONDEFERRED },
     { "STATE",     OP_STATE,        0 },
     { "CREATE",    OP_CREATE,       NONDEFERRED },
     { "DOES>",     OP_DOES,         0 },

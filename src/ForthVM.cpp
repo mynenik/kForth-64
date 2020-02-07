@@ -3,7 +3,7 @@
 // The C++ portion of the kForth Virtual Machine to 
 // execute Forth byte code.
 //
-// Copyright (c) 1996--2019 Krishna Myneni,
+// Copyright (c) 1996--2020 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -997,7 +997,7 @@ int CPP_create ()
 
 // :NONAME ( -- )
 // Compile an anonymous definition
-// Forth 2012 Core
+// Forth 2012 Core Extensions Wordset 6.2.0455
 int CPP_noname()
 {
     State = TRUE;
@@ -2519,7 +2519,9 @@ int CPP_recurse()
   return 0;
 }
 //---------------------------------------------------------------------
-
+// [  "left-bracket" ( -- )
+// Enter interpretation state.
+// Forth 2012 Core Wordset 6.1.2500
 int CPP_lbracket()
 {
   State = FALSE;
@@ -2529,18 +2531,14 @@ int CPP_lbracket()
   return 0;
 }
 //--------------------------------------------------------------------
-
+// ]  "right-bracket" ( -- )
+// Enter compilation state.
+// Forth 2012 Core Wordset 6.1.2540
 int CPP_rbracket()
 {
-  pCurrentOps->push_back(OP_RET);
-  if (debug) OutputForthByteCode(pCurrentOps);
-  byte* pIp = GlobalIp;
-  int e = vm((byte*) &(*pCurrentOps)[0]);
-  pCurrentOps->erase(pCurrentOps->begin(), pCurrentOps->end());
-  GlobalIp = pIp;
   State = TRUE;
   pCurrentOps = pPreviousOps;
-  return e;
+  return 0;
 }
 //-------------------------------------------------------------------
 
