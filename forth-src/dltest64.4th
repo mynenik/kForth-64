@@ -1,0 +1,51 @@
+\ dltest64.4th
+\
+\ Test use of the experimental dynamic link library 
+\ interface in kForth-64 for x86_64-linux, v 0.1.4 and greater.
+\
+\ K. Myneni, krishna.myneni@ccreweb.org
+\ Last Revised: 2020-01-31
+\
+\ Notes:
+\
+
+include ans-words
+include strings
+include utils
+include fcalls-x86_64
+include dump
+
+base @
+hex
+
+1 constant RTLD_LAZY
+
+: check-dlerror ( -- ) 
+    dlerror dup IF  dup strlen cr type cr ABORT THEN drop ;
+
+0 value hndLib
+0 value llabs 
+    
+: dltest ( -- )
+    c" libc-2.17.so" 1+ RTLD_LAZY dlopen to hndLib
+    hndLib 0= IF check-dlerror THEN
+    cr ." Opened the C library, libc-2.17.so."
+
+    hndLib c" llabs" 1+ dlsym to llabs
+    check-dlerror
+    cr ." Loaded library function 'llabs' at address " 
+    llabs hex u. decimal
+
+    -3 llabs fcall1        \ call the library function
+
+    cr ." -3 llabs returns " dup . 
+    ."  which is "
+    -3 abs = IF ." correct." ELSE ." INCORRECT!" THEN 
+    hndLib dlclose
+    cr ." dlclose returned " .
+;
+
+dltest
+
+base !
+
