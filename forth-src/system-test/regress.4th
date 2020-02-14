@@ -17,7 +17,8 @@
 \        Revised:  April 16, 2017  km; fixed mispelling, FFLOOR to FLOOR
 \                    in comment line.
 \        Revised:  January 26, 2020  km; fixed DU< tests for 64-bit.
-\        Revised:  January 29. 2020  km; added tests for UW@ SW@ UL@ SL@ L!
+\        Revised:  January 29, 2020  km; added tests for UW@ SW@ UL@ SL@ L!
+\        Revised:  February 13, 2020 km; added tests for NUMBER? 
 s" ans-words.4th" included
 s" ttester.4th" included
 
@@ -437,6 +438,21 @@ t{  0  3 -1  2 dmin -> -1  2 }t
 t{  0  3 -1  3 dmin ->  0  3 }t
 t{ -1  2  0  3 dmin -> -1  2 }t
 t{ -1  3  0  3 dmin ->  0  3 }t
+
+hex
+testing NUMBER?
+64bit? [IF]
+t{ c" FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF" number? -> -1 s>d true }t
+t{ c" ABBA00FACADEBABACAFE" number? -> facadebabacafe abba true }t
+t{ c" abba00facadebabacafe" number? -> facadebabacafe abba true }t  
+[ELSE]
+t{ c" FFFFFFFFFFFFFFFF" number? -> -1 s>d true }t
+t{ c" FACADEBABACAFE" number?  ->  babacafe facade true }t
+t{ c" facadebabacafe" number?  ->  babacafe facade true }t
+[THEN]
+t{ c" 5G" number?  ->  5 s>d false }t
+t{ c" G5" number?  ->  0 s>d false }t
+decimal
 
 64bit? invert [IF]
 COMMENT Uncomment lines in regress.4th to test errors.
