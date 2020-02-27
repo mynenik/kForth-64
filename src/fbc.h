@@ -382,7 +382,6 @@
 #define OP_FLNP1		367
 #define OP_UDDOTR		368
 #define OP_DDOTR		369
-
 #define OP_F2DROP               370
 #define OP_F2DUP                371
 #define OP_ZSWAP                372

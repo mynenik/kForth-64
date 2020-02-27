@@ -585,9 +585,6 @@ void PrintVM_Error (long int ec)
 	*pOutStream << " VM Error(" << ec << "): " << pMsg << endl;
 }
 //---------------------------------------------------------------
-
-int ForthVM (vector<byte>* pFBC, long int** pStackPtr, byte** pTypePtr)
-{
 // The FORTH Virtual Machine
 //
 // Arguments:
@@ -598,7 +595,8 @@ int ForthVM (vector<byte>* pFBC, long int** pStackPtr, byte** pTypePtr)
 //
 // Return value: error code (see ForthVM.h)
 //
-
+int ForthVM (vector<byte>* pFBC, long int** pStackPtr, byte** pTypePtr)
+{
   if (pFBC->size() == 0) return 0;  // null opcode vector
 
   // Initialize the instruction ptr and error code
@@ -1006,7 +1004,7 @@ int CPP_noname()
     return 0;
 }
 
-// :  ( "name" -- )
+// : (colon)  ( "name" -- )
 // Parse name and create a definition for name
 // Forth 2012 Core Wordset 6.1.0450
 int CPP_colon()
@@ -1025,7 +1023,7 @@ int CPP_colon()
     return 0;
 }
 
-// ; ( -- )
+// ; (semicolon)  ( -- )
 // End the current definition
 // Forth 2012 Core Wordset 6.1.0460
 int CPP_semicolon()
@@ -1331,24 +1329,20 @@ int CPP_dotr ()
   pOutStream->flush();
   return i;
 }
-//---------------------------------------------------------------
 
+// U.R  ( u n -- )
+// Print unsigned single in current base, right-justified in field width n.
+// Forth 2012 Core Extensions Wordset 6.2.2330 
 int CPP_udotr ()
 {
-  // stack: ( u n -- | print unsigned in field width n )
-
+  if ((GlobalSp+2) > BottomOfStack) return E_V_STK_UNDERFLOW;
   DROP
-  if (GlobalSp > BottomOfStack) return E_V_STK_UNDERFLOW;
-  
   long int i, ndig, nfield;
-  unsigned long int u, utemp, uscale;
-
   nfield = TOS;
   DROP
-  if (GlobalSp > BottomOfStack) return E_V_STK_UNDERFLOW;
-
   if (nfield <= 0) return 0;  // don't print anything if field with <= 0
 
+  unsigned long int u, utemp, uscale;
   u = TOS;
   ndig = 1;
   uscale = 1;
@@ -1395,12 +1389,12 @@ int CPP_udot0 ()
     }
   return 0;
 }
-//--------------------------------------------------------------
 
+// U.  ( u -- )
+// Display unsigned single in current base, followed by space
+// Forth 2012 Core Wordset 6.1.2320
 int CPP_udot ()
 {
-  // stack: ( u -- | print unsigned single in current base followed by space )
-
   int e = CPP_udot0();
   if (e)
     return e;
@@ -1411,17 +1405,15 @@ int CPP_udot ()
     }
   return 0;
 }
-//---------------------------------------------------------------
 
+// UD.  ( ud -- )
+// Print unsigned double in current base
+// Non-standard
 int CPP_uddot ()
 {
-  // stack: ( ud -- | print unsigned double in current base )
-
   if ((GlobalSp + 2) > BottomOfStack) return E_V_STK_UNDERFLOW;
   
-  unsigned long int u1;
-
-  u1 = *(GlobalSp + 1);
+  unsigned long int u1 = *(GlobalSp + 1);
   if (u1 == 0)
     {
       DROP
@@ -1436,15 +1428,33 @@ int CPP_uddot ()
       *pOutStream << ' ';
       pOutStream->flush();
     }
-  
   return 0;
 }
-//---------------------------------------------------------------
 
+// UD.R  ( ud n -- )
+// Display unsigned double, right-justified in field of width n
+// Non-standard
+int CPP_uddotr ()
+{
+  if ((GlobalSp + 3) > BottomOfStack) return E_V_STK_UNDERFLOW;
+  DROP
+  long int nfield = TOS;
+  C_bracketsharp();
+  C_sharps();
+  C_sharpbracket();  // ( -- caddr ndig )
+  int ndig = *(GlobalSp + 1);
+  if (ndig <= nfield)
+    for (int i = 0; i < (nfield - ndig); i++) *pOutStream << ' ';
+  CPP_type();
+  pOutStream->flush();
+  return 0;
+}
+ 
+// D.  ( d -- )
+// Print signed double length number in current base.
+// Forth 2012 Double Number Wordset 8.6.1.1060
 int CPP_ddot ()
 {
-  // stack: ( d -- | print signed double length number )
-
   if ((GlobalSp + 2) > BottomOfStack) 
     return E_V_STK_UNDERFLOW;
   else
@@ -1459,12 +1469,37 @@ int CPP_ddot ()
     }
   return 0;
 }
-//---------------------------------------------------------------
 
+// D.R ( d n -- )
+// Print signed double length number, right justified in field width n
+// Forth 2012 Double Number Wordset 8.6.1.1070
+int CPP_ddotr ()
+{
+  if ((GlobalSp + 3) > BottomOfStack) return E_V_STK_UNDERFLOW;
+  DROP
+  int nfield = TOS;
+  if (nfield <= 0) return 0;  // don't print anything if field with <= 0
+  long int n = *(GlobalSp+1);
+  L_dabs();
+  C_bracketsharp();
+  C_sharps();
+  C_sharpbracket();  // ( -- caddr ndig )
+  int ndig, ntot;
+  ndig = *(GlobalSp + 1);  
+  ntot = (n < 0) ? ndig + 1 : ndig;
+  if (ntot <= nfield)
+      for (int i = 0; i < (nfield - ntot); i++) *pOutStream << ' ';
+  if (n < 0) *pOutStream << '-';
+  CPP_type();
+  pOutStream->flush();
+  return 0;
+}
+
+// F.  ( r -- )
+// Print floating point number from the stack.
+// Forth-94 Floating Point Extensions Wordset 12.6.2.1427
 int CPP_fdot ()
 {
-  // stack: ( f -- | print floating point number )
-
   DROP
   DROP
   if (GlobalSp > BottomOfStack)
@@ -1478,12 +1513,12 @@ int CPP_fdot ()
     }
   return 0;
 }
-//---------------------------------------------------------------
 
+// FS.  ( r -- )
+// Print floating point number in scientific notation.
+// Forth-94 Floating Point Extensions Wordset 12.6.2.1613
 int CPP_fsdot ()
 {
-  // stack: ( f -- | print floating point number )
-
   DROP
   DROP
   if (GlobalSp > BottomOfStack)
@@ -1502,8 +1537,10 @@ int CPP_fsdot ()
     }
   return 0;
 }
-//---------------------------------------------------------------
 
+// .S  ( i*x -- i*x )
+// Display the contents of the data stack
+// Forth 2012 Programming Tools Wordset 15.6.1.0220
 int CPP_dots ()
 {
   if (GlobalSp > BottomOfStack) return E_V_STK_UNDERFLOW;
@@ -1553,13 +1590,12 @@ int CPP_dots ()
 
   return 0;
 }
-//---------------------------------------------------------------
 
+// ' (tick) ( "name" -- xt )
+// Find "name" and return its execution token. If not found, throw exception.
+// Forth 2012 Core Wordset 6.1.0070
 int CPP_tick ()
 {
-    // stack: ( "name" -- xt )
-    // Return error if "name" is not found in current search order
-
     char name[128];
     pTIB = ExtractName(pTIB, name);
     strupr(name);
@@ -1575,11 +1611,13 @@ int CPP_tick ()
     
     return e;
 }
-//---------------------------------------------------------------
 
+// >BODY  ( xt -- pfa | 0 )
+// Return parameter field address corresponding to xt.
+// Forth 2012 Core Wordset 6.1.0550
+// System-specific: if xt is not for a CREATEd word, return 0.
 int CPP_tobody ()
 {
-   // stack: ( xt -- pfa | 0 )
    INC_DSP
    void** pCfa = (void**) TOS;
    void** pPfa = ++pCfa;
@@ -1587,30 +1625,37 @@ int CPP_tobody ()
    DEC_DSP
    return 0;
 }
-//---------------------------------------------------------------
 
+// [DEFINED]  ( "name" -- flag )
+// Return true if "name" can be found in search order.
+// Forth 2012 Programming Tools Extensions 15.6.2.2530.30
 int CPP_defined ()
 {
-   // stack: ( "name" -- flag)
    int not_found = CPP_tick();
    if ( ! not_found ) { DROP }
    PUSH_IVAL( not_found ? FALSE : TRUE )
    return 0;
 }
 
+// [UNDEFINED]  ( "name" -- flag )
+// Return true if "name" cannot be found in search order.
+// Forth 2012 Programming Tools Extensions 15.6.2.2534
 int CPP_undefined ()
 {
-   // stack: ( "name" -- flag)
    int not_found = CPP_tick();
    if ( ! not_found ) { DROP }
    PUSH_IVAL( not_found ? TRUE : FALSE )
    return 0;
 }
 
+// FIND  ( ^str -- ^str 0 | xt 1 | xt -1 )
+// Find dictionary word represented by counted string. 
+// If found return execution token and either 1 for an
+// immediate word or -1 for default compilation semantics;
+// Return ^str and 0 if word cannot be found in search order.
+// Forth 2012 Core Wordset 6.1.1550
 int CPP_find ()
 {
-  // stack: ( ^str -- ^str 0 | xt_addr 1 | xt_addr -1 )
-
   DROP
   CHK_ADDR
   unsigned char* s = *((unsigned char**) GlobalSp);
@@ -1633,11 +1678,12 @@ int CPP_find ()
     }
   return 0;
 }
-//---------------------------------------------------------------
 
+// EMIT  ( n -- )
+// Display character with ASCII code n
+// Forth 2012 Core Wordset 6.1.1320
 int CPP_emit ()
 {
-  // stack: ( n -- | display character with ascii code n )
   DROP
   if (GlobalSp > BottomOfStack)
     return E_V_STK_UNDERFLOW;
@@ -1648,15 +1694,19 @@ int CPP_emit ()
     }
   return 0;
 }
-//---------------------------------------------------------------
 
+// CR  ( -- )
+// Begin output on a new line.
+// Forth 2012 Core Wordset 6.1.0990
 int CPP_cr ()
 {
   *pOutStream << '\n';
   return 0;
 }
-//---------------------------------------------------------------
 
+// SPACES  ( n -- )
+// Display n spaces
+// Forth 2012 Core Wordset 6.1.2230
 int CPP_spaces ()
 {
   DROP
@@ -1671,8 +1721,10 @@ int CPP_spaces ()
     }
   return 0;
 }
-//---------------------------------------------------------------
 
+// TYPE  ( c-addr u -- )
+// Display character string 
+// Forth 2012 Core Wordset 6.1.2310
 int CPP_type ()
 {
   DROP
@@ -1691,11 +1743,12 @@ int CPP_type ()
     }
   return 0;
 }
-//---------------------------------------------------------------
 
+// ALLOCATE  ( u -- a ior )
+// Allocate u bytes and return address and i/o result 
+// Forth 2012 Memory Allocation Wordset 14.6.1.0707
 int CPP_allocate()
 {
-  // stack: ( u -- a ior | allocate u bytes and return address and success)
   DROP
   if (GlobalSp > BottomOfStack) 
     return E_V_STK_UNDERFLOW;
@@ -1712,10 +1765,11 @@ int CPP_allocate()
   return 0;
 }
 
-
+// FREE  ( a -- ior )
+// Free the previously allocated region at address a; return i/o result.
+// Forth 2012 Memory Allocation Wordset 14.6.1.1605
 int CPP_free()
 {
-    // stack: ( a -- ior | free the allocated region at address a )
     DROP
     CHK_ADDR
     byte *p = (byte*) TOS; 
@@ -1724,10 +1778,11 @@ int CPP_free()
     return 0;
 }
 
-
+// RESIZE  ( a unew -- anew ior )
+// Change allocation size of region at address a to unew bytes.
+// Forth 2012 Memory Allocation Wordset 14.6.1.2145
 int CPP_resize()
 {
-    // stack: ( a unew -- anew ior )
     DROP
     unsigned long unew = TOS;
     DROP
@@ -1743,8 +1798,13 @@ int CPP_resize()
 
     return 0;
 }
-//----------------------------------------------------------------
 
+// ALLOT  ( n -- )
+// Reserve n bytes of memory
+// Forth 2012 Core Wordset 6.1.0710
+// System-specific: if n <= 0, ALLOT does not do anything.
+// All memory is dynamically allocated in kForth (see ?ALLOT).
+// ALLOT must only be used following CREATE.
 int CPP_allot ()
 {
   DROP
@@ -1779,12 +1839,12 @@ int CPP_allot ()
 
   return 0;
 }
-//--------------------------------------------------------------
 
+// ?ALLOT  ( n -- a )
+// Perform ALLOT and return starting address of allotted region.
+// Non-standard
 int CPP_queryallot ()
 {
-  // stack: ( n -- a | allot n bytes and leave starting address on the stack )
-
   int e = CPP_allot();
   if (!e)
     {
@@ -1795,11 +1855,13 @@ int CPP_queryallot ()
     }
   return e;
 }
-//---------------------------------------------------------------
 
+// ALIAS  ( xt "name" -- )
+// Create a new dictionary entry for "name" with execution
+// semantics defined by xt.
+// Non-standard
 int CPP_alias ()
 {
-    // stack: ( xt "name" -- )
     DROP
     void** pCfa = (void**) TOS;
     CHK_ADDR
@@ -1821,29 +1883,32 @@ int CPP_alias ()
 
     return 0;
 }
-//-----------------------------------------------------------------
 
+// VARIABLE ( "name" -- )
+// Create a dictionary entry for "name" and allot 1 cell.
+// Forth 2012
 int CPP_variable ()
 {
-  // stack: ( -- | create dictionary entry and allot space )
   if (CPP_create()) return E_V_CREATE;
   PUSH_IVAL( sizeof(long int) )  
   return( CPP_allot() );
 }
-//-----------------------------------------------------------------
 
+// 2VARIABLE ( "name" -- )
+// Create a dictionary entry for "name" and allot 2 cells.
+// Forth 2012
 int CPP_twovariable ()
 {
-  // stack: ( -- | create dictionary entry and allot space )
   if (CPP_create()) return E_V_CREATE;
   PUSH_IVAL( 2*sizeof(long int) )  
   return( CPP_allot() );
 }
-//-----------------------------------------------------------------
 
+// FVARIABLE  ( "name" -- )
+// Create dictionary entry for "name" and allot space for 1 dfloat.
+// Forth 2012
 int CPP_fvariable ()
 {
-  // stack: ( -- | create dictionary entry and allot space )
   if (CPP_create()) return E_V_CREATE;
   PUSH_IVAL( sizeof(double) )  
   return( CPP_allot() );
@@ -2400,12 +2465,12 @@ int CPP_if()
   OpsPushInt(0);   // placeholder for jump count
   return 0;
 }
-//------------------------------------------------------------------
 
+// ELSE  ( -- )
+// Build IF ... ELSE ... THEN block
+// Forth 2012 
 int CPP_else()
 {
-  // stack: ( -- | build the if-else-then block )
-
   pCurrentOps->push_back(OP_JMP);
   OpsPushInt(0);  // placeholder for jump count
 
@@ -2418,12 +2483,12 @@ int CPP_else()
 
   return 0;
 }
-//-------------------------------------------------------------------
 
+// THEN  ( -- )
+// Complete the current IF ... THEN or IF ... ELSE ... THEN block.
+// Forth 2012
 int CPP_then()
 {
-  // stack: ( -- | complete the if-then or if-else-then block )
-
   if (ifstack.empty()) 
     return E_V_THEN_NO_IF;  // THEN without matching IF or IF-ELSE
 
@@ -2434,21 +2499,21 @@ int CPP_then()
 
   return 0;
 }
-//-------------------------------------------------------------------
 
+// CASE  ( n -- )
+// Begin a CASE ... ENDCASE control structure
+// Forth 2012
 int CPP_case()
 {
-  // stack: ( n -- | mark the beginning of a case...endcase structure)
-
   casestack.push_back(-1);
   return 0;
 }
-//-----------------------------------------------------------------
 
+// ENDCASE  ( -- )
+// Terminate a CASE ... ENDCASE control structure
+// Forth 2012
 int CPP_endcase()
 {
-  // stack: ( -- | terminate the case...endcase structure)
-
   if (casestack.size() == 0) return E_V_NO_CASE;  // ENDCASE without matching CASE
   pCurrentOps->push_back(OP_DROP);
 
@@ -2466,12 +2531,12 @@ int CPP_endcase()
 
   return 0;
 }
-//----------------------------------------------------------------
 
+// OF  ( -- )
+// Begin an OF ... ENDOF control block.
+// Forth 2012
 int CPP_of()
 {
-  // stack: ( -- | generate start of an of...endof block)
-
   pCurrentOps->push_back(OP_OVER);
   pCurrentOps->push_back(OP_EQ);
   pCurrentOps->push_back(OP_JZ);
@@ -2480,12 +2545,12 @@ int CPP_of()
   pCurrentOps->push_back(OP_DROP);
   return 0;
 }
-//-----------------------------------------------------------------
 
+// ENDOF  ( -- )
+// Complete an OF ... ENDOF control block.
+// Forth 2012
 int CPP_endof()
 {
-  // stack: ( -- | complete an of...endof block)
-
   pCurrentOps->push_back(OP_JMP);
   casestack.push_back(pCurrentOps->size());
   OpsPushInt(0);   // placeholder for jump count
@@ -2500,8 +2565,10 @@ int CPP_endof()
 
   return 0;
 }
-//-----------------------------------------------------------------
 
+// RECURSE  ( -- )
+//
+// Forth 2012
 int CPP_recurse()
 {
   pCurrentOps->push_back(OP_ADDR);
@@ -2518,7 +2585,7 @@ int CPP_recurse()
   pCurrentOps->push_back(OP_EXECUTE_BC);
   return 0;
 }
-//---------------------------------------------------------------------
+
 // [  "left-bracket" ( -- )
 // Enter interpretation state.
 // Forth 2012 Core Wordset 6.1.2500
@@ -2530,7 +2597,7 @@ int CPP_lbracket()
   pCurrentOps = &tempOps;
   return 0;
 }
-//--------------------------------------------------------------------
+
 // ]  "right-bracket" ( -- )
 // Enter compilation state.
 // Forth 2012 Core Wordset 6.1.2540
@@ -2540,8 +2607,10 @@ int CPP_rbracket()
   pCurrentOps = pPreviousOps;
   return 0;
 }
-//-------------------------------------------------------------------
 
+// DOES>  ( -- )
+//
+// Forth 2012 
 int CPP_does()
 {
   // Allocate new opcode array
@@ -2568,35 +2637,32 @@ int CPP_does()
   L_ret();
   return 0;
 }
-//-------------------------------------------------------------------
 
+// IMMEDIATE  ( -- )
+// Mark the most recently defined word as immediate.
+// Forth 2012 Core Wordset 
 int CPP_immediate ()
 {
-  // Mark the most recently defined word as immediate.
-  // stack: ( -- )
-
   WordListEntry* pWord = *(pCompilationWL->end() - 1);
   pWord->Precedence |= PRECEDENCE_IMMEDIATE;
   return 0;
 }
-//-------------------------------------------------------------------
 
+// NONDEFERRED  ( -- )
+// Mark the most recently defined word as non-deferred.
+// Non-standard word (see kForth Manual)
 int CPP_nondeferred ()
 {
-  // Mark the most recently defined word as non-deferred.
-  // stack: ( -- )
-
   WordListEntry* pWord = *(pCompilationWL->end() - 1);
   pWord->Precedence |= PRECEDENCE_NON_DEFERRED;
   return 0;
 }
-//-------------------------------------------------------------------
 
+// EVALUATE  ( i*x c-addr u -- j*x )
+// Evaluate a character string containing Forth source
+// Forth 2012 Core Wordset 
 int CPP_evaluate ()
 {
-  // Evaluate a Forth source string
-  // ( ... a u -- ? )
-
   char s[256], s2[256];
   DROP
   long int nc = TOS; int ec = 0;
@@ -2635,13 +2701,13 @@ int CPP_evaluate ()
   return( ec );
   
 }
-//-------------------------------------------------------------------
 
+// INCLUDED  ( c-addr u -- )
+//
+// Forth 2012 
 int CPP_included()
 {
   // include the filename given on the stack as a counted string
-  // ( ... a u -- ?)
-
   char filename[256];
   DROP
   long int nc = TOS;
@@ -2707,8 +2773,8 @@ int CPP_included()
   return ecode;
 }
 
-//-------------------------------------------------------------------
-
+// INCLUDE ( "name" -- )
+//
 int CPP_include()
 {
     char WordToken[256], s[256];
@@ -2727,16 +2793,20 @@ int CPP_include()
     
     return 0;
 }
-//-------------------------------------------------------------------
 
+// SOURCE ( )
+//
+// Forth 2012
 int CPP_source()
 {
     PUSH_ADDR((long int) TIB)
     PUSH_IVAL(strlen(TIB))
     return 0;
 }
-//-------------------------------------------------------------------
 
+// REFILL ( -- )
+//
+// Forth 2012
 int CPP_refill()
 {
     pInStream->getline(TIB, 255); 
@@ -2746,24 +2816,23 @@ int CPP_refill()
     pTIB = TIB;
     return 0;
 }
-//-------------------------------------------------------------------
 
+// STATE  ( -- n )
+// Return value indicating Forth state (0/1 for interpreting/compiling)
+// Forth 2012
 int CPP_state()
 {
     PUSH_ADDR((long int)(&State))
     return 0;
 }
-//-------------------------------------------------------------------
 
+// SP! (spstore) ( a -- )
+// Set the stack pointer to address a; throw exception if a is
+// outside of the stack space.
+// Forth 2012
+// System-specific: the "type stack" is correspondingly adjusted.
 int CPP_spstore()
 {
-    // stack: ( addr -- | make the stack ptr point to a new address)
-
-// cout << "GlobalSp = " << GlobalSp << "  ForthStack = " << ForthStack << endl;
-// #ifndef __FAST__
-// cout << "GlobalTp = " << (void *) GlobalTp << "  ForthTypeStack = " << (void *) ForthTypeStack << endl;
-// #endif
-
     DROP
     CHK_ADDR
     long int* p = (long int*) TOS; --p;
@@ -2777,12 +2846,13 @@ int CPP_spstore()
 #endif
     return 0;
 }
-//--------------------------------------------------------------------
 
+// RP! (rpstore)  ( a -- )
+// Set the return stack pointer to address a.
+// Forth 2012
+// System-specific: the "return type stack" is correspondingly adjusted.
 int CPP_rpstore()
 {
-    // stack: ( addr -- | make the stack ptr point to a new address)
-
     DROP
     CHK_ADDR
     long int* p = (long int*) TOS; --p;
