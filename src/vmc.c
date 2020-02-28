@@ -1173,7 +1173,11 @@ int C_us2fetch ()
      (tv.tv_usec - ForthStartTime.tv_usec);
   TOS = *((long int*)&usec);
   DEC_DSP
+#if WSIZE == 4
   TOS = *((long int*)&usec + 1);
+#else
+  TOS = 0;
+#endif
   DEC_DSP
   STD_IVAL
   STD_IVAL
