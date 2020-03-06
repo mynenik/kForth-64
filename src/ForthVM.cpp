@@ -1043,7 +1043,8 @@ int CPP_semicolon()
       if (ecode) return ecode;
 
       if (debug) OutputForthByteCode (pCurrentOps);
-      byte* lambda = new byte[pCurrentOps->size()];
+      int nalloc = max( (int) pCurrentOps->size(), 2*WSIZE );
+      byte* lambda = new byte[ nalloc ];
       void* pLambda;
 
       if (pNewWord) {
