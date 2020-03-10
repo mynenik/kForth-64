@@ -218,22 +218,6 @@
 	LOGIC_DYADIC xor
 .endm
 	
-
-// use algorithm from DNW's vm-osxppc.s
-.macro _ABS	
-	LDSP
-	mov WSIZE(%rbx), %rcx
-	xor %rax, %rax
-	cmp %rax, %rcx
-	setl %al
-	neg %rax
-	mov %rax, %rdx
-	xor %rcx, %rdx
-	sub %rax, %rdx
-	mov %rdx, WSIZE(%rbx)
-	xor %rax, %rax
-.endm
-	
 // Dyadic relational operators (single length numbers) 
 	
 .macro REL_DYADIC setx
@@ -354,62 +338,6 @@
 	dec %rax
 	movq %rax, GlobalTp(%rip)
 	xor %rax, %rax
-.endm
-			
-.macro DNEGATE
-	LDSP
-	INC_DSP
-	mov %rbx, %rcx
-	INC_DSP
-	mov (%rbx), %rax
-	not %rax
-	clc
-	addq $1, %rax
-	mov %rax, (%rbx)
-	mov %rcx, %rbx
-	mov (%rbx), %rax
-	not %rax
-	adcq $0, %rax
-	mov %rax, (%rbx)
-	xor %rax, %rax	
-.endm
-	
-.macro STARSLASH
-	movq $2*WSIZE, %rax
-	addq %rax, GlobalSp(%rip)
-	LDSP
-	movq WSIZE(%rbx), %rax
-	imulq (%rbx)
-	idivq -WSIZE(%rbx)
-	mov %rax, WSIZE(%rbx)
-	INC2_DTSP
-	xor %rax, %rax
-.endm
-	
-
-.macro TNEG
-	LDSP
-	movq $WSIZE, %rax
-	add %rax, %rbx
-	mov (%rbx), %rdx
-	add %rax, %rbx
-	mov (%rbx), %rcx
-	add %rax, %rbx
-	mov (%rbx), %rax
-	not %rax
-	not %rcx
-	not %rdx
-	clc
-	addq $1, %rax
-	adcq $0, %rcx
-	adcq $0, %rdx
-	mov %rax, (%rbx)
-	movq $WSIZE, %rax
-	sub %rax, %rbx
-	mov %rcx, (%rbx)
-	sub %rax, %rbx
-	mov %rdx, (%rbx)
-	xor %rax, %rax	
 .endm
 
 .macro BOOLEAN_QUERY
@@ -1405,9 +1333,17 @@ L_minusrot:
 	NEXT
 
 L_nip:
-	SWAP
-	addq $WSIZE, GlobalSp(%rip)
-	INC_DTSP
+        LDSP
+        INC_DSP
+        movq (%rbx), %rax
+        movq %rax, WSIZE(%rbx)
+        STSP
+        movq GlobalTp(%rip), %rbx
+        inc %rbx
+        movb (%rbx), %al
+        movb %al, 1(%rbx)
+        movq %rbx, GlobalTp(%rip)
+        xor %rax, %rax
 	NEXT
 
 L_tuck:
@@ -1853,6 +1789,7 @@ L_dfstore:
 	NEXT
 
 L_abs:
+        LDSP
 	_ABS
 	NEXT
 
@@ -2017,10 +1954,13 @@ L_slashmod:
 	NEXT
 
 L_starslash:
-	STARSLASH	
+        LDSP
+	STARSLASH
+        STSP
 	NEXT
 
 L_starslashmod:
+        LDSP
 	STARSLASH
 	mov %rdx, (%rbx)
 	DEC_DSP
@@ -2058,7 +1998,7 @@ L_plusstore:
 L_dabs:
 	LDSP
 	INC_DSP
-	mov (%rbx), %rcx
+	mov (%rbx), %rcx  # high dword
 	mov %rcx, %rax
 	cmpq $0, %rax
 	jl dabs_go
@@ -2066,7 +2006,7 @@ L_dabs:
 	ret
 dabs_go:
 	INC_DSP
-	mov (%rbx), %rax
+	mov (%rbx), %rax  # low dword
 	clc
 	subq $1, %rax
 	not %rax
@@ -2079,6 +2019,7 @@ dabs_go:
 	ret
 
 L_dnegate:
+        LDSP
 	DNEGATE
 #	NEXT	
 	ret
@@ -2121,8 +2062,8 @@ L_dsstar:
 	xorb %ah, %al      # sign of result
 	andq $1, %rax
 	push %rax
+        LDSP
 	_ABS
-	LDSP
 	INC_DSP
 	STSP
 	INC_DTSP
@@ -2132,6 +2073,7 @@ L_dsstar:
 	STSP
 	DEC_DTSP
 	call L_udmstar
+        LDSP
 	pop %rax
 	cmpq $0, %rax
 	jne dsstar1
@@ -2300,6 +2242,8 @@ L_stsslashrem:
 # rule for symmetric division.
 	LDSP
 	INC_DSP
+        INC_DTSP
+        STSP
 	mov (%rbx), %rcx		# divisor in rcx
 	cmpq $0, %rcx
 	jz   E_div_zero
@@ -2316,11 +2260,14 @@ L_stsslashrem:
 	neg %rax
 	xor %rax, %rdx			# sign of quotient
 	push %rdx
-	STSP
 	call L_tabs
-	subq $WSIZE, GlobalSp(%rip)
+        LDSP
+        DEC_DSP
+        DEC_DTSP
+        STSP
 	_ABS
 	call L_utsslashmod
+        LDSP
 	pop %rdx
 	cmpq $0, %rdx
 	jz stsslashrem1
@@ -2329,7 +2276,6 @@ stsslashrem1:
 	pop %rax
 	cmpq $0, %rax
 	jz stsslashrem2
-	LDSP
 	addq $4*WSIZE, %rbx
 	negq (%rbx)	
 stsslashrem2:
@@ -2434,24 +2380,25 @@ utmslash6:
 L_mstarslash:
 	LDSP
 	INC_DSP
+        movq (%rbx), %rax  # rax = +n2
+        cmpq $0, %rax
+        jz E_div_zero
 	INC_DSP
-	mov (%rbx), %rax
+	mov (%rbx), %rax   # rax = n1
 	INC_DSP
 	xor (%rbx), %rax
-	shrq $8*WSIZE-1, %rax
+	shrq $8*WSIZE-1, %rax  # eax = sign(n1) xor sign(d1)
 	push %rax	# keep sign of result -- negative is nonzero
-	LDSP
-	INC_DSP
-	STSP
-	INC_DTSP
-	_ABS
-	LDSP
+        subq $2*WSIZE, %rbx
+        INC_DTSP
+	_ABS            # abs(n1)
+        STSP
 	INC_DSP
 	STSP
 	INC_DTSP
 	call L_dabs
 	LDSP
-	DEC_DSP
+	DEC_DSP         # TOS = +n2
 	STSP
 	DEC_DTSP
 	call L_udmstar

@@ -250,6 +250,22 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 	notq WSIZE(%rbx)
 .endm
 
+// use algorithm from DNW's vm-osxppc.s
+// Regs: rax, rbx, rcx, rdx
+// In: rbx = DSP
+// Out: rax = 0, rbx = DSP
+.macro _ABS
+        mov WSIZE(%rbx), %rcx
+        xor %rax, %rax
+        cmp %rax, %rcx
+        setl %al
+        neg %rax
+        mov %rax, %rdx
+        xor %rcx, %rdx
+        sub %rax, %rdx
+        mov %rdx, WSIZE(%rbx)
+        xor %rax, %rax
+.endm
 
 .macro STOD
 	LDSP
@@ -292,6 +308,71 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 	STSP
 	INC2_DTSP
 	xor %rax, %rax
+.endm
+
+// Regs: rax, rbx, rcx
+// In: rbx = DSP
+// Out: rax = 0, rbx = DSP                      
+.macro DNEGATE
+        INC_DSP
+        mov %rbx, %rcx
+        INC_DSP
+        mov (%rbx), %rax
+        not %rax
+        clc
+        addq $1, %rax
+        mov %rax, (%rbx)
+        mov %rcx, %rbx
+        mov (%rbx), %rax
+        not %rax
+        adcq $0, %rax
+        mov %rax, (%rbx)
+        DEC_DSP
+        xor %rax, %rax
+.endm
+
+// Regs: rax, rbx
+// In: rbx = DSP
+// Out: rax = 0, rbx = DSP      
+.macro STARSLASH
+        cmpq $0, WSIZE(%rbx)
+        jz E_div_zero
+        INC2_DSP
+        movq WSIZE(%rbx), %rax
+        imulq (%rbx)
+        idivq -WSIZE(%rbx)
+        mov %rax, WSIZE(%rbx)
+        INC2_DTSP
+        xor %rax, %rax
+.endm
+
+// Regs: rax, rbx, rcx, rdx
+// In: rbx = DSP
+// Out: rax = 0, rbx = DSP
+.macro TNEG
+        push %rbx
+        movq $WSIZE, %rax
+        add %rax, %rbx
+        mov (%rbx), %rdx
+        add %rax, %rbx
+        mov (%rbx), %rcx
+        add %rax, %rbx
+        mov (%rbx), %rax
+        not %rax
+        not %rcx
+        not %rdx
+        clc
+        addq $1, %rax
+        adcq $0, %rcx
+        adcq $0, %rdx
+        mov %rax, (%rbx)
+        movq $WSIZE, %rax
+        sub %rax, %rbx
+        mov %rcx, (%rbx)
+        sub %rax, %rbx
+        mov %rdx, (%rbx)
+        pop %rbx
+        xor %rax, %rax
 .endm
 
 // Error jumps
