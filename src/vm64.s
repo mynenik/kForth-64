@@ -378,6 +378,7 @@
 vm:
 	push %rbp
 	push %rbx
+	push %r12
 	pushq GlobalIp(%rip)
 	pushq vmEntryRp(%rip)
 	movq %rdi, %rbp         # load the Forth instruction pointer
@@ -390,7 +391,10 @@ next:
 	leaq JumpTable(%rip), %rcx
 	movq (%rcx,%rax,WSIZE), %rbx	# machine code address of word
 	xor %rax, %rax           # clear error code
+	mov %rsp, %r12   # save rsp in r12, which is callee-saved
+	and $-16, %rsp   # align rsp to 16-byte boundary
 	call *%rbx		 # call the word
+	mov %r12, %rsp   # restore rsp for the next pops and ret to work
 	movq GlobalIp(%rip), %rbp      # resync ip (possibly changed in call)
 	inc %rbp		 # increment the Forth instruction ptr
 	movq %rbp, GlobalIp(%rip)
@@ -403,6 +407,7 @@ exitloop:
 vmexit:
 	popq vmEntryRp(%rip)
 	popq GlobalIp(%rip)
+	pop %r12
 	pop %rbx
 	pop %rbp
 	ret
