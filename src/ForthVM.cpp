@@ -1759,7 +1759,7 @@ int CPP_allocate()
     return E_V_NOT_IVAL;  // need an int
 #endif
 
-  unsigned int requested = TOS;
+  unsigned long requested = TOS;
   byte *p = new (nothrow) byte[requested];
   PUSH_ADDR( (long int) p )
   PUSH_IVAL( p ? 0 : -1 )
