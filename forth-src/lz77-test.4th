@@ -16,7 +16,7 @@ include lz77.4th
 \ Delete file with check to see if it exists.
 : del-file ( caddr u -- )
     2dup strpck file-exists 
-    0= if delete-file drop else 2drop then ;
+    if delete-file drop else 2drop then ;
 
 \ Show a binary file, replacing unprintable characters with '|'.
 : show-bin-file ( caddr u -- )
