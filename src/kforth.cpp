@@ -65,6 +65,7 @@ extern "C" long int* BottomOfStack;
 extern "C" long int* BottomOfReturnStack;
 extern "C" char TIB[];
 extern "C" {
+    void set_start_mem();
     void echo_on(void);
     void echo_off(void);
 }
@@ -76,6 +77,7 @@ int main(int argc, char *argv[])
     ostringstream initial_commands (ostringstream::out);
     istringstream* pSS = NULL;
     const char* prompt = " ok\n";
+    set_start_mem();
     int nWords = OpenForth();
 
     if (argc < 2) {

@@ -451,6 +451,9 @@ void CloseForth ()
 	Dictionary.pop_back();
    }
 
+    // Remove the search order
+    SearchOrder.clear();
+
     // Clean up the string table
 
     vector<char*>::iterator j = StringTable.begin();

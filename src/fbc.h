@@ -371,6 +371,7 @@
 #define OP_MYNAME               355
 #define OP_CATCH                356
 #define OP_THROW                357
+#define OP_USED                 358
 
 #define OP_PRECISION            360
 #define OP_SET_PRECISION        361

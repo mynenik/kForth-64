@@ -61,6 +61,7 @@ WordTemplate ForthWords[] =
     { ":NONAME",   OP_NONAME,       NONDEFERRED },
     { ":",         OP_COLON,        NONDEFERRED },
     { ";",         OP_SEMICOLON,    IMMEDIATE },
+    { "USED",      OP_USED,         0 },
     { "ALLOCATE",  OP_ALLOCATE,     0 },     
     { "FREE",      OP_FREE,         0 },
     { "RESIZE",    OP_RESIZE,       0 },

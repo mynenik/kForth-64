@@ -124,7 +124,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad CPP_forth, CPP_assembler, CPP_traverse_wordlist, CPP_name_to_string # 344--347
            .quad CPP_name_to_interpret, CPP_name_to_compile, CPP_defined, CPP_undefined  # 348--351
            .quad L_nop, L_nop, L_nop, CPP_myname       # 352--355
-           .quad L_nop, L_nop, L_nop, L_nop            # 356--359
+           .quad L_nop, L_nop, C_used, L_nop           # 356--359
            .quad L_precision, L_setprecision, L_nop, CPP_fsdot   # 360--363
            .quad L_nop, L_nop, C_fexpm1, C_flnp1	    # 364--367
            .quad CPP_uddotr, CPP_ddotr, L_f2drop, L_f2dup   # 368--371
