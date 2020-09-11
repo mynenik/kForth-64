@@ -1198,8 +1198,8 @@ int C_used ()
   /* stack: ( -- u | return bytes used since start of Forth ) */
   unsigned long u0, u1;
   struct mallinfo mi = mallinfo();
-  u0 = ForthStartMem.uordblks;
-  u1 = mi.uordblks;
+  u0 = ForthStartMem.arena + ForthStartMem.hblkhd;
+  u1 = mi.arena + mi.hblkhd;
   TOS = (u1 - u0);
   DEC_DSP
   STD_IVAL
