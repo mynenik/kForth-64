@@ -448,7 +448,7 @@ PAD-SPACE CONSTANT GULP   \ #characters in search space
 VARIABLE way#
 : CALL-WAY  ( a n -- ? )  CELLS + a@ EXECUTE ;
 : WAYS
-   CREATE  ( n -- )  DUP CELLS ?allot SWAP 
+   CREATE  ( n -- )  DUP CELLS allot? SWAP 
    0 DO  DUP ' SWAP !  /CELL + LOOP DROP
    DOES>  way# @  CALL-WAY ;
 

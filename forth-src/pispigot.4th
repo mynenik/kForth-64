@@ -11,7 +11,7 @@
 
 \ ==== kForth requires ===================
 include ans-words
-: ptr  create 1 cells ?allot ! does> a@ ;
+[undefined] ptr [IF] : ptr  create 1 cells allot? ! does> a@ ; [THEN]
 \ =======================================
 
 \ read NUM from last command line argument

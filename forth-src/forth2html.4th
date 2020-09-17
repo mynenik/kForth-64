@@ -193,7 +193,7 @@ VARIABLE infont                                 \ within <font> tag
    misctext 5 line 0 HEX <# # # # # # # #> out  "> R> BASE ! ;
 
 : col ( color <name> -- )                       \ define a font color
-    CREATE 1 CELLS ?allot ! DOES> @ color ! ;
+    CREATE 1 CELLS allot? ! DOES> @ color ! ;
 
 HEX
 scheme 0 = [IF]                                 \ light background
@@ -501,7 +501,7 @@ variable indexing
    \ XPAD COUNT 2DUP hcreate R> HERE SWAP ,
    \ R@ CELL+ !                                   \ resolve link to definition name
    \ R> , ,$ ofn ,$                               \ rest of structure
-   XPAD COUNT 2DUP hcreate 512 ?allot R> OVER !
+   XPAD COUNT 2DUP hcreate 512 allot? R> OVER !
    DUP R@ CELL+ ! CELL+ R> OVER ! CELL+  $!+  ofn ROT pack
    DOES> deflink ;
 
@@ -538,7 +538,7 @@ variable indexing
    newindex >R
    uname COUNT 2DUP hcreate 
    \ HERE ['] userwords , R@ CELL+ ! R> , ,$ ofn ,$
-   512 ?allot ['] userwords OVER ! DUP R@ CELL+ ! CELL+ R> OVER ! CELL+ $!+
+   512 allot? ['] userwords OVER ! DUP R@ CELL+ ! CELL+ R> OVER ! CELL+ $!+
    ofn ROT pack
    DOES> deflink defdef
 ;  CONSTANT defining_def
@@ -781,7 +781,7 @@ superlinks SET-CURRENT \ These hyperlinks cannot be overridden.
 
 \ Not ANS standard, but used in kForth
 
-: ?allot  resunk ;
+: allot?  resunk ;
 : a@      resunk ;
 
 

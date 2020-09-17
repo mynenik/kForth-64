@@ -4,7 +4,6 @@
 \ interface in kForth-64 for x86_64-linux, v 0.1.4 and greater.
 \
 \ K. Myneni, krishna.myneni@ccreweb.org
-\ Last Revised: 2020-01-31
 \
 \ Notes:
 \
@@ -27,9 +26,9 @@ hex
 0 value llabs 
     
 : dltest ( -- )
-    c" libc-2.17.so" 1+ RTLD_LAZY dlopen to hndLib
+    c" libc-2.30.so" 1+ RTLD_LAZY dlopen to hndLib
     hndLib 0= IF check-dlerror THEN
-    cr ." Opened the C library, libc-2.17.so."
+    cr ." Opened the C library."
 
     hndLib c" llabs" 1+ dlsym to llabs
     check-dlerror

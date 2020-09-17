@@ -62,7 +62,7 @@
       drop ;
 
 : create-field ( align1 offset1 align size "name" --  align2 offset2 )
-    create swap rot over nalign dup 1 cells ?allot ! ( ,) ( align1 size align offset )
+    create swap rot over nalign dup 1 cells allot? ! ( ,) ( align1 size align offset )
     rot + >r nalign r> ;
 
 : field ( align1 offset1 align size "name" --  align2 offset2 )
@@ -101,7 +101,7 @@ cell% 2*              2constant double%
     ( drop here swap nalign here - allot) 2drop ;
 
 : %allot ( align size -- addr )
-    tuck %align ( here swap) ?allot ;
+    tuck %align ( here swap) allot? ;
 
 : %allocate ( align size -- addr ior )
     nip allocate ;

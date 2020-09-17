@@ -4,6 +4,10 @@
 \ 2020-01-03
 \
 \ Requires
+\   ans-words
+\   modules.fs
+\   syscalls
+\   mc
 \   strings.4th (strings64.4th -- subset of strings.4th)
 \   utils.4th
 \
@@ -100,18 +104,28 @@ HEX
 
 : fcall1 ( n1 addr -- n2 ) fcall1-code call drop ;
 
-0 [IF]
 \ Call a function with two arguments and one return value.
 \ fcall2-code ( x1 x2 addr -- xret )
+  55             \ rbp         push,
+  48 89 e5       \ rsp rbp      mov,
+  57             \ rdi         push,
+  56             \ rsi         push,
   48 8b 03       \ 0 [rbx] rax  mov,
   48 83 c3 08    \ 8 # rbx      add,
-  53             \ rbx         push,
+  48 8b 33       \ 0 [rbx] rsi  mov,
+  48 83 c3 08    \ 8 # rbx      add,
   48 8b 3b       \ 0 [rbx] rdi  mov,
+  53             \ rbx         push,
   ff d0          \ rax          call,
   5b             \ rbx          pop,
   48 89 03       \ rax 0 [rbx]  mov,
   48 31 c0       \ rax rax      xor,
+  5e             \ rsi          pop,
+  5f             \ rdi          pop,
+  48 89 ec       \ rbp rsp      mov,
+  5d             \ rbp          pop,
   c3             \              ret,
-15 ctable fcall2-code
-[THEN]
+28 ctable fcall2-code
+
+: fcall2 ( x1 x2 addr -- x3 ) fcall2-code call drop ;
 

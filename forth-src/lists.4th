@@ -53,10 +53,10 @@ DECIMAL
     : a@ @ ;
     : ptr value ;
   [THEN]
-: ?allot here swap allot ;
+: allot? here swap allot ;
 : nondeferred ;
 [ELSE]
-: ptr create 1 cells ?allot ! does> a@ ;
+: ptr create 1 cells allot? ! does> a@ ;
 [THEN]
 
 variable dsign

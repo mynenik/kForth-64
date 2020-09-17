@@ -14,14 +14,14 @@
 \                   for kForth 1.5.x
 
 : method ( m v -- m' v) 
-	create over 1 cells ?allot ! swap cell+ swap
+	create over 1 cells allot? ! swap cell+ swap
 	does>  ( ... o -- ... ) @ over a@ + a@ execute ;
 
 : var ( m v size -- m v')
-	create over 1 cells ?allot ! +
+	create over 1 cells allot? ! +
 	does>  ( o -- addr) a@ + ;
 
-create object 2 cells ?allot 1 cells over ! cell+ 2 cells swap !
+create object 2 cells allot? 1 cells over ! cell+ 2 cells swap !
 
 : class ( class -- class methods vars )  dup 2@ ;
 
@@ -29,7 +29,7 @@ create object 2 cells ?allot 1 cells over ! cell+ 2 cells swap !
 	true abort" undefined class method called" ;
 
 : end-class ( class methods vars --  | create the vtable )
-	over create ?allot dup >r 2dup ! nip cell+ 2dup ! cell+
+	over create allot? dup >r 2dup ! nip cell+ 2dup ! cell+
 	swap 2 cells ?DO ['] undefined-method over ! cell+ 1 cells +LOOP
 	drop cell+ dup cell+ r> rot @ 2 cells /string move ;
 
@@ -43,7 +43,7 @@ create object 2 cells ?allot 1 cells over ! cell+ 2 cells swap !
 \   specified class' method name. See demo code for usage.
 
 : new ( class -- o | create object and leave its address on stack)
-       create dup @ ?allot dup >r ! r> ;
+       create dup @ allot? dup >r ! r> ;
 
 : :: ( class "method" -- xt ) ' >body @ + a@ ;
 

@@ -16,11 +16,14 @@ include lz77.4th
 \ Delete file with check to see if it exists.
 : del-file ( caddr u -- )
     2dup strpck file-exists 
-    if delete-file drop else 2drop then ;
+    if
+      2dup ."    Deleting " type cr 
+      delete-file drop
+    else 2drop then ;
 
 \ Show a binary file, replacing unprintable characters with '|'.
 : show-bin-file ( caddr u -- )
-    R/O open-file checked in-file !
+    R/O BIN open-file checked in-file !
     BEGIN
       pad 64 in-file @ read-file drop  \ -- u
       ?dup 0= IF cr in-file @ closed EXIT THEN
@@ -66,8 +69,8 @@ cr .( 1. Deleting files, {'green-eggs.lz','green-eggs2.txt'}, if they exist.) cr
    s" green-eggs2.txt" del-file
 
 cr .( 2. Encoding 'green-eggs.txt' to 'green-eggs.lz'.) cr
-   s" green-eggs.txt" R/O  open-file    checked  in-file   !
-   s" green-eggs.lz"  W/O  create-file  checked  out-file  !
+   s" green-eggs.txt" R/O      open-file    checked  in-file   !
+   s" green-eggs.lz"  W/O  BIN create-file  checked  out-file  !
    ENCODE
    in-file @ closed    out-file @ closed
 
@@ -75,8 +78,8 @@ cr .( 3. Contents of 'green-eggs.lz':) cr
    s" green-eggs.lz" show-bin-file
 
 cr .( 4. Decoding 'green-eggs.lz' to 'green-eggs2.txt'.) cr
-   s" green-eggs.lz"   R/O  open-file    checked  in-file   !
-   s" green-eggs2.txt" W/O  create-file  checked  out-file  !
+   s" green-eggs.lz"   R/O BIN open-file    checked  in-file   !
+   s" green-eggs2.txt" W/O     create-file  checked  out-file  !
    DECODE
    in-file @ closed    out-file @ closed
 

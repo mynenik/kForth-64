@@ -22,7 +22,7 @@
 \ Forth systems (e.g. PFE, GFORTH, ...)  with the definitions:
 \
 \       : A@ @ ;
-\       : ?ALLOT HERE SWAP ALLOT ;
+\       : ALLOT? HERE SWAP ALLOT ;
 \       : 2+ 2 + ; ( needed for GFORTH)
 
 
@@ -58,7 +58,7 @@
 : fsm: ( nstates ninputs -- ) 
 	create
 	  2dup * cells 2*	\ Number of cells for actions and transition 
-	  2 cells + ?allot	\ Two more cells to hold the state and width
+	  2 cells + allot?	\ Two more cells to hold the state and width
 	  dup >r cell+ ! drop r>  \ Store the width of the table in 2nd cell;
 	  2 cells +		\ leave pfa + 2 cells on stack
 ;

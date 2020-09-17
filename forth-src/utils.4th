@@ -41,18 +41,18 @@
 \ PTR is similar to VALUE except it returns a number with an address
 \ type. The word TO may be used to change the value of a named ptr.
 : ptr ( a <name> -- ) 
-    create 1 cells ?allot ! does> a@ ;
+    create 1 cells allot? ! does> a@ ;
 
 : table ( v1 v2 ... vn n <name> -- | create a table of singles ) 
-    create dup cells ?allot over 1- cells + swap
+    create dup cells allot? over 1- cells + swap
     0 ?do dup >r ! r> 1 cells - loop drop ;
 
 : ctable ( ... n <name> -- | create a table of characters/byte values)
-    dup >r create ?allot dup r> + 1-
+    dup >r create allot? dup r> + 1-
     ?do	 i c! -1 +loop ;
 
 : $table ( a1 u1 a2 u2 ... an un n umax <name> -- | create a string table )
-    CREATE  2DUP * CELL+ ?allot 2DUP ! 
+    CREATE  2DUP * CELL+ allot? 2DUP ! 
     CELL+ >R 2DUP SWAP 1- * R> + 
     SWAP ROT  
     0 ?DO  
@@ -73,7 +73,7 @@
 ; 
 
 : $constant  ( a u <name> -- | create a string constant )
-    create dup >r cell+ ?allot dup r@ swap ! cell+ r> cmove  
+    create dup >r cell+ allot? dup r@ swap ! cell+ r> cmove  
     does> ( a -- a' u ) dup @ swap cell+ swap ; 
 
 ( simple enumeration utility

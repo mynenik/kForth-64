@@ -2,7 +2,7 @@
 \
 \ Simple electronic note-keeping system
 \
-\ Copyright (c) 2001 Krishna Myneni
+\ Copyright (c) 2001--2020 Krishna Myneni
 \ Provided under the GNU General Public License
 \ 
 \ Required files:
@@ -17,28 +17,6 @@
 \       ans-words.4th
 \	files.4th
 \	utils.4th
-\
-\ Revisions:
-\	9-18-2001 created KM
-\	9-20-2001 simplified user commands KM
-\	9-21-2001 added modify-note KM
-\	4-06-2002 used $constant for string constants and
-\	            made mods to allow operation under other Forths;
-\		    tested under PFE and gforth  KM
-\	9-19-2002 removed $constant and pack -- these are now in
-\		    utils.4th. Also use get-username from user.4th.  KM
-\       2-27-2007 automatic user name used in DEF-NOTES-FILE; use
-\                   struct for note record header  km
-\       3-22-2007 revised search-notes to search for text in the 
-\                   three fields: keywords, title, and note body  km
-\       7-28-2010 updated the field retrieval words to use explicit
-\                   little-endian 32-bit fetches and stores, so that the 
-\                   code will also run on 64-bit systems, and the
-\                   database files will be portable across both 
-\                   big-endian and little-endian systems ; updated notes  km
-\       7-31-2010 factored SET-NOTE-POSITION by introducing the words
-\                   NEAREST-NOTE-INDEX and NEAREST-OFFSET; also defined U>D  km
-\       8-01-2010 added REBUILD-INDEX, COMMITT-INDEX, and D>U; further factoring  km
 \	
 \ Notes:
 \
@@ -118,7 +96,7 @@ include struct-ext.fs
 : a@         \ a1 -- a2  | fetch address stored at a1
 	@ ;
 
-: ?allot     \ n -- a | allot n bytes, return start address
+: allot?     \ n -- a | allot n bytes, return start address
        here swap allot ;
 
 
@@ -130,7 +108,7 @@ include struct-ext.fs
     2dup c! 1+ swap cmove ;	
 
 : $constant  ( a u <name> -- | create a string constant )
-    create dup >r cell+ ?allot dup r@ swap ! cell+ r> cmove  
+    create dup >r cell+ allot? dup r@ swap ! cell+ r> cmove  
     does> ( -- a' u ) dup @ swap cell+ swap ;  
 
 \ pfe shell command
@@ -567,7 +545,7 @@ variable input-count
 	get-number validate-index
 	order-index-pair ;
 
-create modified-hdr note-record-header% %allot
+create modified-hdr note-record-header% %allot drop
 
 : modify-note ( n -- | allow user to modify the title and keywords of a note )
 	dup 0 <= if drop exit then 

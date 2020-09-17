@@ -1,8 +1,7 @@
 \ random.4th
 \
 \ Assorted simple random number generators
-\
-\ Needs to be updated for 64-bit systems -- km, 2020-01-26
+
 
 base @ 
 hex
