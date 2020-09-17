@@ -165,4 +165,7 @@ variable handler
         >BODY !
       THEN ; IMMEDIATE
 
+\ === Non-standard words commonly needed for kForth programs ===
+: PTR ( a "name" -- ) CREATE 1 CELLS ALLOT? ! DOES> A@ ;
+
 BASE !

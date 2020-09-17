@@ -724,6 +724,8 @@ Public:
  1  constant  MREMAP_MAYMOVE
  2  constant  MREMAP_FIXED
 
+32bit? [IF]
+
 : mmap       ( addr  nlength  nprot  nflags  nfd  noffset -- n ) 
     mmap_args 5 cells +
     !--  \ offset
@@ -734,14 +736,21 @@ Public:
     !    \ addr
     mmap_args NR_MMAP syscall1 ;
 
-32bit? [IF]
-: mmap2      ( addr  nlength  nprot  nflags  nfd  noffset -- n ) 
-    NR_MMAP2 syscall6 ; [THEN]
+: mmap2      ( addr  nlength  nprot  nflags  nfd  noffset -- n )
+    NR_MMAP2 syscall6 ;
+
+[ELSE]
+
+: mmap  ( addr nlength nprot nflags nfd noffset -- n )
+    NR_MMAP syscall6 ;
+
+[THEN]
+
+: mprotect   ( addr nlen nprot -- n ) NR_MPROTECT syscall3 ;
 : munmap     ( addr nlen -- n )  NR_MUNMAP syscall2 ;
 : msync      ( addr nlen nflags -- n )  NR_MSYNC syscall3 ;
 : mlock      ( addr nlen -- n )  NR_MLOCK syscall2 ;
 : munlock    ( addr nlen -- n ) NR_MUNLOCK syscall2 ;
-: mprotect   ( addr nlen nprot -- n ) NR_MPROTECT syscall3 ;
 : mlockall   ( nflags -- n ) NR_MLOCKALL syscall1 ;
 : munlockall ( -- n )  NR_MUNLOCKALL syscall0 ;
 : mremap     ( aoldaddress noldsize nnewsize nflags -- anewmem ) 
