@@ -14,6 +14,8 @@ Also syscalls
 BASE @
 HEX
 
+: align16 ( u1|a1 -- u2|a2 ) 10 /mod swap IF 1+ THEN 4 LSHIFT ;
+
 \ Page utilities
 1000 constant PAGESIZE  \ this should be obtained from the OS config.
 PAGESIZE 1- invert constant PAGEMASK
@@ -26,7 +28,7 @@ PAGESIZE 1- invert constant PAGEMASK
 : NextPage ( a1 -- a2 )  PAGEMASK and PAGESIZE + ;
 
 \ Machine code buffer will be a multiple of PAGESIZE bytes
-16    constant MC_NPAGES
+20 constant MC_NPAGES
 PAGESIZE MC_NPAGES * constant MC_BUFSIZE
 0 ptr MC-Here0
 
@@ -54,6 +56,29 @@ MC-Here0 ptr MC-Here
     >r PAGEMASK and PAGESIZE 
     r> IF  PROT_EXEC  ELSE  PROT_READ PROT_WRITE or  THEN
     mprotect 0= ;
+
+\ Create a named machine code table, returning the address of
+\ the starting address of the machine code buffer. The
+\ requested number of bytes, ur, will be adjusted to a multiple
+\ of 16 when the buffer is allocated. Executing the table name
+\ will return the start address of the machine code buffer.
+\ Upon creation, the buffer will be in a read-writable state.
+
+: MC-Table ( ur "name" -- a_mc )
+    create align16 MC-Allot?           
+    does>  ( a -- a_mc ) a@ ;
+
+: MC-Put ( b1 b2 ... b_u u a_mc -- )
+    dup false MC-Executable 0=
+    Abort" Cannot make buffer R/W!"
+    dup >r
+    2dup + 1- nip
+    swap 0 ?DO 2dup c! 1- nip LOOP drop
+    r> true MC-Executable 0=
+    Abort" Cannot make buffer R/X!" ;
+
+\ Return the executable code address
+: >MC-Code ( xt -- a ) >body a@ ;
 
 BASE !
 Previous

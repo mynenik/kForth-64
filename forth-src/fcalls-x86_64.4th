@@ -1,16 +1,17 @@
 \ fcalls-x86_64.4th
 \
 \ Copyright (c) 2020 Krishna Myneni
-\ 2020-01-03
 \
 \ Requires
 \   ans-words
 \   modules.fs
 \   syscalls
 \   mc
-\   strings.4th (strings64.4th -- subset of strings.4th)
-\   utils.4th
 \
+
+BASE @
+HEX
+
 \ #     GNU assembly code        Gas output           asm-x86_64 assembly    
 \ # ------------------------------------------------------------------------
 \	movq (%rbx), %rax   #  48 8b 03             |   0 [rbx] rax  mov,  |
@@ -41,7 +42,6 @@
 \	movq $0, %rax       #  48 c7 c0 00 00 00 00 |       0 # rax  mov,  |
 \ # ------------------------------------------------------------------------
 
-HEX
   48 8b 03                     \  0 [rbx] rax  mov,
   48 83 c3 08                  \      8 # rbx  add,
   48 8b 0b                     \  0 [rbx] rcx  mov,
@@ -68,7 +68,9 @@ HEX
   48 01 cb                     \      rcx rbx  add,
   48 89 03                     \  rax 0 [rbx]  mov,
   48 c7 c0 00 00 00 00         \      0 # rax  mov,
-5c ctable fcall-code
+5c 
+dup MC-Table fcall-code 
+MC-Put
 
 
 : fcall ( ... ncells addr -- val )
@@ -83,9 +85,11 @@ HEX
   48 89 03    \  rax 0 [rbx]  mov,
   48 31 c0    \  rax    rax   xor,
   c3          \               ret,
-0e ctable fcall0-code
+0e 
+dup MC-Table fcall0-code
+MC-Put
 
-: fcall0       ( addr - x )  fcall0-code call ; 
+: fcall0       ( addr - x ) fcall0-code call ; 
 : fcall0-noret ( addr --  ) fcall0 drop ;
 
 
@@ -100,7 +104,9 @@ HEX
   48 89 03       \ rax 0 [rbx]  mov,
   48 31 c0       \ rax rax      xor,
   c3             \              ret,
-15 ctable fcall1-code
+15 
+dup MC-Table fcall1-code
+MC-Put
 
 : fcall1 ( n1 addr -- n2 ) fcall1-code call drop ;
 
@@ -125,7 +131,12 @@ HEX
   48 89 ec       \ rbp rsp      mov,
   5d             \ rbp          pop,
   c3             \              ret,
-28 ctable fcall2-code
+28 
+dup MC-Table fcall2-code
+MC-Put
 
 : fcall2 ( x1 x2 addr -- x3 ) fcall2-code call drop ;
+
+
+BASE !
 

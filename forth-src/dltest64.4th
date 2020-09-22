@@ -9,10 +9,13 @@
 \
 
 include ans-words
+include modules
+include syscalls
+include mc
 include strings
 include utils
-include fcalls-x86_64
 include dump
+include fcalls-x86_64
 
 base @
 hex
