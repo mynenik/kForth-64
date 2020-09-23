@@ -13,12 +13,8 @@ include modules
 include syscalls
 include mc
 include strings
-include utils
 include dump
 include fcalls-x86_64
-
-base @
-hex
 
 1 constant RTLD_LAZY
 
@@ -48,6 +44,4 @@ hex
 ;
 
 dltest
-
-base !
 
