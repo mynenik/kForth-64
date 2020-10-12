@@ -87,7 +87,12 @@ cr .( 5. Contents of 'green-eggs2.txt':) cr
    s" green-eggs2.txt" show-txt-file
 
 cr .( 6. Comparing decoded file to the original: )
-   s" diff green-eggs.txt green-eggs2.txt" shell
+[DEFINED] _WIN32_ [IF]
+   s" cmd.exe /c fc"
+[ELSE]
+   s" diff"
+[THEN]
+   s"  green-eggs.txt green-eggs2.txt" strcat shell cr
 [IF]
   .( FAILED!) cr
   .(    Files are not the same.)

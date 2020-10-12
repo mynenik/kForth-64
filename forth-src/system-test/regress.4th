@@ -519,7 +519,7 @@ t{  5e f0> -> true  }t
 t{  0e f0> -> false }t
 t{ -1e f0> -> false }t
 
-testing S>F D>F F>D FROUND>S FTRUNC>S SF@ SF!
+testing S>F D>F F>D FROUND>S FTRUNC>S SF@ SF! DF@ DF!
 SET-EXACT
 t{  3 s>f ->  3e r}t
 t{  0 s>f ->  0e r}t
@@ -610,6 +610,7 @@ fvariable fdouble
 t{ 1.2e fdouble df! -> }t
 t{ fdouble df@ -> 1.2e r}t
 
+testing DEG>RAD RAD>DEG
 0.572957795130823208769e2  fconstant 180/pi
 0.174532925199432957692e-1 fconstant pi/180
 0.157079632679489661923e1  fconstant pi/2

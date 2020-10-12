@@ -94,6 +94,9 @@ T{ addr1 a@ 200 RESIZE SWAP addr1 ! -> 0 }T
 T{ addr1 a@ 28 checkmem
 
 \ ------------------------------------------------------------------------------
+[DEFINED] _WIN32_ [IF]
+COMMENT Skipping failure of RESIZE and ALLOCATE tests on Win32
+[ELSE]
 TESTING failure of RESIZE and ALLOCATE (unlikely to be enough memory)
 
 \ This test relies on the previous test having passed
@@ -108,6 +111,7 @@ MEM?
 T{ addr1 a@ FREE -> 0 }T  \ Tidy up
 
 T{ -1 ALLOCATE SWAP DROP 0= -> FALSE }T		\ Memory allocate failed
+[THEN]
 
 \ ------------------------------------------------------------------------------
 TESTING @  and ! work in ALLOCATEd memory (provided by Peter Knaggs)

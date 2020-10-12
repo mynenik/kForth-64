@@ -29,11 +29,11 @@
 \
 \ Copyright (c) 1999--2020 Krishna Myneni
 \
-\ This software is provided under the terms of the GNU General
-\ Public License.
+\ This software is provided under the terms of the GNU Affero
+\ General Public License (AGPL) v 3.0 or later.
 \
 \ Requires:
-\
+\  ans-words.4th
 \  strings.4th
 \
 
@@ -45,11 +45,24 @@ hex
 
   A constant EOL
 
+[DEFINED] _WIN32_ [IF]
+
+ 100 constant  O_CREAT
+ 400 constant  O_EXCL
+ 200 constant  O_TRUNC
+   8 constant  O_APPEND
+4000 constant  O_TEXT
+8000 constant  O_BINARY
+
+[ELSE]  \ Linux
+
  40 constant O_CREAT
  80 constant O_EXCL
 200 constant O_TRUNC
 400 constant O_APPEND
   0 constant O_BINARY
+
+[THEN]
 
   0 constant SEEK_SET
   1 constant SEEK_CUR
@@ -125,8 +138,16 @@ variable read_count
 \ DELETE-FILE ( c-addr u -- ior )
 \ Delete the file named by c-addr, u
 \ Forth-94/2012 File Access words 11.6.1.1190
+[DEFINED] _WIN32_ [IF]
+: delete-file
+        2dup strpck file-exists IF
+          s" cmd.exe /c del " 2swap strcat strpck system
+        ELSE 2drop 256 ( return code for "rm" under Linux )
+        THEN ;
+[ELSE]
 : delete-file
         s" rm " 2swap strcat strpck system ; 
+[THEN]
 
 \ RENAME-FILE ( c-addr1 u1 c-addr2 u2 -- ior )
 \ Rename the file named c-addr,u1 to name given by c-addr2,u2
@@ -135,9 +156,16 @@ variable read_count
 \ RENAME-FILE has a limit for the sum of the two filenames
 \ to be less than 250 pchars because of limitations in the 
 \ argument to SYSTEM.
+[DEFINED] _WIN32_ [IF]
+: rename-file
+    2>r 2>r s" cmd.exe /c rename " 
+    2r> strcat s"  " strcat 2r> strcat
+    strpck system ;
+[ELSE]
 : rename-file
     2>r 2>r s" mv " 2r> strcat s"  " strcat 2r> strcat 
     strpck system ;
+[THEN]
 
 \ READ-LINE ( c-addr u1 fileid -- u2 flag ior )
 \ Read the next line from the file into memory at c-addr

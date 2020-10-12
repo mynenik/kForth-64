@@ -51,7 +51,6 @@ s" ans-words.4th" included
 s" ttester.4th" included
 s" strings.4th" included
 s" files.4th" included
-: BIN ;
 \ == end of kForth-specific preliminaries =
 
 

@@ -33,8 +33,13 @@ PAGESIZE MC_NPAGES * constant MC_BUFSIZE
 0 ptr MC-Here0
 
 \ Allocate buffer 
+[DEFINED] _WIN32_ [IF]  \ Win32
+0 MC_BUFSIZE MEM_RESERVE MEM_COMMIT or PAGE_READWRITE valloc
+[ELSE]  \ Linux 
 0 MC_BUFSIZE PROT_READ PROT_WRITE or MAP_ANONYMOUS MAP_PRIVATE or
--1 0 mmap to MC-Here0
+-1 0 mmap 
+[THEN]
+to MC-Here0
 
 MC-Here0 -1 = [IF]
   cr .( Failed to allocate machine code buffer! ) cr
@@ -52,10 +57,18 @@ MC-Here0 ptr MC-Here
 \ flag_rw = TRUE,  the page is allowed read-executable
 \ flag_rw = FALSE, the page is read-writable
 \ return true if successful
+[DEFINED] _WIN32_ [IF]  \ Win32
+variable OldProt
+: MC-Executable ( a_mc flag_rw -- flag )
+    >r PAGEMASK and PAGESIZE
+    r> IF  PAGE_EXECUTE_READ  ELSE  PAGE_READWRITE  THEN
+    OldProt vprotect 0= ;
+[ELSE]  \ Linux
 : MC-Executable ( a_mc flag_rw -- flag )
     >r PAGEMASK and PAGESIZE 
     r> IF  PROT_EXEC  ELSE  PROT_READ PROT_WRITE or  THEN
     mprotect 0= ;
+[THEN]
 
 \ Create a named machine code table, returning the address of
 \ the starting address of the machine code buffer. The
@@ -82,8 +95,4 @@ MC-Here0 ptr MC-Here
 
 BASE !
 Previous
- 
-
-
-
 
