@@ -81,7 +81,7 @@ ply      nodes  time score  pv
 \ code. It includes minor changes to permit the code
 \ to run under kForth (v 1.0.11 or later). The code
 \ will also run under ANS Forths (PFE, gforth, etc.)
-\ provided the definitions of "a@" and "?allot" are 
+\ provided the definitions of "a@" and "allot?" are 
 \ uncommented below.
 \
 \ Krishna Myneni, 16 July 2002
@@ -101,15 +101,13 @@ ply      nodes  time score  pv
 
 \ ============= ANS Forth definitions =============
 [UNDEFINED] A@ [IF] synonym a@ @ [THEN]
-[UNDEFINED] ?ALLOT [IF] : ?allot HERE SWAP ALLOT ; [THEN]
+[UNDEFINED] ALLOT? [IF] : allot? HERE SWAP ALLOT ; [THEN]
+[UNDEFINED] PTR [IF] synonym ptr value [THEN]
 \ ============= end ANS Forth definitions =========
 
 : table ( v1 ... vn n -- )
-	CREATE DUP CELLS ?allot OVER 1- CELLS + SWAP
+	CREATE DUP CELLS allot? OVER 1- CELLS + SWAP
 	0 ?DO DUP >R ! R> 1 CELLS - LOOP DROP ;
-
-: ptr CREATE 1 CELLS ?allot ! DOES> a@ ;
-
 
 1120 CONSTANT GEN_STACK
   32 CONSTANT MAX_PLY
@@ -1257,9 +1255,14 @@ VARIABLE nodes          \ must be 32-bit (or higher for long searches)
   R> OVER !  R> SWAP CELL+ ! ;     \ temp -> from
 
 VARIABLE stopSearch
+0 value keyHit
 
 : checkTime ( -- tf )
-  KEY? DUP IF DUP stopSearch ! ." Time's up! " CR THEN ;
+  KEY? DUP IF 
+    KEY to keyHit
+    DUP stopSearch ! 
+    ." Time's up! " CR 
+  THEN ;
 
 \ principal variation tracking
 
@@ -1625,7 +1628,8 @@ HEX
 
 \ *** User Commands ***
 
-: new init_board .board ;            \ setup a new game
+: newGame init_board .board ;            \ setup a new game
+: new newGame ;
 
 : sd ( n -- ) 1+ maxDepth ! ;
 
@@ -1653,6 +1657,7 @@ HEX
 : undo2 retract retract .board ;   \ take back one full move
 
 : whoseTurn? wtm? IF ." White to move." ELSE ." Black to move." THEN CR ;
+: .whoseTurn whoseTurn? ;
 
 : rotateBoard blackAtBottom? @ 0= blackAtBottom? ! .board ;
 : showCoords showCoords? @ 0= showCoords? ! .board ;
@@ -1672,23 +1677,40 @@ HEX
 : setup ( "epd" "w|b" -- )
   epd IF .board whoseTurn? THEN ;
 
+: bench   \ Fischer-Sherwin NJ Championships 1957, move 17 
+  S" setup 1rb2rk/p4ppp/1p1qp1n/3n2N/2pP4/2P3P/PPQ2PBP/R1B1R1K w" evaluate
+  5 sd  Think CR ;
+
 \ !!! need validation routines for regression testing?
 
 \ __saveBase @ BASE !
 
+: tscp-help  CR
+." tscp-help    Show this help list of commands" CR
+." go           Make the computer move (hit any key to stop thinking)" CR
+." domove e2e4  Move a piece from square e2 to square e4" CR
+." undo         Take back the last move" CR
+." mv h7h8Q     domove h7h8Q go (promote to a queen)" CR
+." mv e1g1      castle kingside" CR
+." undo2        undo undo" CR
+." 5 sd         Set maximum depth for computer search" CR
+." newGame      Start a new game" CR
+." rotateBoard  Display board rotated by 180 degrees" CR
+." showCoords   Display toggle algebraic coordinates" CR
+." .board       Display the board" CR
+." .moveList    Display the list of moves played so far" CR
+." .epd         Display the EPD description of the board" CR
+." .whoseTurn   Display which color moves next" CR
+." setup EPD    Setup an EPD position" CR
+;
+
 \ *** EXECUTE WHEN LOADING ***
 
-CR .( TSCP loaded ) CR
-CR .( Type 'mv xnym', e.g. 'mv e2e4' to move a piece from its )
-CR .(   current position to its new position. You may also type )
-CR .(   'go' to let the computer make the next move. Set the )
-CR .(   variable maxDepth for the desired level of difficulty. ) CR CR
-
-FALSE blackAtBottom? !
-TRUE showCoords? !
-( MAX_PLY 2/ maxDepth ! )
-5 maxDepth !
-new
+CR .( TSCP 0.4.2 loaded ) CR
+tscp-help CR
+4 sd
+true showCoords? !
+newGame
 
 DECIMAL
 
