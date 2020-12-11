@@ -66,7 +66,7 @@ ply      nodes  time score  pv
 \   Thus, BASE 10 is assumed.  Use the next line if this is not the case.)
 \ VARIABLE __saveBase BASE @ __saveBase ! DECIMAL
 
-\ Assumes 32-bit cells
+\ Assumes 32-bit or 64-bit cells
 \ Recursive: assumes a data stack larger than 2*MAX_PLY
 \  and a return stack larger than 3*MAX_PLY.
 \ Uses about 64K bytes of data space, mostly for the
@@ -79,10 +79,10 @@ ply      nodes  time score  pv
 \
 \ This version is modified from Ian Osgood's original
 \ code. It includes minor changes to permit the code
-\ to run under kForth (v 1.0.11 or later). The code
-\ will also run under ANS Forths (PFE, gforth, etc.)
-\ provided the definitions of "a@" and "allot?" are 
-\ uncommented below.
+\ to run under kForth (1.6.x or later). The code will 
+\ also run under ANS Forths (PFE, gforth, etc.) provided
+\ the definitions of "a@" and "allot?" are uncommented 
+\ below.
 \
 \ Krishna Myneni, 16 July 2002
 \
@@ -94,9 +94,10 @@ ply      nodes  time score  pv
 \ 2020-01-26  removed definitions of [UNDEFINED] , [DEFINED],
 \               CHARS and SPACE ; used fix for 64-bit
 \               systems from more recent fcp.f
-\ 
-\ Requires:
-\   ans-words.4th      
+\ 2020-12-05  fix abort bug during search: v 0.4.2
+\ 2020-12-11  fix to run on 64-bit systems: v 0.4.3
+\
+\ Requires (kForth only): ans-words.4th      
 \ =================================================
 
 \ ============= ANS Forth definitions =============
@@ -465,7 +466,7 @@ VARIABLE lkSq   VARIABLE dkSq
 \ *** Move Generation ***
 
 moveSize CELL+ CONSTANT genSize
-: genSize* 3 LSHIFT ;
+: genSize* 2* CELLS ;
 
 CREATE gen_dat GEN_STACK genSize* ALLOT
 \ gen_t accessors: move, score
@@ -1706,7 +1707,7 @@ HEX
 
 \ *** EXECUTE WHEN LOADING ***
 
-CR .( TSCP 0.4.2 loaded ) CR
+CR .( TSCP 0.4.3 loaded ) CR
 tscp-help CR
 4 sd
 true showCoords? !
