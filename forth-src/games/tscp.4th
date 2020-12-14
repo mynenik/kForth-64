@@ -10,8 +10,6 @@
 \
 \ http://www.quirkster.com/iano/forth/FCP.html
 \
-\ KM, 2007-11-15
-
 \ TSCP.f, version 0.4  Copyright 2001 Ian Osgood  iano@quirkster.com
 ( numbers for PIII-550 MHz
 ply    nodes    time score pv
@@ -80,14 +78,11 @@ ply      nodes  time score  pv
 \ This version is modified from Ian Osgood's original
 \ code. It includes minor changes to permit the code
 \ to run under kForth (1.6.x or later). The code will 
-\ also run under ANS Forths (PFE, gforth, etc.) provided
-\ the definitions of "a@" and "allot?" are uncommented 
-\ below.
-\
-\ Krishna Myneni, 16 July 2002
+\ also run under ANS Forths (PFE, gforth, etc.)
 \
 \ Revisions:
 \
+\ 2002-07-16  modified for use with kForth; km
 \ 2006-03-28  modified ".PIECE" to use @ instead of C@ to 
 \               avoid ENDIAN dependence.  km
 \ 2009-12-12  added definition of NOOP  km
@@ -96,6 +91,8 @@ ply      nodes  time score  pv
 \               systems from more recent fcp.f
 \ 2020-12-05  fix abort bug during search: v 0.4.2
 \ 2020-12-11  fix to run on 64-bit systems: v 0.4.3
+\ 2020-12-14  add time limit for search; backport other
+\               modifications from versions: v 0.4.4
 \
 \ Requires (kForth only): ans-words.4th      
 \ =================================================
@@ -115,35 +112,6 @@ ply      nodes  time score  pv
  400 CONSTANT HIST_STACK
 
  : MAX_PLY* 5 LSHIFT ;
-
-( sampled up to depth 6 from initial position
- 0 62752F  inLine?   [37% do MOD]
- 3 41B98B  sqAttacks?
-10 2F468A  pieceSlides? == pieceOffsets
- 2 20EF4E  sqPieceAttacks?
-12 1279F7  sqLPattacks?
- 6  E6EB3  genPutMove  ~= genPush
-13  E5046  sqDPattacks?
- 4  44FD9  attacks?  ~= inCheck?
- 9  3DECE  makeMove == sort
- 8  33CD9  takeBack
- E  2BEDE  eval == quiesce
- C  1788A  genCaps
- D   70BC  _search == reps == gen == genCastle
-
- A   A20D  makeMove: a castle move
-14   CA7B  gen: a castle move
-
-18  3132E  makeMove & takeBack: update material and pawn files
-19 53CC5A  eval: total material and pawn files
-
-conclusions:
-  attacks? is almost always used by inCheck? [v0.2]
-  optimizing or eliminating the routines called by inCheck? is worthwhile
-  it is worthless to improve updatePV or sqSliderAttacks? [~3500]
-  it is worth incrementally updating material & pawn files [v0.3]
-  it is OK to generate castles cheaply and make them expensively
-)
 
 HEX
 
@@ -184,8 +152,19 @@ LIGHT PAWN + CONSTANT LIGHTPAWN
 
 CREATE board 80 ALLOT
 
-: edge? ( sq+offset -- nz ) 88 AND ;
+70 CONSTANT sqA1
+72 CONSTANT sqC1
+74 CONSTANT sqE1
+76 CONSTANT sqG1
+77 CONSTANT sqH1
+00 CONSTANT sqA8
+02 CONSTANT sqC8
+04 CONSTANT sqE8
+06 CONSTANT sqG8
+07 CONSTANT sqH8
 
+: edge? ( sq+offset -- nz ) 88 AND ;
+: eraseBoard  board 80 erase ;
 : bd! ( piece sq -- ) board + c! ;
 : bd@ ( sq -- piece ) s" board + c@ " evaluate ; immediate
 : ?bd@ ( sq -- piece ) DUP edge? IF DROP EDGE ELSE bd@ THEN ;
@@ -264,13 +243,13 @@ VARIABLE fifty          \ fifty move draw count
 VARIABLE blackAtBottom?
 VARIABLE showCoords?
 
-: rotate ( sq -- sq ) 77 SWAP - ;
+: rotate ( sq -- sq ) NEGATE 77 + ;
 
 : .aSq ( sq -- )
   showCoords? @ IF
     DUP 1- edge? IF
       DUP blackAtBottom? @ IF rotate THEN
-      rank [CHAR] 8 SWAP - EMIT 2 SPACES
+      rank NEGATE [CHAR] 8 + EMIT 2 SPACES
     THEN
   THEN
   DUP blackAtBottom? @ IF rotate THEN bd@ .piece
@@ -285,7 +264,7 @@ VARIABLE showCoords?
 
 : .sq ( sq -- )
   DUP file [CHAR] a + EMIT
-  rank [CHAR] 8 SWAP - EMIT ;
+  rank NEGATE [CHAR] 8 + EMIT ;
 
 VARIABLE epdBlCount
 : 0epdBl! ( -- ) 0 epdBlCount ! ;
@@ -549,17 +528,6 @@ captureBit epBit pawnBit OR OR CONSTANT epBits
 2 CONSTANT wqCastleBit
 4 CONSTANT bkCastleBit
 8 CONSTANT bqCastleBit
-
-70 CONSTANT sqA1
-72 CONSTANT sqC1
-74 CONSTANT sqE1
-76 CONSTANT sqG1
-77 CONSTANT sqH1
-00 CONSTANT sqA8
-02 CONSTANT sqC8
-04 CONSTANT sqE8
-06 CONSTANT sqG8
-07 CONSTANT sqH8
 
 : genCastle ( -- )
   castle @ DUP
@@ -1063,15 +1031,15 @@ VARIABLE lightScore      VARIABLE darkScore
 
 
 : evalLK ( sq -- )
-  darkPieceMat @ endgameThreshold < IF
+  darkPieceMat @ endgameThreshold U< IF
     CELLS kingEndgamePcSq + @
   ELSE
     DUP CELLS kingLtPcSq + @              ( sq value )
-    SWAP file DUP 3 < IF DROP
+    SWAP file DUP 3 U< IF DROP
       1 evalLightKP +
       2 evalLightKP +
       3 evalLightKP 2/ +
-    ELSE DUP 4 > IF DROP
+    ELSE 4 OVER U< IF DROP
       8 evalLightKP +
       7 evalLightKP +
       6 evalLightKP 2/ +
@@ -1085,15 +1053,15 @@ VARIABLE lightScore      VARIABLE darkScore
   lightScore +! ;
 
 : evalDK ( sq -- )
-  lightPieceMat @ endgameThreshold < IF
+  lightPieceMat @ endgameThreshold U< IF
     CELLS kingEndgamePcSq + @
   ELSE
     DUP CELLS kingDkPcSq + @              ( sq value )
-    SWAP file DUP 3 < IF DROP
+    SWAP file DUP 3 U< IF DROP
       1 evalDarkKP +
       2 evalDarkKP +
       3 evalDarkKP 2/ +
-    ELSE DUP 4 > IF DROP
+    ELSE 4 OVER U< IF DROP
       8 evalDarkKP +
       7 evalDarkKP +
       6 evalDarkKP 2/ +
@@ -1113,10 +1081,10 @@ VARIABLE lightScore      VARIABLE darkScore
     DOUBLED_PAWN_PENALTY ELSE 0 THEN >R
   OVER DUP CELL+ @ SWAP CELL- @ OR 0= IF
     R> ISOLATED_PAWN_PENALTY + >R NIP
-  ELSE OVER CELL+ @ ROT CELL- @ MAX OVER < IF
+  ELSE OVER CELL+ @ ROT CELL- @ MAX OVER U< IF
     R> BACKWARD_PAWN_PENALTY + >R THEN THEN          ( value f+1 r )
   SWAP darkPawnRank +
-  DUP CELL+ @ OVER CELL- @ MIN SWAP @ MIN OVER < 0= IF  ( value r )
+  DUP CELL+ @ OVER CELL- @ MIN SWAP @ MIN OVER U< 0= IF  ( value r )
     7 SWAP - PASSED_PAWN_BONUS * R> +
     \ !!! optimize: 7 SWAP - R> SWAP 0 DO PASSED_PAWN_BONUS + LOOP
   ELSE DROP R> THEN
@@ -1126,7 +1094,7 @@ VARIABLE lightScore      VARIABLE darkScore
 : evalDP ( sq -- )
   DUP rotate CELLS pawnPcSq + @                        ( sq value )
   SWAP DUP file 1+ CELLS DUP darkPawnRank + ROT rank  ( value f+1 ^lpr r )
-  OVER @ OVER < IF
+  OVER @ OVER U< IF
     DOUBLED_PAWN_PENALTY ELSE 0 THEN >R
   OVER DUP CELL+ @ SWAP CELL- @ AND 7 = IF
     R> ISOLATED_PAWN_PENALTY + >R NIP
@@ -1242,6 +1210,45 @@ VARIABLE lightScore      VARIABLE darkScore
 
 VARIABLE nodes          \ must be 32-bit (or higher for long searches)
 
+\ Win32Forth word ms@ returns number of milliseconds since system start.
+\ More accurate is GetTickCount
+\ Define as appropriate for your Forth dialect
+
+1000 CONSTANT msPerS
+3600000 VALUE msMaxThinkTime
+
+[UNDEFINED] ms@ [IF]
+  [DEFINED] ?MS [IF]
+  : ms@ ?MS ;           \ iForth
+  [ELSE]
+  [DEFINED] utime [IF]
+  : ms@ utime 1000 um/mod nip ;  \ gforth
+  [ELSE]
+  5 CONSTANT npms
+  : ms@  nodes @ npms / ;
+  [THEN] [THEN]
+[THEN]
+
+: .ms ( n -- )
+  msPerS /MOD 4 .R ." ." 0 <# # # # #> TYPE ;
+
+VARIABLE msStart
+: startTimer ms@ msStart ! ;
+: readTimer ( -- ms ) ms@ msStart @ - ;
+
+VARIABLE stopSearch
+0 VALUE keyHit
+
+: checkTime ( -- tf )
+  readTimer msMaxThinkTime >
+  KEY? DUP IF 
+    KEY to keyHit
+  THEN
+  OR DUP IF
+    DUP stopSearch ! 
+    ." Time's up! " readTimer .ms ."  seconds" CR 
+  THEN ;
+
 \ pick the best move from those generated: move it to the front
 
 : sort ( ^from -- )             \ from points into gen_dat
@@ -1254,16 +1261,6 @@ VARIABLE nodes          \ must be 32-bit (or higher for long searches)
   >R  DUP @ >R               \ best -> temp ( ^from ^best  R: bScore bMove )
   OVER @ OVER !  OVER CELL+ @ SWAP CELL+ !    \ from -> best ( ^from )
   R> OVER !  R> SWAP CELL+ ! ;     \ temp -> from
-
-VARIABLE stopSearch
-0 value keyHit
-
-: checkTime ( -- tf )
-  KEY? DUP IF 
-    KEY to keyHit
-    DUP stopSearch ! 
-    ." Time's up! " CR 
-  THEN ;
 
 \ principal variation tracking
 
@@ -1306,22 +1303,20 @@ CREATE pvEnd MAX_PLY CELLS ALLOT        \ pointer into pv
 CREATE repsBd numSquares CELLS ALLOT
 
 : reps ( -- n )
-  fifty @ 4 < IF 0 EXIT THEN
+  fifty @ 4 U< IF 0 EXIT THEN
   repsBd numSquares CELLS ERASE 0 0  ( reps count )
-  histTop a@ histSize - DUP fifty @ histSize* - SWAP DO
+  histTop a@ histSize - DUP fifty @ 1- histSize* - SWAP DO
     I @ mvFrom asIndex CELLS  repsBd +  DUP >R  @ 1+  DUP >R
     0= IF 1- ELSE 1+ THEN R> R> !
     I @ mvTo asIndex CELLS  repsBd +  DUP >R  @ 1-  DUP >R
     0= IF 1- ELSE 1+ THEN R> R> !
-    DUP 0= IF SWAP 1+ SWAP THEN
+    DUP 0= IF >R 1+ R> THEN
   histSize NEGATE +LOOP DROP ;
 
 0 CONSTANT drawScore
 100 CONSTANT 50moveCount        \ ply 2*
 -10000 CONSTANT mateScore
 -100000 CONSTANT abortScore
-
-1000 CONSTANT msPerS
 
 : quiesce ( a b -- value )   ( adds -b -a -- when recursing )
   nodes @ 1+ DUP nodes !
@@ -1330,7 +1325,7 @@ CREATE repsBd numSquares CELLS ALLOT
   ply @ DUP resetPVend
   1+ MAX_PLY > histTop a@ 1+ histMax > OR IF 2DROP eval EXIT THEN
   eval ( a b e )
-  2DUP > 0= IF ROT 2DROP EXIT THEN      \ b <= e: return beta 
+  2DUP > 0= IF DROP NIP EXIT THEN      \ b <= e: return beta 
   ROT MAX ( b a )               \ a < e:  a = e
   genCaps
   followPV @ IF sortPV THEN
@@ -1367,32 +1362,9 @@ CREATE searchFlags MAX_PLY CELLS ALLOT
 : sfMoves!  16 sfPly +! ;
 : sfMoves?  sfPly @ [ hex FF0 decimal ] literal AND ;
 
-VARIABLE msStart
 VARIABLE lastScore
 
-
-\ Win32Forth word ms@ returns number of milliseconds since system start.
-\ More accurate is GetTickCount
-\ Define as appropriate for your Forth dialect
-
-
-[UNDEFINED] ms@ [IF]
-  [DEFINED] ?MS [IF]
-  : ms@ ?MS ;           \ iForth
-  [ELSE]
-  [DEFINED] utime [IF]
-  : ms@ utime 1000 um/mod nip ;  \ gforth
-  [ELSE]
-  5 CONSTANT npms
-  : ms@  nodes @ npms / ;
-  [THEN] [THEN]
-[THEN]
-
-
 : .searchHeader ." ply    nodes    time score pv" CR ;
-
-: .ms ( n -- )
-  msPerS /MOD 4 .R ." ." 0 <# # # # #> TYPE ;
 
 \ code char: BL depth complete, '&' new best move, '-' '+' fail low/high
 
@@ -1400,7 +1372,7 @@ VARIABLE lastScore
   \ BASE @ >R DECIMAL
   EMIT DUP lastScore !
   _depth @ 2 .R nodes @ 9 .R
-  ms@ msStart @ - .ms
+  readTimer .ms
   ( value ) 6 .R SPACE .pv CR ;
   \ R> BASE ! ;
 
@@ -1436,14 +1408,14 @@ VARIABLE lastScore
         THEN
         DROP R>                         \ a = value
         I @ updatePV
-        ply @ 0= IF _depth @ 2 > IF DUP [CHAR] & .searchStatus THEN THEN
+        ply @ 0= IF 2 _depth @ U< IF DUP [CHAR] & .searchStatus THEN THEN
       ELSE DROP THEN
     THEN
   genSize +LOOP
 
   sfMoves? IF
     sfCheck? 0= IF 1 _depth +! THEN
-    fifty @ 50moveCount < IF NIP        \ return alpha
+    fifty @ 50moveCount U< IF NIP        \ return alpha
     ELSE 2DROP drawScore THEN           \ draw, 50-move rule
   ELSE
     \ ." mate" sfPly @ . .board xgendump xPause
@@ -1476,7 +1448,7 @@ VARIABLE maxDepth
   0 ply !
   historyErase
   CR .searchHeader
-  ms@ msStart !
+  startTimer
   mateScore DUP NEGATE quiesce lastScore !
   0 nodes !
   maxDepth @ startDepth DO                       \ iterative deepening
@@ -1484,7 +1456,7 @@ VARIABLE maxDepth
     I _depth !
     lastScore @ DUP pawnValue 2/ - SWAP pawnValue 2/ +
     2DUP _search  ( l-p l+p value )
-    DUP ABS mateScore ABS > IF I _depth ! DROP 2DROP LEAVE THEN \ time ran out
+    mateScore ABS OVER ABS U< IF I _depth ! DROP 2DROP LEAVE THEN \ time ran out
     2DUP > 0= IF   \ fail high: re-search l+p inf
       [CHAR] + .searchStatus
       mateScore NEGATE _search
@@ -1497,10 +1469,10 @@ VARIABLE maxDepth
     ABS 100 + mateScore ABS > IF LEAVE THEN
   LOOP
   \ lastScore @ [CHAR] ! .searchStatus
-  ms@ msStart @ - ?DUP IF
+  readTimer ?DUP IF
     nodes @ msPerS ROT */
   ELSE
-    ( DROP) ." at least " nodes @
+    ." at least " nodes @
   THEN . ." nps " ;
 
 \ *** high level (validated) ***
@@ -1516,13 +1488,14 @@ VARIABLE maxDepth
 HEX
 
 : init_board ( -- )
-  4 2 3 6 5 3 2 4   08 00 DO DARK + I bd! LOOP  \ top row of pieces
-  18 10 DO DARKPAWN I bd! LOOP    \ pawns
-  60 20 DO
-    I 8 + I DO 0 I bd! LOOP  \ middle row of empty squares
-  10 +LOOP
-  68 60 DO LIGHTPAWN I bd! LOOP   \ pawns
-  4 2 3 6 5 3 2 4   78 70 DO LIGHT + I bd! LOOP  \ bottom row of pieces
+  eraseBoard
+  ROOK KNIGHT BISHOP KING QUEEN BISHOP KNIGHT ROOK
+  08 00 DO 
+    DUP DARK + I      bd!         \ top row of pieces
+    DARKPAWN   I 10 + bd!         \ pawns
+    LIGHTPAWN  I 60 + bd!         \ pawns
+    LIGHT +    I 70 + bd!         \ bottom row of pieces
+  LOOP
   sqE1 lkSq ! sqE8 dkSq !
   F castle !
   LIGHT side !
@@ -1531,7 +1504,7 @@ HEX
 : strSq ( c-addr -- sq T | F )
   DUP c@ tolower [CHAR] a - ( ^c file )
   SWAP CHAR+ c@ [CHAR] 8 SWAP - ( file rank )
-  2DUP OR DUP 0 < 0= SWAP 8 < AND IF
+  2DUP OR 0 8 WITHIN IF
     4 LSHIFT OR TRUE
   ELSE 2DROP FALSE THEN ;
 
@@ -1576,13 +1549,13 @@ HEX
 
 : epd ( "epd" "w|b" -- tf )
   0 >R                             \ R: current sq
-  board 80 ERASE
+  eraseBoard
   BL WORD COUNT OVER + SWAP   ( ^end ^cur )
   DUP c@ [CHAR] / = IF CHAR+ THEN
   BEGIN
     DUP c@
     DUP [CHAR] 1 -
-    DUP DUP 0< 0= SWAP 8 < AND IF
+    DUP 0 8 WITHIN IF
       R> + 1+ >R                \ 1-8 empty squares
     ELSE DROP DUP [CHAR] / = IF
       R> rank 1+ 4 LSHIFT >R    \ next rank, 1st file
@@ -1632,7 +1605,9 @@ HEX
 : newGame init_board .board ;            \ setup a new game
 : new newGame ;
 
-: sd ( n -- ) 1+ maxDepth ! ;
+: sd ( n -- ) 1+ MAX_PLY 2/ MIN maxDepth ! ;
+
+: st ( seconds -- ) msPerS * TO msMaxThinkTime ;
 
 : go                  \ ask the computer to choose move
   think               \  press any key to stop thinking and make a move
@@ -1680,7 +1655,13 @@ HEX
 
 : bench   \ Fischer-Sherwin NJ Championships 1957, move 17 
   S" setup 1rb2rk/p4ppp/1p1qp1n/3n2N/2pP4/2P3P/PPQ2PBP/R1B1R1K w" evaluate
-  5 sd  Think CR ;
+  5 sd  
+  think readTimer      \ best of three
+  think readTimer MIN
+  think readTimer MIN 
+  CR ." Results: "
+  DUP nodes @ msPerS ROT */ . ." nps" 
+  DROP ;
 
 \ !!! need validation routines for regression testing?
 
@@ -1695,6 +1676,7 @@ HEX
 ." mv e1g1      castle kingside" CR
 ." undo2        undo undo" CR
 ." 5 sd         Set maximum depth for computer search" CR
+." 10 st        Set maximum thinking time in seconds" CR
 ." newGame      Start a new game" CR
 ." rotateBoard  Display board rotated by 180 degrees" CR
 ." showCoords   Display toggle algebraic coordinates" CR
@@ -1707,7 +1689,7 @@ HEX
 
 \ *** EXECUTE WHEN LOADING ***
 
-CR .( TSCP 0.4.3 loaded ) CR
+CR .( TSCP 0.4.4 loaded ) CR
 tscp-help CR
 4 sd
 true showCoords? !
