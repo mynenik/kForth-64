@@ -46,7 +46,8 @@ FAST = -D__FAST__
 OBJS = kforth.o ForthVM.o ForthCompiler.o vm64.o vmc.o
 FOBJS = kforth-fast.o ForthVM-fast.o ForthCompiler-fast.o vm64-fast.o vmc-fast.o
 # LIBS = -pie -lreadline -lncurses -ldl -lm
-LIBS = -pie -lreadline -ldl -lm
+# LIBS = -pie -lreadline -ldl -lm
+LIBS = -pie -lreadline -ltinfo -ldl -lm
 
 all:	
 	make kforth64
