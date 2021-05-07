@@ -3,7 +3,7 @@
 // Useful macros for kForth C and C++ source files, following
 // the convention established by DNW in vm-osxppc.s
 //
-// Copyright (c) 2009--2018, Krishna Myneni
+// Copyright (c) 2009--2021, Krishna Myneni
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -13,6 +13,9 @@
 #define INC_DSP   ++GlobalSp;
 #define DEC_DSP   --GlobalSp;
 #define TOS       (*GlobalSp)
+
+#define INC_FSP   (GlobalFp = (void*)((byte*)GlobalFp + FpSize));
+#define DEC_FSP   (GlobalFp = (void*)((byte*)GlobalFp - FpSize));
 
 #ifndef __FAST__
 

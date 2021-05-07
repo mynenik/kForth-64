@@ -29,6 +29,7 @@ using namespace std;
 #include "kfmacros.h"
 
 #define STACK_SIZE 32768
+#define FP_STACK_SIZE 16384
 #define RETURN_STACK_SIZE 4096
 
 extern bool debug;
@@ -82,11 +83,13 @@ extern "C" {
 
   // global pointers exported to other modules
 
-  long int* GlobalSp;      // the global stack pointer
-  byte* GlobalIp;     // the global instruction pointer
+  long int* GlobalSp;  // the typed global stack pointer
+  void* GlobalFp;      // the untyped floating point stack pointer
+  byte* GlobalIp;      // the global instruction pointer
   long int* GlobalRp;      // the global return stack pointer
   long int* BottomOfStack;
   long int* BottomOfReturnStack;
+  void* BottomOfFpStack;
 
 #ifndef __FAST__
   byte* GlobalTp;     // the global type stack pointer
@@ -99,6 +102,7 @@ extern "C" {
   long int Base;
   long int State;
   long int Precision;
+  long int FpSize;
   char* pTIB;
   long int NumberCount;
   char WordBuf[256];
@@ -237,6 +241,7 @@ vector<char*> StringTable;               // table for persistent strings
 
 long int ForthStack[STACK_SIZE];                  // the stack
 long int ForthReturnStack[RETURN_STACK_SIZE];     // the return stack
+
 #ifndef __FAST__
 byte ForthTypeStack[STACK_SIZE];             // the value type stack
 byte ForthReturnTypeStack[RETURN_STACK_SIZE];// the return value type stack
@@ -367,7 +372,8 @@ int InitSystemVars ()
 
     Base = 10;
     State = FALSE;
-    Precision = 15;
+    Precision = 15;  // Default FP output precision
+    FpSize = 8;      // Default FP size in bytes
 
     WordListEntry* pWord;
     pWord = Voc_Forth.GetFromName("STATE");
@@ -391,6 +397,18 @@ int NullSystemVars ()
 }
 //--------------------------------------------------------------- 
 
+int InitFpStack ()
+{
+// Allocate the Floating Point stack and set the relevant
+// stack pointers.
+
+    unsigned u = FP_STACK_SIZE*FpSize;
+    void* p = (void*) new byte [u];  // == fixme ==> null ptr check
+    BottomOfFpStack = (void*)( (byte*) p + u - FpSize );
+    GlobalFp = BottomOfFpStack;
+    return 0;
+}
+
 int OpenForth ()
 {
 // Initialize the Forth system, and return the total number of words
@@ -411,6 +429,7 @@ int OpenForth ()
     pCompilationWL = &Voc_Forth;
 
     // Initialize the global stack pointers
+    // Floating point stack pointers initialized by InitFpStack()
     BottomOfStack = ForthStack + STACK_SIZE - 1;
     BottomOfReturnStack = ForthReturnStack + RETURN_STACK_SIZE - 1;
     GlobalSp = BottomOfStack;
@@ -425,6 +444,7 @@ int OpenForth ()
    // Other initialization
     vmEntryRp = BottomOfReturnStack;
     InitSystemVars();
+    InitFpStack();
     set_start_time();
     save_term();
     L_initfpu();
@@ -464,6 +484,9 @@ void CloseForth ()
         ++j;
     }
     StringTable.erase(StringTable.begin(), StringTable.end());
+
+    // Delete the floating point stack
+    delete [] (((byte*) BottomOfFpStack) + FpSize - FP_STACK_SIZE*FpSize) ;
 
     restore_term();
 }
@@ -1499,42 +1522,46 @@ int CPP_ddotr ()
   return 0;
 }
 
-// F.  ( r -- )
+// F.  ( F: r -- )
 // Print floating point number from the stack.
-// Forth-94 Floating Point Extensions Wordset 12.6.2.1427
+// Forth-2012 Floating Point Extensions Wordset 12.6.2.1427
 int CPP_fdot ()
 {
-  DROP
-  DROP
-  if (GlobalSp > BottomOfStack)
+  if (GlobalFp > BottomOfFpStack)
     return E_V_STK_UNDERFLOW;
   else
     {
-      DEC_DSP
-      *pOutStream << *((double*) GlobalSp) << ' ';
-      INC_DSP
+      INC_FSP
+      switch( FpSize ) {
+        case 4:
+	  *pOutStream << *((float*) GlobalFp) << ' ';
+	  break;
+	case 8:
+          *pOutStream << *((double*) GlobalFp) << ' ';
+	  break;
+	case 16:
+	  *pOutStream << "qfloat" << ' ';
+	  break;
+      }
       (*pOutStream).flush();
     }
   return 0;
 }
 
-// FS.  ( r -- )
+// FS.  ( F: r -- )
 // Print floating point number in scientific notation.
-// Forth-94 Floating Point Extensions Wordset 12.6.2.1613
+// Forth-2012 Floating Point Extensions Wordset 12.6.2.1613
 int CPP_fsdot ()
 {
-  DROP
-  DROP
-  if (GlobalSp > BottomOfStack)
+  if (GlobalFp > BottomOfFpStack)
     return E_V_STK_UNDERFLOW;
   else
     {
-      DEC_DSP
+      INC_FSP
       ios_base::fmtflags origFlags = cout.flags();
       int origPrec = cout.precision();
       *pOutStream << setprecision(Precision-1) << scientific << 
-		*((double*) GlobalSp) << ' ';
-      INC_DSP
+		*((double*) GlobalFp) << ' ';
       (*pOutStream).flush();
       cout.flags(origFlags);
       cout.precision(origPrec);
@@ -1593,6 +1620,20 @@ int CPP_dots ()
   DEC_DTSP
 
   return 0;
+}
+
+// F.S ( F: i*r -- i*r )
+int CPP_fdots ()
+{
+   if (GlobalFp > BottomOfFpStack) return E_V_STK_UNDERFLOW;
+   if (GlobalFp == BottomOfFpStack) {
+	   *pOutStream << "f:<empty>";
+    }
+   else {
+	   ;
+   }
+   *pOutStream << endl;
+   return 0;
 }
 
 // ' (tick) ( "name" -- xt )

@@ -2,7 +2,7 @@
 //
 // Common declarations and data for kForth 64-bit Virtual Machine
 //
-// Copyright (c) 1998--2020 Krishna Myneni,
+// Copyright (c) 1998--2021 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -130,9 +130,9 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad CPP_uddotr, CPP_ddotr, L_f2drop, L_f2dup   # 368--371
            .quad L_nop, L_nop, L_nop, L_nop                 # 372--375
            .quad L_nop, L_nop, L_nop, L_nop                 # 376--379
-           .quad L_nop, L_nop, L_nop, L_nop                 # 380--383
-           .quad L_nop, L_nop, L_nop, L_nop                 # 384--387
-           .quad L_nop, L_nop, L_nop, L_nop                 # 388--391
+           .quad L_nop, L_fdepth, L_fpfetch, L_nop          # 380--383
+           .quad CPP_fdots, L_fdup, L_fdrop, L_fswap        # 384--387
+           .quad L_frot, L_fover, L_nop, L_nop              # 388--391
            .quad L_nop, L_nop, L_nop, L_nop                 # 392--395
            .quad L_nop, L_nop, L_nop, L_nop                 # 396--399
            .quad L_bool_not, L_bool_and, L_bool_or, L_bool_xor  # 400--403 
@@ -157,6 +157,14 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
   .endif
 .endm
 
+.macro LDFSP
+	movq GlobalFp(%rip), %rbx
+.endm
+
+.macro STFSP
+	movq %rbx, GlobalFp(%rip)
+.endm
+
 .macro INC_DSP
 	addq $WSIZE, %rbx
 .endm
@@ -167,6 +175,14 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 
 .macro INC2_DSP           # increment DSP by 2 cells; assume DSP in rbx reg
 	addq $2*WSIZE, %rbx
+.endm
+
+.macro INC_FSP
+	addq FpSize(%rip), %rbx
+.endm
+
+.macro DEC_FSP
+	subq FpSize(%rip), %rbx
 .endm
 
 .macro INC_DTSP
@@ -426,6 +442,8 @@ L_quit:
 L_abort:
 	mov BottomOfStack(%rip), %rax
 	mov %rax, GlobalSp(%rip)
+        mov BottomOfFpStack(%rip), %rax
+        mov %rax, GlobalFp(%rip)
   .ifndef __FAST__
 	mov BottomOfTypeStack(%rip), %rax
 	mov %rax, GlobalTp(%rip)
@@ -541,7 +559,7 @@ L_bl:
 
 L_cellplus:
 	LDSP
-	add $WSIZE, WSIZE(%rbx)
+	addq $WSIZE, WSIZE(%rbx)
 	NEXT
 
 L_cells:
@@ -551,7 +569,7 @@ L_cells:
 
 L_dfloatplus:	
 	LDSP
-	add $8, WSIZE(%rbx)
+	addq $8, WSIZE(%rbx)
 	NEXT				
 
 L_dfloats:	
@@ -864,6 +882,7 @@ L_backslash:
 
 
 	.comm GlobalSp, WSIZE,WSIZE
+	.comm GlobalFp, WSIZE,WSIZE
 	.comm GlobalIp, WSIZE,WSIZE
 	.comm GlobalRp, WSIZE,WSIZE
 	.comm BottomOfStack, WSIZE,WSIZE
@@ -872,6 +891,7 @@ L_backslash:
 	.comm Base, WSIZE,WSIZE
 	.comm State, WSIZE,WSIZE
 	.comm Precision, WSIZE,WSIZE
+	.comm FpSize, WSIZE,WSIZE
 	.comm pTIB, WSIZE,WSIZE
 	.comm TIB, 256,1
 	.comm WordBuf, 256,1

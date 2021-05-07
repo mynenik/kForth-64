@@ -66,7 +66,7 @@
 	xor %rax, %rax
 .endm
 
-.macro FDUP
+.macro TWO_DUP
 	LDSP
 	mov %rbx, %rcx
 	INC_DSP
@@ -89,14 +89,14 @@
 	xor %rax, %rax
 .endm
 	
-.macro FDROP
+.macro TWO_DROP
 	movq $2*WSIZE, %rax
 	addq %rax, GlobalSp(%rip)
 	INC2_DTSP
 	xor %rax, %rax
 .endm
 
-.macro FSWAP
+.macro TWO_SWAP
 	LDSP
 	movq $WSIZE, %rcx
 	add %rcx, %rbx
@@ -122,7 +122,7 @@
 	xor %rax, %rax
 .endm
 		
-.macro FOVER
+.macro TWO_OVER
 	LDSP
 	mov %rbx, %rcx
 	addq $3*WSIZE, %rbx
@@ -838,6 +838,15 @@ L_spfetch:
 	movq %rbx, GlobalTp(%rip)
 	xor %rax, %rax 
 	NEXT
+L_fpfetch:
+        LDSP
+	movq GlobalFp(%rip), %rax
+	movq %rax, (%rbx)
+	DEC_DSP
+	STSP
+	STD_ADDR
+	xor %rax, %rax
+	NEXT
 
 L_i:
 	movq GlobalRtp(%rip), %rbx
@@ -1036,25 +1045,14 @@ L_2val:
 	NEXT
 
 L_fval:
-	mov %rbp, %rbx
-	inc %rbx
-	movq GlobalSp(%rip), %rcx
-	subq $WSIZE, %rcx
-	mov (%rbx), %rax
-	mov %rax, (%rcx)
-	movq WSIZE(%rbx), %rax
-	movq %rax, WSIZE(%rcx)
-	subq $WSIZE, %rcx
-	movq %rcx, GlobalSp(%rip)
-	addq $2*WSIZE-1, %rbx
-	mov %rbx, %rbp
-	movq GlobalTp(%rip), %rbx
-	movb $OP_IVAL, (%rbx)
-	dec %rbx
-	movb $OP_IVAL, (%rbx)
-	dec %rbx
-	movq %rbx, GlobalTp(%rip)
-	xor %rax, %rax
+        LDFSP
+	movq FpSize(%rip), %rax
+	movq 1(%rbp), %rcx
+	movq %rcx, (%rbx)
+	subq %rax, %rbx
+	STFSP
+	addq %rax, %rbp
+	xor %rax, %rax 
 	NEXT
 
 L_and:
@@ -1445,30 +1443,97 @@ L_depth:
 	xor %rax, %rax
 	ret
 
+L_fdepth:
+	movq GlobalFp(%rip), %rbx
+	movq BottomOfFpStack(%rip), %rax
+        sub %rbx, %rax
+        LDSP
+        movq FpSize(%rip), %rcx
+	movq $0, %rdx
+	idivq %rcx
+	movq %rax, (%rbx)
+	sub $WSIZE, %rbx
+	STSP
+	STD_IVAL
+        xor %rax, %rax
+	ret
+ 
 L_2drop:
-	FDROP
+	TWO_DROP
+	NEXT
+
+L_fdrop:
+	LDFSP
+	addq FpSize(%rip), %rbx
+	STFSP
+	NEXT
+
+L_fdup:
+        LDFSP
+        mov %rbx, %rcx
+        movq FpSize(%rip), %rax
+        add %rax, %rcx
+        movq (%rcx), %rcx
+        movq %rcx, (%rbx)
+        sub %rax, %rbx
+        STFSP
+        xor %rax, %rax
+        NEXT
+
+L_fswap:
+        LDFSP
+        movq FpSize(%rip), %rax
+        addq %rax, %rbx
+        movq (%rbx), %rcx
+        addq %rax, %rbx
+        movq (%rbx), %rdx
+        movq %rcx, (%rbx)
+        subq %rax, %rbx
+        movq %rdx, (%rbx)
+        subq %rax, %rbx
+        xor %rax, %rax
+	NEXT
+
+L_fover:
+	LDFSP
+	mov %rbx, %rcx
+	mov FpSize(%rip), %rax
+        add %rax, %rcx
+	add %rax, %rcx
+	movq (%rcx), %rcx
+	movq %rcx, (%rbx)
+	subq %rax, %rbx
+	STFSP
+	xor %rax, %rax
+	NEXT
+
+L_frot:
+		# == fixme ==> implement 
 	NEXT
 
 L_f2drop:
-	FDROP
-	FDROP
+	LDFSP
+        movq FpSize(%rip), %rax
+	addq %rax, %rbx
+	addq %rax, %rbx
+	STFSP
+        xor %rax, %rax
 	NEXT
 
 L_f2dup:
-	FOVER
-	FOVER
+		# == fixme ==> implement
 	NEXT
 
 L_2dup:
-	FDUP
+	TWO_DUP
 	NEXT
 
 L_2swap:
-	FSWAP	
+	TWO_SWAP	
 	NEXT
 
 L_2over:
-	FOVER
+	TWO_OVER
 	NEXT
 
 L_2rot:
@@ -1751,21 +1816,16 @@ L_dffetch:
 	cmpb $OP_ADDR, %al
 	jnz E_not_addr
 	movb $OP_IVAL, (%rbx)
-	dec %rbx
-	movb $OP_IVAL, (%rbx)
-	dec %rbx
 	movq %rbx, GlobalTp(%rip)
 	LDSP
-	mov %rbx, %rdx
 	INC_DSP
-	mov (%rbx), %rcx
-	mov (%rcx), %rax
-	mov %rax, (%rdx)
-	addq $WSIZE, %rcx
-	mov (%rcx), %rax
-	mov %rax, (%rbx)
-	subq $WSIZE, %rdx
-	movq %rdx, GlobalSp(%rip)
+	mov (%rbx), %rcx  # rcx = fpaddr
+	movq %rbx, GlobalSp(%rip)
+	movq (%rcx), %rax
+        LDFSP
+	movq %rax, (%rbx) 
+        DEC_FSP
+        STFSP
 	xor %rax, %rax
 	NEXT
 
@@ -1775,21 +1835,15 @@ L_dfstore:
 	movb (%rbx), %al
 	cmpb $OP_ADDR, %al
 	jnz  E_not_addr
-	addq $2, %rbx
-	movq %rbx, GlobalTp(%rip)
 	LDSP
-	movq $WSIZE, %rdx
-	add %rdx, %rbx
-	mov %rbx, %rax
-	mov (%rbx), %rbx  # address to store
-	add %rdx, %rax
-	mov (%rax), %rcx
-	mov %rcx, (%rbx)
-	add %rdx, %rax
-	add %rdx, %rbx
-	mov (%rax), %rcx
-	mov %rcx, (%rbx)
-	movq %rax, GlobalSp(%rip)
+	add $WSIZE, %rbx
+	mov (%rbx), %rcx  # address to store
+	STSP
+	LDFSP
+	INC_FSP
+	movq (%rbx), %rax
+	movq %rax, (%rcx)
+	STFSP
 	xor %rax, %rax
 	NEXT
 
@@ -1839,8 +1893,8 @@ minexit:
 	NEXT
 
 L_dmax:
-	FOVER
-	FOVER
+	TWO_OVER
+	TWO_OVER
 	DLT
 	INC_DTSP
 	LDSP
@@ -1849,13 +1903,13 @@ L_dmax:
 	STSP
 	cmpq $0, %rax
 	jne dmin1
-	FDROP
+	TWO_DROP
 	xor %rax, %rax
 	NEXT
 
 L_dmin:
-	FOVER
-	FOVER
+	TWO_OVER
+	TWO_OVER
 	DLT
 	INC_DTSP
 	movq $WSIZE, %rcx
@@ -1865,12 +1919,12 @@ L_dmin:
 	STSP
 	cmpq $0, %rax
 	je dmin1
-	FDROP
+	TWO_DROP
 	xor %rax, %rax
 	NEXT
 dmin1:
-	FSWAP
-	FDROP
+	TWO_SWAP
+	TWO_DROP
 	xor %rax, %rax
 	NEXT
 

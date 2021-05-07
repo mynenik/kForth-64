@@ -2,7 +2,7 @@
 //
 // The intrinsic Forth word list for kForth
 //
-// Copyright (c) 2008--2020 Krishna Myneni,
+// Copyright (c) 2008--2021 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org> 
 //
 // This software is provided under the terms of the GNU
@@ -119,6 +119,8 @@ WordTemplate ForthWords[] =
     { "SP!",       OP_SPSTORE,      0 },
     { "RP@",       OP_RPFETCH,      0 },
     { "RP!",       OP_RPSTORE,      0 },
+    { "FP@",       OP_FPFETCH,      0 },
+    { "FP!",       OP_FPSTORE,      0 },
     { ">R",        OP_PUSH,         0 },
     { "R>",        OP_POP,          0 },
     { "R@",        OP_RFETCH,       0 },
@@ -142,6 +144,7 @@ WordTemplate ForthWords[] =
     { "2OVER",     OP_2OVER,        0 },
     { "2ROT",      OP_2ROT,         0 },
     { "DEPTH",     OP_DEPTH,        0 },
+    { "FDEPTH",    OP_FDEPTH,       0 },
     { "BASE",      OP_BASE,         0 },
     { "BINARY",    OP_BINARY,       NONDEFERRED },
     { "DECIMAL",   OP_DECIMAL,      NONDEFERRED },
@@ -232,6 +235,7 @@ WordTemplate ForthWords[] =
     { "FS.",       OP_FSDOT,        0 },
     { ".\x22",     OP_DOTQUOTE,     IMMEDIATE },
     { ".S",        OP_DOTS,         0 },
+    { "F.S",       OP_FDOTS,        0 },
     { "CR",        OP_CR,           0 },
     { "SPACES",    OP_SPACES,       0 },
     { "EMIT",      OP_EMIT,         0 },
@@ -327,13 +331,13 @@ WordTemplate ForthWords[] =
     { "MOVE",      OP_MOVE,         0 },
     { "CMOVE",     OP_CMOVE,        0 },
     { "CMOVE>",    OP_CMOVEFROM,    0 },
-    { "FDUP",      OP_2DUP,         0 },
-    { "FDROP",     OP_2DROP,        0 },
+    { "FDUP",      OP_FDUP,         0 },
+    { "FDROP",     OP_FDROP,        0 },
     { "F2DROP",    OP_F2DROP,       0 },
     { "F2DUP",     OP_F2DUP,        0 },
-    { "FSWAP",     OP_2SWAP,        0 },
-    { "FOVER",     OP_2OVER,        0 },
-    { "FROT",      OP_2ROT,         0 },
+    { "FSWAP",     OP_FSWAP,        0 },
+    { "FOVER",     OP_FOVER,        0 },
+    { "FROT",      OP_FROT,         0 },
     { "F=",        OP_FEQ,          0 },
     { "F<>",       OP_FNE,          0 },
     { "F<",        OP_FLT,          0 },

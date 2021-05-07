@@ -1,6 +1,6 @@
 // ForthVM.h
 //
-// Copyright (c) 1996--2020, Krishna Myneni
+// Copyright (c) 1996--2021, Krishna Myneni
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -13,6 +13,7 @@
 
 int InitSystemVars ();
 int NullSystemVars ();
+int InitFpStack ();
 int OpenForth ();
 void CloseForth ();
 bool InStringTable (char*);
@@ -71,6 +72,7 @@ int CPP_ddot();
 int CPP_fdot();
 int CPP_fsdot();
 int CPP_dots();
+int CPP_fdots();
 int CPP_emit();
 int CPP_cr();
 int CPP_spaces();
