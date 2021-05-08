@@ -454,7 +454,6 @@ t{ c" 5G" number?  ->  5 s>d false }t
 t{ c" G5" number?  ->  0 s>d false }t
 decimal
 
-64bit? invert [IF]
 COMMENT Uncomment lines in regress.4th to test errors.
 
 \ Use stolerance for single precision floating point 
@@ -466,7 +465,7 @@ COMMENT Uncomment lines in regress.4th to test errors.
 
 : -frot  ( F: x y z -- z x y )  frot frot ;
 
-t{ 1e 2e 3e 4e 5e 6e -frot -> 5e 6e 1e 2e 3e 4e }t
+\ t{ 1e 2e 3e 4e 5e 6e -frot -> 5e 6e 1e 2e 3e 4e }t
 
 : fwithin ( -- flag ) ( F: x y z -- )
 (
@@ -528,10 +527,18 @@ t{ -3 s>f -> -3e r}t
 t{  3  0         d>f ->  3e r}t
 t{  0  0         d>f ->  0e r}t
 t{ -3 -1         d>f -> -3e r}t
+
+64bit? invert [IF]
 t{  0  1         d>f ->  4294967296e r}t
 t{  0  1 dnegate d>f -> -4294967296e r}t
-
+[THEN]
+.s
 hex
+[DEFINED] FDEPTH [IF]  \ has fp stack
+
+comment Skipping all F>D tests
+
+[ELSE]
 -1 43dfffff           fconstant  maxftod.f
 maxftod.f fnegate     fconstant -maxftod.f
 0 40900000            fconstant  2^10.f
@@ -579,6 +586,7 @@ t{ -1e  0e f/            f>d -> -maxdint }t  \ -Inf
 t{  0e  0e f/            f>d ->  maxdint }t  \  NaN
 t{  0e  0e f/ fnegate    f>d -> -maxdint }t  \ -NaN
 )
+[THEN]
 
 decimal
 SET-EXACT
@@ -718,4 +726,3 @@ t{ 0e   fsincos -> 0e 1e rr}t
 t{ pi/2 fsincos -> 1e 0e rr}t
 t{ 45e deg>rad fsincos ->  1/sqrt2  1/sqrt2  rr}t
 
-[THEN] \ 64bit? ...

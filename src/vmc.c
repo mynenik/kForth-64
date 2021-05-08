@@ -175,6 +175,7 @@ int C_fln   () { DOUBLE_FUNC(log)   return 0; }
 int C_flnp1 () { DOUBLE_FUNC(log1p) return 0; }
 int C_flog  () { DOUBLE_FUNC(log10) return 0; }
 int C_falog () { DOUBLE_FUNC(exp10) return 0; }
+int C_floor () { DOUBLE_FUNC(floor) return 0; }
 
 int C_fpow ()
 {

@@ -1783,47 +1783,42 @@ L_lstore:
         NEXT
 
 L_sffetch:
-	movq $WSIZE, %rax
-	addq %rax, GlobalSp(%rip)
-	INC_DTSP
 	movq GlobalTp(%rip), %rbx
+	inc %rbx
 	movb (%rbx), %al
 	cmpb $OP_ADDR, %al
 	jnz E_not_addr
 	movb $OP_IVAL, (%rbx)
-	dec %rbx
-	movb $OP_IVAL, (%rbx)
-	DEC_DTSP
-	DEC_DTSP
-	LDSP
-	mov (%rbx), %rbx
-	flds (%rbx)
-	movq $WSIZE, %rax
-	subq %rax, GlobalSp(%rip)
-	LDSP
-	fstp (%rbx)
-	subq %rax, GlobalSp(%rip)
+	movq %rbx, GlobalTp(%rip)
+        LDSP
+        INC_DSP
+        movq (%rbx), %rcx  # rcx = sfloat src addr
+	STSP
+	LDFSP
+	flds (%rcx)
+	fstpl (%rbx)
+	sub %rax, %rbx
+	STFSP
 	xor %rax, %rax
 	NEXT
 
 L_sfstore:
-	movq $WSIZE, %rax
-	addq %rax, GlobalSp(%rip)
-	INC_DTSP
 	movq GlobalTp(%rip), %rbx
+        inc %rbx
 	movb (%rbx), %al
 	cmpb $OP_ADDR, %al
 	jnz E_not_addr
+        movb $OP_IVAL, (%rbx)
+        movq %rbx, GlobalTp(%rip)
 	LDSP
 	INC_DSP
-	fld (%rbx)              # load the f number into NDP
-	DEC_DSP
-	mov (%rbx), %rbx          # load the dest address
-	fstps (%rbx)             # store as single precision float
-	movq $WSIZE, %rax
-	salq $1, %rax
-	addq %rax, GlobalSp(%rip)
-	INC2_DTSP
+        movq (%rbx), %rcx  # rcx = sfloat dest addr
+        STSP
+        LDFSP
+        add %rax, %rbx
+	fldl (%rbx)        # load the double f number into NDP
+	fstps (%rcx)
+        STFSP
 	xor %rax, %rax
 	NEXT
 
@@ -1838,7 +1833,7 @@ L_dffetch:
 	LDSP
 	INC_DSP
 	mov (%rbx), %rcx  # rcx = fpaddr
-	movq %rbx, GlobalSp(%rip)
+	STSP
 	movq (%rcx), %rcx
         LDFSP
 	movq %rcx, (%rbx) 
@@ -2550,11 +2545,11 @@ L_smslashrem:
 	NEXT
 
 L_stof:
-	INC_DTSP
 	LDSP
         add $WSIZE, %rbx
 	fildq (%rbx)
 	STSP
+        INC_DTSP
 	LDFSP
 	fstpl (%rbx)
 	DEC_FSP
@@ -2570,49 +2565,46 @@ L_dtof:
 	xchgq (%rbx), %rax
 	mov %rax, (%rbx)
         STSP
-	fildl (%rbx)
+        INC2_DTSP
+	fildq (%rbx)   # == fixme ==> limited to 64-bit integer
         LDFSP
 	fstpl (%rbx)
-        DEC_FSP
+        sub %rax, %rbx
         STFSP
 	xor %rax, %rax	
 	NEXT	
 
 L_froundtos:
-	movq $WSIZE, %rax
-	addq %rax, GlobalSp(%rip)
-	LDSP
-	fld (%rbx)
-	add %rax, %rbx
-	fistp (%rbx)
-	INC_DTSP
-	movq GlobalTp(%rip), %rbx
-	inc %rbx
-	movb $OP_IVAL, (%rbx)
+	LDFSP
+        add %rax, %rbx
+	fldl (%rbx)
+	STFSP
+        LDSP
+	fistpq (%rbx)
+	DEC_DSP
+        STSP
+	STD_IVAL
 	xor %rax, %rax
 	NEXT
 
 L_ftrunctos:
-	LDSP
-	movq $WSIZE, %rax
-	add %rax, %rbx
-	STSP
-	fld (%rbx)
+        LDFSP
+        add %rax, %rbx
+	fldl (%rbx)
+        STFSP
+        LDSP
 	fnstcw (%rbx)
 	mov (%rbx), %rcx	# save NDP control word		
 	mov %rcx, %rdx	
 	movb $12, %dh
 	mov %rdx, (%rbx)
-	fldcw (%rbx)
-	add %rax, %rbx	
-	fistp (%rbx)
-	sub %rax, %rbx
+	fldcw (%rbx)	
+	fistpq (%rbx)
+	DEC_DSP
+        STSP
 	mov %rcx, (%rbx)
 	fldcw (%rbx)		# restore NDP control word
-	INC_DTSP
-	movq GlobalTp(%rip), %rbx
-	inc %rbx
-	movb $OP_IVAL, (%rbx)
+	STD_IVAL
 	xor %rax, %rax	
 	NEXT
 	
@@ -2620,25 +2612,22 @@ L_ftod:
 	LDFSP
 	add %rax, %rbx
 	fldl (%rbx)
+	STFSP
 	LDSP
 	mov $WSIZE, %rax
-	sub %rax, %rbx
 	fnstcw (%rbx)
 	mov (%rbx), %rcx	# save NDP control word	
 	mov %rcx, %rdx
 	movb $12, %dh		
-	mov %rdx, (%rbx)
-	fldcw (%rbx)
-	add %rax, %rbx	
+	movq %rdx, (%rbx)
+	fldcw (%rbx)	
 	fistpq (%rbx)
 	sub %rax, %rbx
 	mov %rcx, (%rbx)
 	fldcw (%rbx)		# restore NDP control word
-	add %rax, %rbx 
-	mov (%rbx), %rax
-	xchgq WSIZE(%rbx), %rax
-	mov %rax, (%rbx)
-	xor %rax, %rax	
+        STSP
+        STD_IVAL
+        STOD      # == fixme ==> conv. limited to 64-bit integer
 	NEXT
 
 L_fne:

@@ -17,8 +17,7 @@
 \     ansi.4th 
 \     dump.4th
 \
-\ Copyright (c) 2002--2020 Krishna Myneni, Creative Consulting
-\   for Research and Education
+\ Copyright (c) 2002--2021 Krishna Myneni
 \
 \ Provided under the GNU Lesser General Public License (LGPL)
 \
@@ -47,6 +46,7 @@
 \   2011-02-05  km  removed [DEFINED] and [UNDEFINED], now intrinsic 
 \   2020-01-21  km  added SYNONYM
 \   2020-01-25  km  revised defn. of VALUE for improved efficiency.
+\   2021-05-08  km  added defn. of F~ for 64-bit separate fp stack.
 BASE @
 DECIMAL
 \ ============== From the CORE wordset

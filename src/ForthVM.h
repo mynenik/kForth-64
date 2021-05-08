@@ -141,6 +141,7 @@ int CPP_refill();
 int CPP_state();
 int CPP_spstore();
 int CPP_rpstore();
+int CPP_fpstore();
 }
 #endif
 

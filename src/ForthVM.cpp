@@ -2916,6 +2916,24 @@ int CPP_rpstore()
     return 0;
 }
 
+// FP! (fpstore) ( a -- )
+// Set the floating point stack point to address a; throw
+// exception if 'a' is outside of the stack space
+// Non-standard word
+int CPP_fpstore()
+{
+    DROP
+    CHK_ADDR
+    unsigned u = FP_STACK_SIZE*FpSize;
+    void* p = (void*) TOS;
+    p = (void*)((byte*) p - FpSize);
+    if ((p > BottomOfFpStack) || 
+	(p < ((byte*)BottomOfFpStack - u)))
+	    return E_V_BAD_STACK_ADDR;
+    GlobalFp = p;  // == fixme ==> ensure FpSize alignment
+    return 0;
+}
+
 void dump_return_stack()  // for debugging purposes
 {
     long int* p = GlobalRp;

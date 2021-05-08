@@ -220,9 +220,6 @@ variable  number_val
 	LOOP
 	drop
 	number_val @ number_sign @ IF negate THEN ;
-
-cr .( FP string conversion words not currently supported in kforth64 ) cr
-1 cells 8 < [IF]
  
 \ Convert r to a formatted fixed point string with
 \ n decimal places, 0 <= n <= 17.
@@ -230,14 +227,14 @@ cr .( FP string conversion words not currently supported in kforth64 ) cr
 \   results in total number of digits > 17 will give
 \   incorrect results, e.g. "65536.9921875e 15 f>fpstr type"
 \   will output garbage (20 digits are being requested).
-: f>fpstr ( r n -- a u )
+: f>fpstr ( n -- a u ) ( F: r -- )
     0 max 17 min >r 10e r@ s>f f** 
     f* fround f>d dup -rot dabs
     <# r> 0 ?DO # LOOP [char] . hold #s rot sign #> ; 
 
 \ Print an fp number as a fixed point string with
 \ n decimal places, right-justified in a field of width, w
-: f.rd ( r w n -- )
+: f.rd ( w n -- ) ( F: r -- )
     swap >r f>fpstr dup 20 > IF
       \ Too many digits requested in fixed point output
       2drop r> 0 ?DO [char] * emit LOOP
@@ -253,7 +250,7 @@ variable  fnumber_digits
 
 \ Convert r to a counted string in scientific notation
 \ with n decimal places
-: f>string ( r n -- ^str )
+: f>string ( n -- ^str ) ( F: r -- )
 	>r 
 	fdup f0= IF
 	  f>d <# r> 0 ?do # loop #> s" e0" strcat 
@@ -297,12 +294,15 @@ variable  fnumber_digits
 
 0e 0e f/ fconstant NAN
 	 
-: string>f ( ^str -- r )
+: string>f ( ^str -- ) ( F: -- r )
     count bl skip base @ >r decimal >float 
     0= IF NAN THEN r> base ! ;
 
+[DEFINED] FDEPTH [IF]
+cr .( PARSE_ARGS not supported yet for separate fp stack. ) cr
+[ELSE]
 \ Parse a string delimited by spaces into fp numbers
-: parse_args ( a u -- r1 ... rn n )
+: parse_args ( a u -- n ) ( F: -- r1 ... rn )
 	0 >r 
 	2>r
 	BEGIN

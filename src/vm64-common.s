@@ -70,7 +70,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad C_fsin, C_fcos, C_ftan, C_fasin   # 128 -- 131
            .quad C_facos, C_fatan, C_fexp, C_fln   # 132 -- 135
            .quad C_flog, L_fatan2, L_ftrunc, L_ftrunctos    # 136 -- 139
-           .quad C_fmin, C_fmax, L_floor, L_fround # 140 -- 143
+           .quad C_fmin, C_fmax, C_floor, L_fround # 140 -- 143
            .quad L_dlt, L_dzeroeq, L_deq, L_twopush_r  # 144 -- 147
            .quad L_twopop_r, L_tworfetch, L_stod, L_stof # 148 -- 151
            .quad L_dtof, L_froundtos, L_ftod, L_degtorad  # 152 -- 155
@@ -130,7 +130,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad CPP_uddotr, CPP_ddotr, L_f2drop, L_f2dup   # 368--371
            .quad L_nop, L_nop, L_nop, L_nop                 # 372--375
            .quad L_nop, L_nop, L_nop, L_nop                 # 376--379
-           .quad L_nop, L_fdepth, L_fpfetch, L_nop          # 380--383
+           .quad L_nop, L_fdepth, L_fpfetch, CPP_fpstore    # 380--383
            .quad CPP_fdots, L_fdup, L_fdrop, L_fswap        # 384--387
            .quad L_frot, L_fover, L_nop, L_nop              # 388--391
            .quad L_nop, L_nop, L_nop, L_nop                 # 392--395
@@ -750,21 +750,23 @@ L_fatan2:
         xor %rax, %rax
 	NEXT
 
-L_floor:
-	LDSP
-	INC_DSP
-	mov WSIZE(%rbx), %rax
-	push %rbx
-	push %rax
-	mov (%rbx), %rax
-	push %rax
-	call floor@plt
-	add $8, %rsp
-	pop %rbx
-	fstp (%rbx)
-	DEC_DSP
-	xor %rax, %rax		
-	NEXT
+# use C_floor for now.
+#
+# L_floor:
+#	LDSP
+#	INC_DSP
+#	mov WSIZE(%rbx), %rax
+#	push %rbx
+#	push %rax
+#	mov (%rbx), %rax
+#	push %rax
+#	call floor@plt
+#	add $8, %rsp
+#	pop %rbx
+#	fstp (%rbx)
+#	DEC_DSP
+#	xor %rax, %rax		
+#	NEXT
 
 L_fround:
 	LDFSP
