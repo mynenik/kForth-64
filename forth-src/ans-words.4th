@@ -61,20 +61,7 @@ CREATE PAD 512 ALLOT
 : TO ' >BODY STATE @ IF POSTPONE LITERAL POSTPONE ! ELSE ! THEN ; IMMEDIATE
 : VALUE CREATE 1 CELLS ?ALLOT ! IMMEDIATE DOES> POSTPONE LITERAL POSTPONE @ ;
 
-\ ============ From the FLOATING EXT wordset
 
-: F~ ( f1 f2 f3 -- flag )
-     FDUP 0e F> 
-     IF 2>R F- FABS 2R> F<
-     ELSE FDUP F0=
-       IF FDROP		  \ are f1 and f2 *exactly* equal 
-         ( F=)		  \ F= cannot distinguish between -0e and 0e
-	 D=
-       ELSE FABS 2>R FOVER FABS FOVER FABS F+ 2>R
-         F- FABS 2R> 2R> F* F<
-       THEN
-     THEN ;
- 
 
 \ ============ From the PROGRAMMING TOOLS wordset
 
@@ -121,6 +108,42 @@ CREATE PAD 512 ALLOT
 : SYNONYM ( "<newname>" "<oldname>" -- )
    CREATE ' 1 CELLS ?ALLOT ! DOES> A@ EXECUTE ; 
 
+\ ============ From the FLOATING EXT wordset
+
+[DEFINED] FDEPTH [IF]
+\ Separate FP stack version of F~
+fvariable r3
+fvariable rhs
+1 CELLS 8 = [IF]  \ 64-bit, separate stack version
+: F~ ( -- flag ) ( F: r1 r2 r3 -- )
+    fdup r3 f!  \ ( -- flag1 ) ( F: -- r1 r2 )
+    f0> IF  f- fabs r3 f@ f<
+    ELSE
+      r3 f@ 
+      f0= IF  
+        fp@ dfloat+ 
+        dup >r @ r> dfloat+ @ =
+        f2drop
+      ELSE  
+        fover fabs fover fabs f+ r3 f@ fabs f* rhs f!
+        f- fabs rhs f@ f<
+      THEN
+    THEN ;
+[THEN]
+[ELSE]
+\ Integrated stack, 32-bit version of F~
+: F~ ( r1 r2 r3 -- flag )
+     FDUP F0> 
+     IF 2>R F- FABS 2R> F<
+     ELSE FDUP F0=
+       IF FDROP		  \ are f1 and f2 *exactly* equal 
+         ( F=)		  \ F= cannot distinguish between -0e and 0e
+	 D=
+       ELSE FABS 2>R FOVER FABS FOVER FABS F+ 2>R
+         F- FABS 2R> 2R> F* F<
+       THEN
+     THEN ;
+[THEN]
 
 \ ============= From the EXCEPTION wordset
 ( see DPANS94, sec. A.9 )

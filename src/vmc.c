@@ -156,7 +156,9 @@ double powA(double x, double y) /* return x ^ y (exponentiation) */
 } 
 
 #define DOUBLE_FUNC(x)   pf = (double*)((byte*)GlobalFp+FpSize); *pf=x(*pf);
-  
+
+int C_fsin  () { DOUBLE_FUNC(sin)  return 0; }
+int C_fcos  () { DOUBLE_FUNC(cos)  return 0; }
 int C_ftan  () { DOUBLE_FUNC(tan)  return 0; }
 int C_facos () { DOUBLE_FUNC(acos) return 0; }
 int C_fasin () { DOUBLE_FUNC(asin) return 0; }

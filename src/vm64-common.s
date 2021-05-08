@@ -67,7 +67,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad CPP_type, CPP_udot, CPP_variable, CPP_words # 116 -- 119
            .quad CPP_does, L_2val, L_2fetch, C_search # 120 -- 123
            .quad L_or, C_compare, L_not, L_move    # 124 -- 127
-           .quad L_fsin, L_fcos, C_ftan, C_fasin   # 128 -- 131
+           .quad C_fsin, C_fcos, C_ftan, C_fasin   # 128 -- 131
            .quad C_facos, C_fatan, C_fexp, C_fln   # 132 -- 135
            .quad C_flog, L_fatan2, L_ftrunc, L_ftrunctos    # 136 -- 139
            .quad C_fmin, C_fmax, L_floor, L_fround # 140 -- 143
@@ -723,55 +723,18 @@ L_radtodeg:
         xor %rax, %rax
 	NEXT
 
-L_fcos:
-	LDFSP
-	add %rax, %rbx
-	mov WSIZE(%rbx), %rax
-	push %rbx
-	push %rax
-	mov (%rbx), %rax
-	push %rax
-	call cos@plt
-	add $8, %rsp
-	pop %rbx
-	fstp (%rbx)
-	DEC_DSP
-	xor %rax, %rax
-	NEXT
-
-// For native x86 FPU fcos instruction, use FSINCOS
+// For native x86 FPU fcos and fsin instructions, use FSINCOS
 //
-// L_fcos:
-//	LDSP
-//	fld WSIZE(%rbx)
-//	fcos
-//	fstp WSIZE(%rbx)
+// L_fcos [ L_fsin ] :
+//	LDFSP
+//      add %rax, %rbx
+//	fldl (%rbx)
+//	fcos [ fsin ]
+//	fstpl (%rbx)
+//      sub %rax, %rbx
+//      xor %rax, %rax
 //	NEXT
-
-L_fsin:
-	LDSP
-	INC_DSP
-	mov WSIZE(%rbx), %rax
-	push %rbx
-	push %rax
-	mov (%rbx), %rax
-	push %rax
-	call sin@plt
-	add $8, %rsp
-	pop %rbx
-	fstp (%rbx)
-	DEC_DSP
-	xor %rax, %rax
-	NEXT
-
-// For native x86 FPU fsin instruction, use FSINCOS
 //
-// L_fsin:
-//	LDSP
-//	fld WSIZE(%rbx)
-//	fsin
-//	fstp WSIZE(%rbx)
-//	NEXT
 
 L_fatan2:
 	LDFSP
@@ -843,10 +806,11 @@ L_fadd:
 L_fsub:
 	LDFSP
 	add %rax, %rbx
-	fldl (%rbx)
 	add %rax, %rbx
+        fldl (%rbx)
+        sub %rax, %rbx
 	fsubl (%rbx)
-	fchs
+        add %rax, %rbx
 	fstpl (%rbx)
 	sub %rax, %rbx
 	STFSP

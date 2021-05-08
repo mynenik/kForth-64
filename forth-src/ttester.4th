@@ -111,8 +111,8 @@ VARIABLE ERROR-XT
 
 : ERROR ERROR-XT @ EXECUTE ;   \ for vectoring of error reporting
 
-FALSE  CONSTANT HAS-FLOATING
-FALSE CONSTANT HAS-FLOATING-STACK
+TRUE  CONSTANT HAS-FLOATING
+[DEFINED] FDEPTH  CONSTANT HAS-FLOATING-STACK
 
 HAS-FLOATING [IF]
     \ Set the following to the relative and absolute tolerances you

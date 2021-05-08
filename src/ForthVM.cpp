@@ -2008,9 +2008,8 @@ int CPP_fconstant ()
   WordListEntry* pWord = *(pCompilationWL->end() - 1);
   pWord->WordCode = OP_FVAL;
   pWord->Pfa = new double[1];
-  DROP
-  *((double*) (pWord->Pfa)) = *((double*)GlobalSp);
-  DROP
+  INC_FSP
+  *((double*) (pWord->Pfa)) = *((double*) GlobalFp);
   byte *bp = new byte[WSIZE+3];
   pWord->Cfa = bp;
   bp[0] = OP_ADDR;
@@ -2217,7 +2216,12 @@ int CPP_sliteral ()
 int CPP_fliteral ()
 {
   // stack: ( F: r -- | place fp in compiled opcodes )
-  return( CPP_twoliteral ());
+
+  INC_FSP
+  pCurrentOps->push_back(OP_FVAL);
+  double d = *((double*) GlobalFp);
+  OpsPushDouble(d);
+  return 0;
 }
 //-------------------------------------------------------------------
 

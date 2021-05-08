@@ -1502,7 +1502,20 @@ L_fover:
 	NEXT
 
 L_frot:
-		# == fixme ==> implement 
+        LDFSP
+        add %rax, %rbx
+        movq (%rbx), %rcx
+        add %rax, %rbx
+        movq (%rbx), %rdx
+        movq %rcx, (%rbx)
+        add %rax, %rbx
+        movq (%rbx), %rcx
+        movq %rdx, (%rbx)
+        sub %rax, %rbx
+        sub %rax, %rbx
+        movq %rcx, (%rbx)
+        sub %rax, %rbx
+        xor %eax, %eax 
 	NEXT
 
 L_f2drop:
@@ -1514,7 +1527,19 @@ L_f2drop:
 	NEXT
 
 L_f2dup:
-		# == fixme ==> implement
+	LDFSP
+        push %rbx
+        add %rax, %rbx
+        movq (%rbx), %rcx
+        add %rax, %rbx
+        movq (%rbx), %rdx
+        pop %rbx
+        movq %rdx, (%rbx)
+        sub %rax, %rbx
+        movq %rcx, (%rbx)
+        sub %rax, %rbx
+ 	STFSP
+        xor %rax, %rax
 	NEXT
 
 L_2dup:
