@@ -464,16 +464,16 @@ COMMENT Uncomment lines in regress.4th to test errors.
 1e-7  fconstant stolerance  \ tolerance for single precision fp
 1e-15 fconstant tolerance
 
-: -2rot  ( x y z -- z x y )  2rot 2rot ;
+: -frot  ( F: x y z -- z x y )  frot frot ;
 
-t{ 1 2 3 4 5 6 -2rot -> 5 6 1 2 3 4 }t
+t{ 1e 2e 3e 4e 5e 6e -frot -> 5e 6e 1e 2e 3e 4e }t
 
-: fwithin ( x y z -- flag )
+: fwithin ( -- flag ) ( F: x y z -- )
 (
 Assume y < z.  Leave flag = [y<=x<z].
 )
-  -2rot 2over       ( z x y x)
-  f<= ( [y<=x]) >r  ( z x)
+  -frot fover       ( F: z x y x)
+  f<= ( [y<=x]) >r  ( F: z x)
   f> ( [z>x]) r> and
 ;
 

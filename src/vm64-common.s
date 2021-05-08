@@ -159,6 +159,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 
 .macro LDFSP
 	movq GlobalFp(%rip), %rbx
+        movq FpSize(%rip), %rax
 .endm
 
 .macro STFSP
@@ -667,53 +668,64 @@ L_stod:
 	NEXT
 
 L_fabs:
-	LDSP
-	fld WSIZE(%rbx)
+	LDFSP
+        add %rax, %rbx
+        fldl (%rbx)
 	fabs
-	fstp WSIZE(%rbx)
+	fstpl (%rbx)
+        sub %rax, %rbx
+        xor %rax, %rax
 	NEXT
 L_fneg:
-	LDSP
-	fld WSIZE(%rbx)
+	LDFSP
+        add %rax, %rbx
+	fldl (%rbx)
 	fchs
-	fstp WSIZE(%rbx)
+	fstpl (%rbx)
+        sub %rax, %rbx
+        xor %rax, %rax
 	NEXT
 
 L_fsqrt:
-	LDSP
-	fld WSIZE(%rbx)
+	LDFSP
+        add %rax, %rbx
+	fldl (%rbx)
 	fsqrt
-	fstp WSIZE(%rbx)
+	fstpl (%rbx)
+        sub %rax, %rbx
+        xor %rax, %rax
 	NEXT
 
 L_degtorad:
-	LDSP
-	fld FCONST_180(%rip)
-	INC_DSP
-	fld (%rbx)
+	LDFSP
+	fldl FCONST_180(%rip)
+	add %rax, %rbx
+	fldl (%rbx)
 	fdivp %st, %st(1)
 	fldpi
 	fmulp %st, %st(1)
-	fstp (%rbx)
-	DEC_DSP
+	fstpl (%rbx)
+	sub %rax, %rbx
+        xor %rax, %rax
 	NEXT
 
 L_radtodeg:
-	LDSP
-	INC_DSP
-	fld (%rbx)
+	LDFSP
+	add %rax, %rbx
+	fldl (%rbx)
 	fldpi
 	fxch
 	fdivp %st, %st(1)
-	fld FCONST_180(%rip)
+	fldl FCONST_180(%rip)
 	fmulp %st, %st(1)
-	fstp (%rbx)
-	DEC_DSP
+	fstpl (%rbx)
+	sub %rax, %rbx
+        xor %rax, %rax
 	NEXT
 
 L_fcos:
-	LDSP
-	INC_DSP
+	LDFSP
+	add %rax, %rbx
 	mov WSIZE(%rbx), %rax
 	push %rbx
 	push %rax
@@ -762,14 +774,17 @@ L_fsin:
 //	NEXT
 
 L_fatan2:
-	LDSP
-	add $2*WSIZE, %rbx
-	fld WSIZE(%rbx)
-	fld -WSIZE(%rbx)
+	LDFSP
+	add %rax, %rbx
+	fldl (%rbx)
+        add %rax, %rbx
+	fldl (%rbx)
+	fxch
 	fpatan
-	fstp WSIZE(%rbx)
-	STSP
-	INC2_DTSP
+	fstpl (%rbx)
+        DEC_FSP
+	STFSP
+        xor %rax, %rax
 	NEXT
 
 L_floor:
@@ -789,18 +804,19 @@ L_floor:
 	NEXT
 
 L_fround:
-	LDSP
-	INC_DSP
-	fld (%rbx)
+	LDFSP
+	add %rax, %rbx
+	fldl (%rbx)
 	frndint
-	fstp (%rbx)
-	DEC_DSP
+	fstpl (%rbx)
+	sub %rax, %rbx
+        xor %rax, %rax
 	NEXT
 
 L_ftrunc:
-	LDSP
-	INC_DSP
-	fld (%rbx)
+	LDFSP
+	INC_FSP
+	fldl (%rbx)
 	fnstcw NDPcw(%rip)            # save NDP control word
 	mov NDPcw(%rip), %rcx
 	movb $12, %ch
@@ -808,70 +824,56 @@ L_ftrunc:
 	fldcw (%rbx)
 	frndint
 	fldcw NDPcw(%rip)             # restore NDP control word
-	fstp (%rbx)
-	DEC_DSP
+	fstpl (%rbx)
+	DEC_FSP
 	NEXT
 
 L_fadd:
-	LDSP
-	mov $WSIZE, %rax
+	LDFSP
 	add %rax, %rbx
-	fld (%rbx)
-	sal $1, %rax
+	fldl (%rbx)
 	add %rax, %rbx
-	fadd (%rbx)
-	fstp (%rbx)
-	DEC_DSP
-	STSP
-	INC2_DTSP
+	faddl (%rbx)
+	fstpl (%rbx)
+	sub %rax, %rbx
+        STFSP
 	xor %rax, %rax
 	NEXT
 
 L_fsub:
-	LDSP
-	mov $3*WSIZE, %rax
+	LDFSP
 	add %rax, %rbx
-	fld (%rbx)
-	sub $WSIZE, %rax
+	fldl (%rbx)
+	add %rax, %rbx
+	fsubl (%rbx)
+	fchs
+	fstpl (%rbx)
 	sub %rax, %rbx
-	fsub (%rbx)
-	add %rax, %rbx
-	fstp (%rbx)
-	DEC_DSP
-	STSP
-	INC2_DTSP
+	STFSP
 	xor %rax, %rax
 	NEXT
 
 L_fmul:
-	LDSP
-	mov $WSIZE, %rax
+	LDFSP
 	add %rax, %rbx
-	fld (%rbx)
+	fldl (%rbx)
 	add %rax, %rbx
-	mov %rbx, %rcx
-	add %rax, %rbx
-	fmul (%rbx)
-	fstp (%rbx)
-	mov %rcx, %rbx
-	STSP
-	INC2_DTSP
+	fmull (%rbx)
+	fstpl (%rbx)
+	sub %rax, %rbx
+	STFSP
 	xor %rax, %rax
 	NEXT
 
 L_fdiv:
-	LDSP
-	mov $WSIZE, %rax
+	LDFSP
 	add %rax, %rbx
-	fld (%rbx)
+	fldl (%rbx)
 	add %rax, %rbx
-	mov %rbx, %rcx
-	add %rax, %rbx
-	fdivr (%rbx)
-	fstp (%rbx)
-	mov %rcx, %rbx
-	STSP
-	INC2_DTSP
+	fdivrl (%rbx)
+	fstpl (%rbx)
+        sub %rax, %rbx
+	STFSP
 	xor %rax, %rax
 	NEXT
 

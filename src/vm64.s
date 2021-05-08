@@ -255,26 +255,23 @@
 .endm
 
 .macro FREL_DYADIC logic arg set
-	LDSP
-	movq $WSIZE, %rcx
-	add %rcx, %rbx
-	fld (%rbx)
-	add %rcx, %rbx
-	add %rcx, %rbx
-	STSP
-	fcomp (%rbx)
+	LDFSP
+	add %rax, %rbx
+	fldl (%rbx)
+	add %rax, %rbx
+	STFSP
+	fcompl (%rbx)
 	fnstsw %ax
 	andb $65, %ah
 	\logic \arg, %ah
 	movq $0, %rax
 	\set %al
-	neg %rax
-	add %rcx, %rbx
+	negq %rax
+        LDSP
 	mov %rax, (%rbx)
-	movq GlobalTp(%rip), %rax
-	addq $3, %rax
-	movq %rax, GlobalTp(%rip)
-	movb $OP_IVAL, 1(%rax)
+	DEC_DSP
+	STSP
+	STD_IVAL
 	xor %rax, %rax
 .endm
 				
@@ -1046,12 +1043,11 @@ L_2val:
 
 L_fval:
         LDFSP
-	movq FpSize(%rip), %rax
 	movq 1(%rbp), %rcx
 	movq %rcx, (%rbx)
-	subq %rax, %rbx
+	sub %rax, %rbx
 	STFSP
-	addq %rax, %rbp
+	add %rax, %rbp
 	xor %rax, %rax 
 	NEXT
 
@@ -1464,14 +1460,14 @@ L_2drop:
 
 L_fdrop:
 	LDFSP
-	addq FpSize(%rip), %rbx
+	add %rax, %rbx
 	STFSP
+        xor %rax, %rax
 	NEXT
 
 L_fdup:
         LDFSP
         mov %rbx, %rcx
-        movq FpSize(%rip), %rax
         add %rax, %rcx
         movq (%rcx), %rcx
         movq %rcx, (%rbx)
@@ -1482,27 +1478,25 @@ L_fdup:
 
 L_fswap:
         LDFSP
-        movq FpSize(%rip), %rax
         addq %rax, %rbx
         movq (%rbx), %rcx
-        addq %rax, %rbx
+        add %rax, %rbx
         movq (%rbx), %rdx
         movq %rcx, (%rbx)
-        subq %rax, %rbx
+        sub %rax, %rbx
         movq %rdx, (%rbx)
-        subq %rax, %rbx
+        sub %rax, %rbx
         xor %rax, %rax
 	NEXT
 
 L_fover:
 	LDFSP
 	mov %rbx, %rcx
-	mov FpSize(%rip), %rax
         add %rax, %rcx
 	add %rax, %rcx
 	movq (%rcx), %rcx
 	movq %rcx, (%rbx)
-	subq %rax, %rbx
+	sub %rax, %rbx
 	STFSP
 	xor %rax, %rax
 	NEXT
@@ -1513,9 +1507,8 @@ L_frot:
 
 L_f2drop:
 	LDFSP
-        movq FpSize(%rip), %rax
-	addq %rax, %rbx
-	addq %rax, %rbx
+	add %rax, %rbx
+	add %rax, %rbx
 	STFSP
         xor %rax, %rax
 	NEXT
@@ -1821,10 +1814,10 @@ L_dffetch:
 	INC_DSP
 	mov (%rbx), %rcx  # rcx = fpaddr
 	movq %rbx, GlobalSp(%rip)
-	movq (%rcx), %rax
+	movq (%rcx), %rcx
         LDFSP
-	movq %rax, (%rbx) 
-        DEC_FSP
+	movq %rcx, (%rbx) 
+        sub %rax, %rbx
         STFSP
 	xor %rax, %rax
 	NEXT
@@ -1840,7 +1833,7 @@ L_dfstore:
 	mov (%rbx), %rcx  # address to store
 	STSP
 	LDFSP
-	INC_FSP
+	add %rax, %rbx
 	movq (%rbx), %rax
 	movq %rax, (%rcx)
 	STFSP
@@ -2532,35 +2525,31 @@ L_smslashrem:
 	NEXT
 
 L_stof:
-	movq $WSIZE, %rax
-	addq %rax, GlobalSp(%rip)
 	INC_DTSP
 	LDSP
-	fild (%rbx)
-	movq GlobalTp(%rip), %rbx
-	movb $OP_IVAL, (%rbx)
-	dec %rbx
-	movb $OP_IVAL, (%rbx)
-	DEC_DTSP
-	DEC_DTSP
-	LDSP
-	movq $WSIZE, %rax
-	sub %rax, %rbx
-	fstp (%rbx)
-	salq $1, %rax
-	subq %rax, GlobalSp(%rip)
+        add $WSIZE, %rbx
+	fildq (%rbx)
+	STSP
+	LDFSP
+	fstpl (%rbx)
+	DEC_FSP
+	STFSP
 	xor %rax, %rax
 	NEXT
 
 L_dtof:
 	LDSP
-	movq $WSIZE, %rax
-	add %rax, %rbx
+	INC_DSP
 	mov (%rbx), %rax
-	xchgq WSIZE(%rbx), %rax
+        INC_DSP
+	xchgq (%rbx), %rax
 	mov %rax, (%rbx)
-	fildq (%rbx)
-	fstp (%rbx)
+        STSP
+	fildl (%rbx)
+        LDFSP
+	fstpl (%rbx)
+        DEC_FSP
+        STFSP
 	xor %rax, %rax	
 	NEXT	
 
@@ -2603,10 +2592,11 @@ L_ftrunctos:
 	NEXT
 	
 L_ftod:
-	LDSP
-	movq $WSIZE, %rax
+	LDFSP
 	add %rax, %rbx
-	fld (%rbx)
+	fldl (%rbx)
+	LDSP
+	mov $WSIZE, %rax
 	sub %rax, %rbx
 	fnstcw (%rbx)
 	mov (%rbx), %rcx	# save NDP control word	
@@ -2645,73 +2635,61 @@ L_fge:
 	FREL_DYADIC andb $65 setnz
 	NEXT
 L_fzeroeq:
-	LDSP
-	movq $WSIZE, %rax
+	LDFSP
 	add %rax, %rbx
-	mov (%rbx), %rcx
-	STSP
-	add %rax, %rbx
-	mov (%rbx), %rax
-	shlq $1, %rax
-	or %rcx, %rax
+        STFSP
+        xor %rcx, %rcx
+	movl (%rbx), %ecx
+	add $4, %rbx            
+	movl (%rbx), %eax
+	shll $1, %eax
+	or %ecx, %eax
 	movq $0, %rax
 	setz %al
-	neg %rax
-	mov %rax, (%rbx)
 frelzero:
-	movq GlobalTp(%rip), %rbx
-	inc %rbx
-	movq %rbx, GlobalTp(%rip)
-	inc %rbx
-	movb $OP_IVAL, (%rbx)
+	neg %rax
+        LDSP
+	movq %rax, (%rbx)
+        DEC_DSP
+        STSP
+	STD_IVAL
 	xor %rax, %rax
 	NEXT
 L_fzerolt:
-	LDSP
-	movq $WSIZE, %rax
+	LDFSP
 	add %rax, %rbx
-	STSP
-	fld (%rbx)
-	add %rax, %rbx
+	STFSP
+	fldl (%rbx)
 	fldz
 	fcompp	
 	fnstsw %ax
 	andb $69, %ah
 	movq $0, %rax
 	setz %al
-	neg %rax
-	mov %rax, (%rbx)
 	jmp frelzero
 L_fzerogt:
-	LDSP
-	movq $WSIZE, %rax
+	LDFSP
 	add %rax, %rbx
-	STSP
+	STFSP
 	fldz
-	fld (%rbx)
-	add %rax, %rbx
+	fldl (%rbx)
 	fucompp	
 	fnstsw %ax
 	sahf 
 	movq $0, %rax
 	seta %al
-	neg %rax
-	mov %rax, (%rbx)
 	jmp frelzero
 
 L_fsincos:
-	LDSP
-	fld WSIZE(%rbx)
+	LDFSP
+	add %rax, %rbx
+	fldl (%rbx)
 	fsincos
-	fstp -WSIZE(%rbx)
-	fstp WSIZE(%rbx)
-	subq $2*WSIZE, %rbx
-	STSP
-	movq GlobalTp(%rip), %rbx
-	movb $OP_IVAL, (%rbx)
-	dec %rbx
-	movb $OP_IVAL, (%rbx)
-	dec %rbx
-	movq %rbx, GlobalTp(%rip)
+	fxch
+	fstpl (%rbx)
+        sub %rax, %rbx
+	fstpl (%rbx)
+	sub %rax, %rbx
+	STFSP
 	NEXT
 

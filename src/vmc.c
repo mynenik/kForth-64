@@ -43,10 +43,12 @@ vmc.c
 
 //  Provided by ForthVM.cpp
 extern long int* GlobalSp;
+extern void* GlobalFp;
 extern byte* GlobalIp;
 extern long int* GlobalRp;
 extern long int* BottomOfStack;
 extern long int* BottomOfReturnStack;
+extern long int FpSize;
 #ifndef __FAST__
 extern byte* GlobalTp;
 extern byte* GlobalRtp;
@@ -153,7 +155,7 @@ double powA(double x, double y) /* return x ^ y (exponentiation) */
     return ldexp(xy, ey);
 } 
 
-#define DOUBLE_FUNC(x)   pf = (double*)(GlobalSp+1); *pf=x(*pf);
+#define DOUBLE_FUNC(x)   pf = (double*)((byte*)GlobalFp+FpSize); *pf=x(*pf);
   
 int C_ftan  () { DOUBLE_FUNC(tan)  return 0; }
 int C_facos () { DOUBLE_FUNC(acos) return 0; }
@@ -174,34 +176,31 @@ int C_falog () { DOUBLE_FUNC(exp10) return 0; }
 
 int C_fpow ()
 {
-	pf = (double*)(GlobalSp + 1);
+	pf = (double*)((byte*) GlobalFp + FpSize);
 	f = *pf;
 	++pf;
 	*pf = powA (*pf, f);
-	GlobalSp += 2;
-	INC2_DTSP
+	INC_FSP
 	return 0;
 }				
 
 int C_fmin ()
 {
-	pf = (double*)(GlobalSp + 1);
+	pf = (double*)((byte*) GlobalFp + FpSize);
 	f = *pf;
 	++pf;
 	if (f < *pf) *pf = f;
-	GlobalSp += 2;
-	INC2_DTSP
+	INC_FSP
 	return 0;
 }
 
 int C_fmax ()
 {
-	pf = (double*)(GlobalSp + 1);
+	pf = (double*)((byte*) GlobalSp + FpSize);
 	f = *pf;
 	++pf;
 	if (f > *pf) *pf = f;
-	GlobalSp += 2;
-	INC2_DTSP
+	INC_FSP
 	return 0;
 }
 
@@ -956,11 +955,8 @@ int C_tofloat ()
     
 
   if (b) {
-      DEC_DSP
-      *((double*)(GlobalSp)) = f;
-      DEC_DSP
-      STD_IVAL
-      STD_IVAL
+      *((double*)(GlobalFp)) = f;
+      DEC_FSP
   }
   PUSH_IVAL(b)
   return 0;
