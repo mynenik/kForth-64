@@ -309,6 +309,33 @@ HAS-FLOATING-STACK [IF]
 : XXXX}T XTESTER XTESTER XTESTER XTESTER ...}T ;
 
 HAS-FLOATING [IF]
+HAS-FLOATING-STACK [IF]
+: R}T    }T ;
+: XR}T   }T ;
+: RX}T   }T ;
+: RR}T   }T ;
+: XXR}T  }T ;
+: XRX}T  }T ;
+: XRR}T  }T ;
+: RXX}T  }T ;
+: RXR}T  }T ;
+: RRX}T  }T ;
+: RRR}T  }T ;
+: XXXR}T }T ;
+: XXRX}T }T ;
+: XRXX}T }T ;
+: XRXR}T }T ;
+: XRRX}T }T ;
+: XRRR}T }T ;
+: RXXX}T }T ;
+: RXXR}T }T ;
+: RXRX}T }T ;
+: RXRR}T }T ;
+: RRXX}T }T ;
+: RRXR}T }T ;
+: RRRX}T }T ;
+: RRRR}T }T ;
+[ELSE]
 : R}T FTESTER ...}T ;
 : XR}T FTESTER XTESTER ...}T ;
 : RX}T XTESTER FTESTER ...}T ;
@@ -335,6 +362,7 @@ HAS-FLOATING [IF]
 : RRXR}T FTESTER XTESTER FTESTER FTESTER ...}T ;
 : RRRX}T XTESTER FTESTER FTESTER FTESTER ...}T ;
 : RRRR}T FTESTER FTESTER FTESTER FTESTER ...}T ;
+[THEN]
 [THEN]
 
 \ Set the following flag to TRUE for more verbose output; this may

@@ -199,7 +199,7 @@ int C_fmin ()
 
 int C_fmax ()
 {
-	pf = (double*)((byte*) GlobalSp + FpSize);
+	pf = (double*)((byte*) GlobalFp + FpSize);
 	f = *pf;
 	++pf;
 	if (f > *pf) *pf = f;
