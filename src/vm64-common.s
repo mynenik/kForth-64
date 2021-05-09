@@ -137,7 +137,10 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad L_nop, L_nop, L_nop, L_nop                 # 396--399
            .quad L_bool_not, L_bool_and, L_bool_or, L_bool_xor  # 400--403 
            .quad L_boolean_query, L_uwfetch, L_ulfetch, L_slfetch  # 404--407
-           .quad L_lstore, L_nop, L_nop, L_nop                  # 408--411
+           .quad L_lstore, L_nop, L_nop, L_nop              # 408--411
+           .quad L_nop, L_nop, L_nop, L_nop                 # 412--415
+           .quad L_nop, L_nop, L_nop, L_nop                 # 416--419
+           .quad L_sfloats, L_sfloatplus, L_floats, L_floatplus # 420--423
 .text
 	.align WSIZE
 .global JumpTable
@@ -568,6 +571,16 @@ L_cells:
 	salq $3, WSIZE(%rbx)
 	NEXT
 
+L_sfloatplus:
+        LDSP
+        addq $4, WSIZE(%rbx)
+        NEXT
+
+L_sfloats:
+        LDSP
+        salq $2, WSIZE(%rbx)
+        NEXT
+
 L_dfloatplus:	
 	LDSP
 	addq $8, WSIZE(%rbx)
@@ -577,6 +590,20 @@ L_dfloats:
 	LDSP
 	salq $3, WSIZE(%rbx)
 	NEXT
+
+L_floatplus:
+        LDSP
+        movq FpSize(%rip), %rcx
+        addq %rcx, WSIZE(%rbx)
+        NEXT
+
+L_floats:
+        LDSP
+        movq FpSize(%rip), %rax
+        mulq WSIZE(%rbx)
+        movq %rax, WSIZE(%rbx)
+        xor %rax, %rax
+        NEXT
 
 L_dup:
 	LDSP

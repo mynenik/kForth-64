@@ -427,5 +427,9 @@
 #define OP_MSLASH_FLOORED       415
 #define OP_MSTARSLASH_FLOORED   416
 
+#define OP_SFLOATS              420
+#define OP_SFLOATPLUS           421
+#define OP_FLOATS               422
+#define OP_FLOATPLUS            423
 
 #endif

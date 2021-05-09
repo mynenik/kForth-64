@@ -1848,8 +1848,9 @@ L_dfstore:
 	movb (%rbx), %al
 	cmpb $OP_ADDR, %al
 	jnz  E_not_addr
+        movq %rbx, GlobalTp(%rip)
 	LDSP
-	add $WSIZE, %rbx
+	INC_DSP
 	mov (%rbx), %rcx  # address to store
 	STSP
 	LDFSP
