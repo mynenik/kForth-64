@@ -2,7 +2,7 @@
 \
 \ String utility words for kForth
 \
-\ Copyright (c) 1999--2020 Krishna Myneni
+\ Copyright (c) 1999--2021 Krishna Myneni
 \
 \ This software is provided under the terms of the
 \ GNU General Public License.
@@ -17,7 +17,8 @@
 \
 \ 	PARSE_TOKEN ( a u -- a2 u2 a3 u3 )
 \ 	PARSE_LINE  ( a u -- a1 u1 a2 u2 ... an un n )
-\ 	PARSE_ARGS  ( a u -- r1 ... rn n )
+\ 	PARSE_ARGS  ( a u -- n ) ( F: r1 ... rn )
+\       PARSE_CSV   ( a u -- n ) ( F: r1 ... rn )
 \
 \ 	IS_LC_ALPHA ( c -- b )
 \ 	ISDIGIT     ( c -- b )
@@ -38,10 +39,10 @@
 \ 	STRING>S    ( ^str -- n )
 \ 	STRING>D    ( ^str -- d )
 \
-\ 	F>STRING    ( r n -- ^str )
-\ 	F>FPSTR     ( r n -- a u )
-\ 	F.RD        ( r w n -- )
-\ 	STRING>F    ( ^str -- r )
+\ 	F>STRING    ( n -- ^str ) ( F: r -- )
+\ 	F>FPSTR     ( n -- a u ) ( F: r -- )
+\ 	F.RD        ( w n -- ) ( F: r -- )
+\ 	STRING>F    ( ^str -- ) ( F: -- r )
 \ 	
 BASE @
 DECIMAL
@@ -298,11 +299,26 @@ variable  fnumber_digits
     count bl skip base @ >r decimal >float 
     0= IF NAN THEN r> base ! ;
 
-[DEFINED] FDEPTH [IF]
-cr .( PARSE_ARGS not supported yet for separate fp stack. ) cr
-[ELSE]
 \ Parse a string delimited by spaces into fp numbers
+
+[DEFINED] FDEPTH [IF]
 : parse_args ( a u -- n ) ( F: -- r1 ... rn )
+	0 >r  
+	BEGIN
+	  dup 0>
+	WHILE
+	  bl skip 
+	  2dup 
+	  bl scan 2>r
+	  r@ - dup 0= 
+	  IF drop r> 0 >r THEN
+	  strpck string>f
+	  2r> r> 
+	  1+ >r
+	REPEAT
+	2drop r> ;
+[ELSE]
+: parse_args ( a u -- r1 ... rn n )
 	0 >r 
 	2>r
 	BEGIN
@@ -319,5 +335,9 @@ cr .( PARSE_ARGS not supported yet for separate fp stack. ) cr
 	REPEAT
 	2r> 2drop r> ;
 [THEN]
+
+: parse_csv ( a u -- n ) ( F: -- r1 ... rn )
+    [char] , bl replace-char parse_args ;
+
 BASE !
 

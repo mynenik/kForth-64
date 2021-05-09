@@ -141,8 +141,8 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 .text
 	.align WSIZE
 .global JumpTable
-.global L_initfpu, L_depth, L_quit, L_abort, L_ret
-.global L_dabs, L_dplus, L_dminus, L_dnegate
+.global L_initfpu, L_depth, L_fdepth, L_quit, L_abort
+.global L_ret, L_dabs, L_dplus, L_dminus, L_dnegate
 .global L_mstarslash, L_udmstar, L_utmslash
 
 .macro LDSP                      # load stack ptr into rbx reg

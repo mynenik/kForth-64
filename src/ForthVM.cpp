@@ -76,6 +76,7 @@ extern "C" {
 
   int L_initfpu();
   int L_depth();
+  int L_fdepth();
   int L_abort();
   int L_ret();
   int L_dabs();
@@ -1626,11 +1627,42 @@ int CPP_dots ()
 int CPP_fdots ()
 {
    if (GlobalFp > BottomOfFpStack) return E_V_STK_UNDERFLOW;
-   if (GlobalFp == BottomOfFpStack) {
-	   *pOutStream << "f:<empty>";
-    }
+   L_fdepth();
+   DROP
+   long int fdepth = TOS;
+   
+   if (fdepth > 0 ) {
+     float f;
+     double d;
+     byte* bptr = ((byte*) GlobalFp + FpSize);
+     ios_base::fmtflags origFlags = cout.flags();
+     int origPrec = cout.precision();
+
+     for (int i = 0; i < fdepth; i++) {
+       *pOutStream << "\n\t\t";
+       switch( FpSize ) {
+	 case 4:
+	   f = *((float*) bptr);
+           *pOutStream << setprecision(Precision-1) << 
+		   scientific << f;
+	   break;
+	 case 8:
+	   d = *((double*) bptr);
+	   *pOutStream << setprecision(Precision-1) << 
+              scientific << d;
+	   break;
+	 case 16:
+	   *pOutStream << "qfloat";
+	   break;
+       }
+       (*pOutStream).flush();
+       bptr += FpSize;
+     }
+     cout.flags(origFlags);
+     cout.precision(origPrec);
+   }
    else {
-	   ;
+     *pOutStream << "fs: <empty>";
    }
    *pOutStream << endl;
    return 0;
