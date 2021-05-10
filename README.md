@@ -1,10 +1,7 @@
 # kForth-64
 64-bit Forth System for x86_64-GNU/Linux
-NOTE: At present there is no stable release of kForth-64. It is presently
-under development. Although the application will build and execute, please
-note that it has only undergone limited system tests (see forth-src/system-test/).
 
-Copyright &copy; 1998--2020 Krishna Myneni, <krishna.myneni@ccreweb.org>
+Copyright &copy; 1998--2021 Krishna Myneni, <krishna.myneni@ccreweb.org>
 
 ### Contributors:
 
@@ -76,6 +73,8 @@ different categories of Forth libraries or applications. These include:
 
 `system-test/`     A set of automated tests to validate the Forth system against
                    the Forth-2012 standard
+
+`fsl/`             modules from the Forth Scientific Library, including test code
 
 `games/`           console games written in Forth
 
