@@ -465,7 +465,7 @@ COMMENT Uncomment lines in regress.4th to test errors.
 
 : -frot  ( F: x y z -- z x y )  frot frot ;
 
-\ t{ 1e 2e 3e 4e 5e 6e -frot -> 5e 6e 1e 2e 3e 4e }t
+t{ 1e 2e 3e -frot -> 3e 1e 2e }t
 
 : fwithin ( -- flag ) ( F: x y z -- )
 (
@@ -532,12 +532,10 @@ t{ -3 -1         d>f -> -3e r}t
 t{  0  1         d>f ->  4294967296e r}t
 t{  0  1 dnegate d>f -> -4294967296e r}t
 [THEN]
-.s
+
 hex
 [DEFINED] FDEPTH [IF]  \ has fp stack
-
 comment Skipping all F>D tests
-
 [ELSE]
 -1 43dfffff           fconstant  maxftod.f
 maxftod.f fnegate     fconstant -maxftod.f
