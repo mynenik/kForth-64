@@ -2561,9 +2561,9 @@ L_stof:
 L_dtof:
 	LDSP
 	INC_DSP
-        push %rsi
-        push %rdi
+	movq (%rbx), %rsi
         INC_DSP
+        movq (%rbx), %rdi
         STSP
         INC2_DTSP
         call __floattidf
