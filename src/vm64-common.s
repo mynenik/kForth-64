@@ -148,6 +148,8 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 .global L_ret, L_dabs, L_dplus, L_dminus, L_dnegate
 .global L_mstarslash, L_udmstar, L_utmslash
 
+.global __floattidf, __fixdfti
+
 .macro LDSP                      # load stack ptr into rbx reg
   .ifndef __FAST__
 	movq GlobalSp(%rip), %rbx

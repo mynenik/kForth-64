@@ -2561,16 +2561,15 @@ L_stof:
 L_dtof:
 	LDSP
 	INC_DSP
-	mov (%rbx), %rax
+        push %rsi
+        push %rdi
         INC_DSP
-	xchgq (%rbx), %rax
-	mov %rax, (%rbx)
         STSP
         INC2_DTSP
-	fildq (%rbx)   # == fixme ==> limited to 64-bit integer
+        call __floattidf
         LDFSP
-	fstpl (%rbx)
-        sub %rax, %rbx
+        movq %xmm0, (%rbx)
+        DEC_FSP
         STFSP
 	xor %rax, %rax	
 	NEXT	
@@ -2612,23 +2611,18 @@ L_ftrunctos:
 L_ftod:
 	LDFSP
 	add %rax, %rbx
-	fldl (%rbx)
-	STFSP
-	LDSP
-	mov $WSIZE, %rax
-	fnstcw (%rbx)
-	mov (%rbx), %rcx	# save NDP control word	
-	mov %rcx, %rdx
-	movb $12, %dh		
-	movq %rdx, (%rbx)
-	fldcw (%rbx)	
-	fistpq (%rbx)
-	sub %rax, %rbx
-	mov %rcx, (%rbx)
-	fldcw (%rbx)		# restore NDP control word
+        movsd (%rbx), %xmm0
+        STFSP
+        call __fixdfti
+        LDSP
+        movq %rax, (%rbx)
+        DEC_DSP
+        movq %rdx, (%rbx)
+        DEC_DSP
         STSP
-        STD_IVAL
-        STOD      # == fixme ==> conv. limited to 64-bit integer
+	STD_IVAL
+	STD_IVAL
+        xor %rax, %rax 
 	NEXT
 
 L_fne:
