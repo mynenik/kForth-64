@@ -96,5 +96,5 @@ Important system-level files in the `forth-src/` subdirectory include,
 
 ## Documentation
 
-The current version of the kForth-64 User's Guide is located in `kForth-64-branch/doc/`. A copy of the Forth-2012 standards document is also provided here. Please note important differences between kForth-64 and Forth-2012, discussed in section 4 of the User's Guide.
+The current version of the kForth-64 User's Guide is located in `doc/`. A copy of the Forth-2012 standards document is also provided here. Please note important differences between kForth-64 and Forth-2012, discussed in section 4 of the User's Guide.
 
