@@ -228,7 +228,7 @@ BASE !
 TEST-CODE? [IF]     \ test code =============================================
 [undefined] PARSE_ARGS [IF] s" strings.4th" included  [THEN]
 [undefined] T{  [IF]  s" ttester.4th" included [THEN]
-[undefined]  [IF] s" fsl/fsl-test-utils.4th" included [THEN]
+[undefined] CompareArrays [IF] s" fsl/fsl-test-utils.4th" included [THEN]
 [undefined] zvariable [IF] s" fsl/complex.4th" included [THEN]
 
 BASE @
