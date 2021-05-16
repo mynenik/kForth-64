@@ -76,13 +76,14 @@
 \   2017-05-19  km;  add the constant DFLOAT which has the value 1 DFLOATS.
 \   2019-10-29  km;  conditional def. of F2DUP (intrinsic to some Forths).
 \   2021-05-09  km;  provide defs. of  }FCOPY and }FPUT for separate FP stack. 
+\   2021-05-16  km;  provide def. of }}FCOPY for separate FP stack.
 \ ================= kForth specific defs/notes ==============================
 \ Requires ans-words.4th
 
 [undefined] ptr [IF] : ptr create 1 cells allot? ! does> a@ ; [THEN]
 \ ================= end of kForth specific defs ==============================
 
-CR .( FSL-UTIL          V1.3           09 May 2021   EFC, KM )
+CR .( FSL-UTIL          V1.3a          16 May 2021   EFC, KM )
 BASE @ DECIMAL
 
 \ ================= compilation control ======================================
@@ -372,14 +373,25 @@ VARIABLE print-width      6 print-width !
      2DROP ;
 
 \ copy n m elements of 2-D array src to dest
-: }}fcopy ( 'src 'dest n m  -- ) 
+[DEFINED] FDEPTH [IF]
+: }}fcopy ( 'src 'dest n m -- )
     SWAP 0 DO
       DUP 0 DO
+        2 PICK J I }} F@
+        OVER   J I }} F!
+      LOOP
+    LOOP
+    DROP 2DROP ;
+[ELSE]
+: }}fcopy ( 'src 'dest n m  -- ) 
+    SWAP 0 DO  \ -- 'src 'dest m
+      DUP 0 DO \ -- 'src 'dest m
         2 PICK J I  }} F@
         3 PICK J I  }} F!
       LOOP
     LOOP
     DROP 2DROP ;
+[THEN]
 
 \ store r11 ... r_nm into nxm matrix
 : }}fput ( n m 'A -- ) ( F: r11 r12 ... r_nm -- ) 
