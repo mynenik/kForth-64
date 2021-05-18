@@ -174,7 +174,7 @@ FVARIABLE fpivot
 
 FVARIABLE ftemp
 
-[DEFINED] FDEPTH [IF]
+fp-stack? [IF]
 : interchange ( n l k -- n )      
        2 PICK 0 DO  \ -- n l
            matrix{{ 2 PICK I }} DUP F@   \ -- n l a1 ; F: m[n,i]  
@@ -234,7 +234,7 @@ FVARIABLE fscale2
        LOOP
      LOOP ;
 
-[DEFINED] FDEPTH [IF] 
+fp-stack? [IF] 
 : column_swap ( 'p n k1 k2 -- 'p n )
      2 PICK 0 DO
        3 PICK I 3 PICK }} DUP F@  \ -- 'p n k1 k2 a1  F: p{{ I k1 }}

@@ -113,7 +113,7 @@ Public:
 
     npiv ?odd IF FNEGATE THEN ;
 
-[DEFINED] FDEPTH [IF]
+fp-stack? [IF]
 : deti ( 'lu -- nexp ) ( F: -- r )  deti0 nexp ;
 [ELSE]
 : deti ( 'lu -- nexp r )  deti0 nexp -ROT ;
