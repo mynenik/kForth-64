@@ -77,13 +77,14 @@
 \   2019-10-29  km;  conditional def. of F2DUP (intrinsic to some Forths).
 \   2021-05-09  km;  provide defs. of  }FCOPY and }FPUT for separate FP stack. 
 \   2021-05-16  km;  provide def. of }}FCOPY for separate FP stack.
+\   2021-05-18  km;  define FP-STACK? for conditional compilation.
 \ ================= kForth specific defs/notes ==============================
 \ Requires ans-words.4th
 
 [undefined] ptr [IF] : ptr create 1 cells allot? ! does> a@ ; [THEN]
 \ ================= end of kForth specific defs ==============================
 
-CR .( FSL-UTIL          V1.3a          16 May 2021   EFC, KM )
+CR .( FSL-UTIL          V1.3b          18 May 2021   EFC, KM )
 BASE @ DECIMAL
 
 \ ================= compilation control ======================================
@@ -92,9 +93,14 @@ BASE @ DECIMAL
 FALSE VALUE TEST-CODE?
 FALSE VALUE ?TEST-CODE           \ obsolete, for backward compatibility
 
-
 \ for control of conditional compilation of Dynamic memory
 TRUE CONSTANT HAS-MEMORY-WORDS?
+
+\ for conditional compilation with unified vs separate
+\ Floating Point Stack ( unified: 2 cells = 1 dfloat )
+[UNDEFINED] fp-stack? [IF]
+: fp-stack? [DEFINED] fdepth literal ;
+[THEN]
 
 \ =============================================================================
 
@@ -289,7 +295,7 @@ VARIABLE print-width      6 print-width !
       DUP I } @ . 
     LOOP  DROP  ;
 
-[DEFINED] FDEPTH [IF]
+fp-stack? [IF]
 
 \ copy one array into another
 : }fcopy ( 'src 'dest n -- ) 
@@ -373,7 +379,7 @@ VARIABLE print-width      6 print-width !
      2DROP ;
 
 \ copy n m elements of 2-D array src to dest
-[DEFINED] FDEPTH [IF]
+fp-stack? [IF]
 : }}fcopy ( 'src 'dest n m -- )
     SWAP 0 DO
       DUP 0 DO
