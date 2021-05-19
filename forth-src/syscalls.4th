@@ -407,6 +407,20 @@ Public:
 425 constant NR_io_uring_setup
 426 constant NR_io_uring_enter
 427 constant NR_io_uring_register
+428 constant NR_open_tree
+429 constant NR_move_mount
+430 constant NR_fsopen
+431 constant NR_fsconfig
+432 constant NR_fsmount
+433 constant NR_fspick
+434 constant NR_pidfd_open
+435 constant NR_clone3
+436 constant NR_close_range
+437 constant NR_openat2
+438 constant NR_pidfd_getfd
+439 constant NR_faccessat2
+440 constant NR_process_madvise
+441 constant NR_epoll_pwait2
 
 [ELSE]
 
@@ -604,6 +618,120 @@ Public:
 190 constant  NR_VFORK
 191 constant  NR_UGETRLIMIT
 192 constant  NR_MMAP2
+193 constant  NR_TRUNCATE64
+194 constant  NR_FTRUNCATE64
+195 constant  NR_STAT64
+196 constant  NR_LSTAT64
+197 constant  NR_FSTAT64
+198 constant  NR_LCHOWN32
+199 constant  NR_GETUID32
+200 constant  NR_GETGID32
+201 constant  NR_GETEUID32
+202 constant  NR_GETEGID32
+203 constant  NR_SETREUID32
+204 constant  NR_SETREGID32
+205 constant  NR_GETGROUPS32
+206 constant  NR_SETGROUPS32
+207 constant  NR_FCHOWN32
+208 constant  NR_SETRESUID32
+209 constant  NR_GETRESUID32
+210 constant  NR_SETRESGID32
+211 constant  NR_GETRESGID32
+212 constant  NR_CHOWN32
+213 constant  NR_SETUID32
+214 constant  NR_SETGID32
+215 constant  NR_SETFSUID32
+216 constant  NR_SETFSGID32
+217 constant  NR_PIVOT_ROOT
+218 constant  NR_MINCORE
+219 constant  NR_MADVISE
+220 constant  NR_GETDENTS64
+221 constant  NR_FCNTL64
+
+224 constant  NR_GETTID
+225 constant  NR_READAHEAD
+226 constant  NR_SETXATTR
+227 constant  NR_LSETXATTR
+228 constant  NR_FSETXATTR
+229 constant  NR_GETXATTR
+230 constant  NR_LGETXATTR
+231 constant  NR_FGETXATTR
+232 constant  NR_LISTXATTR
+233 constant  NR_LLISTXATTR
+234 constant  NR_FLISTXATTR
+235 constant  NR_REMOVEXATTR
+236 constant  NR_LREMOVEXATTR
+237 constant  NR_FREMOVEXATTR
+238 constant  NR_TKILL
+239 constant  NR_SENDFILE64
+240 constant  NR_FUTEX
+241 constant  NR_SCHED_SETAFFINITY
+242 constant  NR_SCHED_GETAFFINITY
+243 constant  NR_SET_THREAD_AREA
+244 constant  NR_GET_THREAD_AREA
+245 constant  NR_IO_SETUP
+246 constant  NR_IO_DESTROY
+247 constant  NR_IO_GETEVENTS
+248 constant  NR_IO_SUBMIT
+249 constant  NR_IO_CANCEL
+250 constant  NR_FADVISE64
+
+252 constant  NR_EXIT_GROUP
+253 constant  NR_LOOKUP_DCOOKIE
+254 constant  NR_EPOLL_CREATE
+255 constant  NR_EPOLL_CTL
+256 constant  NR_EPOLL_WAIT
+257 constant  NR_REMAP_FILE_PAGES
+258 constant  NR_SET_TID_ADDRESS
+259 constant  NR_TIMER_CREATE
+260 constant  NR_TIMER_SETTIME
+261 constant  NR_TIMER_GETTIME
+262 constant  NR_TIMER_GETOVERRUN
+263 constant  NR_TIMER_DELETE
+264 constant  NR_CLOCK_SETTIME
+265 constant  NR_CLOCK_GETTIME
+266 constant  NR_CLOCK_GETRES
+267 constant  NR_CLOCK_NANOSLEEP
+268 constant  NR_STATFS64
+269 constant  NR_FSTATFS64
+270 constant  NR_TGKILL
+271 constant  NR_UTIMES
+272 constant  NR_FADVISE64_64
+273 constant  NR_VSERVER
+274 constant  NR_MBIND
+275 constant  NR_GET_MEMPOLICY
+276 constant  NR_SET_MEMPOLICY
+277 constant  NR_MQ_OPEN
+278 constant  NR_MQ_UNLINK
+279 constant  NR_MQ_TIMEDSEND
+280 constant  NR_MQ_TIMEDRECEIVE
+281 constant  NR_MQ_NOTIFY
+282 constant  NR_MQ_GETSETATTR
+283 constant  NR_KEXEC_LOAD
+284 constant  NR_WAITID
+
+286 constant  NR_ADD_KEY
+287 constant  NR_REQUEST_KEY
+288 constant  NR_KEYCTL
+289 constant  NR_IOPRIO_SET
+290 constant  NR_IOPRIO_GET
+291 constant  NR_INOTIFY_INIT
+292 constant  NR_INOTIFY_ADD_WATCH
+293 constant  NR_INOTIFY_RM_WATCH
+294 constant  NR_MIGRATE_PAGES
+295 constant  NR_OPENAT
+296 constant  NR_MKDIRAT
+297 constant  NR_MKNODAT
+298 constant  NR_FCHOWNAT
+299 constant  NR_FUTIMESAT
+300 constant  NR_FSTATAT64
+301 constant  NR_UNLINKAT
+302 constant  NR_RENAMEAT
+303 constant  NR_LINKAT
+304 constant  NR_SYMLINKAT
+305 constant  NR_READLINKAT
+306 constant  NR_FCHMODAT
+
 [THEN]
 
 : syscall0 0 swap syscall ;
@@ -662,8 +790,20 @@ Public:
 
  
 \ Process handling
+0 constant P_ALL
+1 constant P_PID
+2 constant P_PGID
+
+1 constant WNOHANG
+2 constant WUNTRACED
+2 constant WSTOPPED
+4 constant WEXITED
+8 constant WCONTINUED
+
 : fork    ( -- pid ) NR_FORK syscall0 ;
 : getpid  ( -- u | get process id ) NR_GETPID syscall0 ;
+: waitid  ( idtype id asiginfo options -- n ) 
+    NR_WAITID syscall4 ;
 32bit? [IF]
 : waitpid ( pid astatus noptions -- pid ) NR_WAITPID syscall3 ;
 [THEN]
