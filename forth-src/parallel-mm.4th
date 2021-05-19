@@ -41,17 +41,23 @@
 \                   kforth-fast.
 \   2021-05-18  km  replace use of WAITPID with WAITID syscall.
 \
+
+1 cells 4 = constant 32bit?
+
 include ans-words
 include strings
 include modules
 include syscalls
 include mc
-\ include asm-x86
+32bit? [IF]  include asm-x86  [THEN]
 include fsl/fsl-util
 include fsl/horner
 include fsl/extras/noise
+32bit? [IF] 
+include fsl/extras/mmul_x86
+[ELSE]
 include fsl/extras/mmul
-\ include fsl/extras/mmul_x86
+[THEN]
 
 Also syscalls
 
@@ -61,7 +67,7 @@ variable shared_mem  \ address of shared memory buffer used by
                      \   both child and parent.
 
 1000000 constant NCOLS
-4       constant NROWS
+100     constant NROWS
 
 NROWS DFLOATS constant SHARED_LEN  \ length of shared memory region
 
@@ -169,7 +175,9 @@ P{ 0 } S{ 0 } NROWS dfloats tuck compare
 cr .( Parallel result is ) [IF] .( NOT ) [THEN]
 .( equal to single process result. ) cr
 
+0 [IF]
 cr .( To print the results, type ) cr
 cr .(    NROWS S{ }fprint )
 cr .(    NROWS P{ }fprint )
+[THEN]
 

@@ -4,7 +4,7 @@
 \
 \ !!! see WARNING below !!!  
 \
-\ Copyright (c) 2004--2020 Krishna Myneni,
+\ Copyright (c) 2004--2021 Krishna Myneni,
 \ Provided under the GNU General Public License
 \
 \ Notes:
@@ -55,6 +55,8 @@
 \       2015-08-01  added MAP_ANONYMOUS  km
 \       2019-12-29  updated for use on both 64-bit and 32-bit systems  km
 \       2020-01-30  conditional definition of FSYNC (now intrinsic) km
+\       2021-05-18  added WAITID and associated constants; extended
+\                   defined syscall numbers for both 32-bit and 64-bit km
 BASE @
 DECIMAL
 
