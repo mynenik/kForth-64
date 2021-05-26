@@ -488,22 +488,24 @@ L_jmp:
 	NEXT
 
 L_calladdr:
-	push %r12
+#	push %r12
 	inc %rbp
 	mov %rbp, %rcx # address to execute (intrinsic Forth word or other)
 	add $WSIZE-1, %rbp
 	mov %rbp, GlobalIp(%rip)
-	mov %rsp, %r12  # save rsp in r12, which is callee-saved
-	and $-16, %rsp  # align rsp to 16-byte boundary
-	call *(%rcx)
-	mov %r12, %rsp  # restore rsp for the next pops and ret to work
-	movq GlobalIp(%rip), %rbp
-	pop %r12
-	ret
+#	mov %rsp, %r12  # save rsp in r12, which is callee-saved
+#	and $-16, %rsp  # align rsp to 16-byte boundary
+#	call *(%rcx)
+        jmpq *(%rcx)
+#	mov %r12, %rsp  # restore rsp for the next pops and ret to work
+#	movq GlobalIp(%rip), %rbp
+#	pop %r12
+#	ret
 
 L_binary:
 	lea Base(%rip), %rcx
 	movq $2, (%rcx)
+        xor %rax, %rax
 	NEXT
 L_decimal:	
 	lea Base(%rip), %rcx
@@ -595,8 +597,9 @@ L_dfloats:
 
 L_floatplus:
         LDSP
-        movq FpSize(%rip), %rcx
-        addq %rcx, WSIZE(%rbx)
+        movq FpSize(%rip), %rax
+        addq %rax, WSIZE(%rbx)
+        xor %rax, %rax
         NEXT
 
 L_floats:
