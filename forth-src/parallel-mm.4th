@@ -39,7 +39,6 @@
 \                   module fsl/extras/mmul.4th; execution speed improved
 \                   from previous version by a factor of 5 with 
 \                   kforth-fast.
-\   2021-05-18  km  replace use of WAITPID with WAITID syscall.
 \
 
 1 cells 4 = constant 32bit?
@@ -62,7 +61,7 @@ include fsl/extras/mmul
 Also syscalls
 
 variable cpid        \ child process id
-create status 128 allot
+create status 256 allot
 variable shared_mem  \ address of shared memory buffer used by
                      \   both child and parent.
 
@@ -153,8 +152,7 @@ dup shared_mem !
 ms@ 
 parallel-process
 \ parent has finished; now, wait for the child to terminate
-1 us  ( == fixme ==> why is this delay needed? )
-P_PID cpid @ status WEXITED waitid
+cpid @ status 0 waitpid cpid @ <>
 [IF] 
 cr .( Child process did not terminate properly! )
 [ELSE]

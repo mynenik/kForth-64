@@ -57,6 +57,7 @@
 \       2020-01-30  conditional definition of FSYNC (now intrinsic) km
 \       2021-05-18  added WAITID and associated constants; extended
 \                   defined syscall numbers for both 32-bit and 64-bit km
+\       2021-06-31  added WAITPID for 64-bit system  km
 BASE @
 DECIMAL
 
@@ -808,6 +809,8 @@ Public:
     NR_WAITID syscall4 ;
 32bit? [IF]
 : waitpid ( pid astatus noptions -- pid ) NR_WAITPID syscall3 ;
+[ELSE]
+: waitpid ( pid astatus noptions -- pid ) 0 NR_WAIT4 syscall4 ;
 [THEN]
 : ptrace  ( nrequest pid addr adata -- n ) NR_PTRACE syscall4 ;
 : brk     ( addr -- n ) NR_BRK syscall1 ;
