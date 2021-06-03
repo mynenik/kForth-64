@@ -1068,13 +1068,13 @@ int CPP_semicolon()
   if (State)
     {
       // Check for incomplete control structures
-		    
-      if (ifstack.size())                          ecode = E_V_INCOMPLETE_IF;
-      if (beginstack.size() || whilestack.size())  ecode = E_V_INCOMPLETE_BEGIN;
-      if (dostack.size()    || leavestack.size())  ecode = E_V_INCOMPLETE_LOOP;
-      if (casestack.size()  || ofstack.size())     ecode = E_V_INCOMPLETE_CASE;
-      if (ecode) return ecode;
-
+      if (pNewWord) {		    
+        if (ifstack.size())                          ecode = E_V_INCOMPLETE_IF;
+        if (beginstack.size() || whilestack.size())  ecode = E_V_INCOMPLETE_BEGIN;
+        if (dostack.size()    || leavestack.size())  ecode = E_V_INCOMPLETE_LOOP;
+        if (casestack.size()  || ofstack.size())     ecode = E_V_INCOMPLETE_CASE;
+        if (ecode) return ecode;
+      }
       if (debug) OutputForthByteCode (pCurrentOps);
       int nalloc = max( (int) pCurrentOps->size(), 2*WSIZE );
       byte* lambda = new byte[ nalloc ];
