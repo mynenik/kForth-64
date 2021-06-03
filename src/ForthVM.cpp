@@ -3,7 +3,7 @@
 // The C++ portion of the kForth Virtual Machine to 
 // execute Forth byte code.
 //
-// Copyright (c) 1996--2020 Krishna Myneni,
+// Copyright (c) 1996--2021 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -252,7 +252,7 @@ byte ForthReturnTypeStack[RETURN_STACK_SIZE];// the return value type stack
 bool FileOutput = FALSE;
 vector<byte>* pPreviousOps;    // copy of ptr to old opcode vector for [ and ]
 vector<byte> tempOps;          // temporary opcode vector for [ and ]
-
+WordListEntry* pPendingWord;
 //---------------------------------------------------------------
 
 void WordList::RemoveLastWord ()
@@ -1025,9 +1025,14 @@ int CPP_create ()
 // Forth 2012 Core Extensions Wordset 6.2.0455
 int CPP_noname()
 {
+    if ((pNewWord) && (State == 0))
+      pPendingWord = pNewWord; // current def. is incomplete
+    else
+      pPendingWord = NULL;
     State = TRUE;
     pNewWord = NULL;
     recursestack.erase(recursestack.begin(), recursestack.end());
+    pCurrentOps->erase(pCurrentOps->begin(), pCurrentOps->end());
     return 0;
 }
 
@@ -1085,12 +1090,14 @@ int CPP_semicolon()
         }
         pCompilationWL->push_back(pNewWord);
         pLambda = ((byte*) pNewWord + offsetof(struct WordListEntry, Cfa));
+	pNewWord = NULL;
       }
       else {
         // noname definition
         pLambda = new byte* ;
         *((byte**) pLambda) = lambda;
         PUSH_ADDR( (long int) pLambda )
+	pNewWord = pPendingWord;
       }
 
       // Resolve any self references (recursion)
@@ -1112,6 +1119,7 @@ int CPP_semicolon()
 
 
       pCurrentOps->erase(pCurrentOps->begin(), pCurrentOps->end());
+      pPendingWord = NULL;
       State = FALSE;
     }
   else

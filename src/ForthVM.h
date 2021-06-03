@@ -52,6 +52,8 @@ int CPP_assembler();
 int CPP_traverse_wordlist();
 int CPP_name_to_string();
 int CPP_name_to_interpret();
+int CPP_lbracket();
+int CPP_rbracket();
 int CPP_noname();
 int CPP_colon();
 int CPP_semicolon();
