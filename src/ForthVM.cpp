@@ -52,7 +52,9 @@ extern vector<int> leavestack;
 extern vector<int> recursestack;
 extern vector<int> casestack;
 extern vector<int> ofstack;
+extern vector<WordListEntry*> PendingDefStack;
 extern WordListEntry* pNewWord;
+
 extern size_t NUMBER_OF_INTRINSIC_WORDS;
 
 extern "C" {
@@ -252,7 +254,6 @@ byte ForthReturnTypeStack[RETURN_STACK_SIZE];// the return value type stack
 bool FileOutput = FALSE;
 vector<byte>* pPreviousOps;    // copy of ptr to old opcode vector for [ and ]
 vector<byte> tempOps;          // temporary opcode vector for [ and ]
-WordListEntry* pPendingWord;
 //---------------------------------------------------------------
 
 void WordList::RemoveLastWord ()
@@ -1025,12 +1026,9 @@ int CPP_create ()
 // Forth 2012 Core Extensions Wordset 6.2.0455
 int CPP_noname()
 {
-    if ((pNewWord) && (State == 0))
-      pPendingWord = pNewWord; // current def. is incomplete
-    else
-      pPendingWord = NULL;
     State = TRUE;
     pNewWord = NULL;
+    PendingDefStack.push_back(pNewWord);
     recursestack.erase(recursestack.begin(), recursestack.end());
     pCurrentOps->erase(pCurrentOps->begin(), pCurrentOps->end());
     return 0;
@@ -1046,6 +1044,7 @@ int CPP_colon()
     pTIB = ExtractName (pTIB, WordToken);
     strupr(WordToken);
     pNewWord = new WordListEntry;
+    PendingDefStack.push_back(pNewWord);
     strcpy (pNewWord->WordName, WordToken);
     pNewWord->WordCode = OP_DEFINITION;
     pNewWord->Precedence = PRECEDENCE_NONE;
@@ -1090,15 +1089,14 @@ int CPP_semicolon()
         }
         pCompilationWL->push_back(pNewWord);
         pLambda = ((byte*) pNewWord + offsetof(struct WordListEntry, Cfa));
-	pNewWord = NULL;
       }
       else {
         // noname definition
         pLambda = new byte* ;
         *((byte**) pLambda) = lambda;
         PUSH_ADDR( (long int) pLambda )
-	pNewWord = pPendingWord;
       }
+      PendingDefStack.pop_back();  
 
       // Resolve any self references (recursion)
 
@@ -1117,9 +1115,7 @@ int CPP_semicolon()
       bp = (byte*) &(*pCurrentOps)[0]; // ->begin();
       while ((vector<byte>::iterator) bp < pCurrentOps->end()) *lambda++ = *bp++;
 
-
       pCurrentOps->erase(pCurrentOps->begin(), pCurrentOps->end());
-      pPendingWord = NULL;
       State = FALSE;
     }
   else
@@ -2566,7 +2562,7 @@ int CPP_else()
 
   if (ifstack.empty()) return E_V_ELSE_NO_IF;  // ELSE without matching IF
   int i = ifstack[ifstack.size()-1];
-  ifstack.pop_back();
+ ifstack.pop_back();
   ifstack.push_back(pCurrentOps->size() - sizeof(long int));
   long int ival = pCurrentOps->size() - i + 1;
   OpsCopyInt (i, ival);  // write the relative jump count
@@ -2694,6 +2690,8 @@ int CPP_lbracket()
 int CPP_rbracket()
 {
   State = TRUE;
+  int nPending = PendingDefStack.size();
+  if (nPending) pNewWord = PendingDefStack[nPending - 1];
   pCurrentOps = pPreviousOps;
   return 0;
 }

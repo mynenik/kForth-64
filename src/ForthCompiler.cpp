@@ -107,6 +107,9 @@ vector<int> recursestack; // stack for recursion
 vector<int> casestack;  // stack for case jumps
 vector<int> ofstack;   // stack for of...endof constructs
 
+vector<WordListEntry*> PendingDefStack;
+WordListEntry* pNewWord;  // current definition (word or anonymous)
+
 long int linecount;
 
 // The global input and output streams
@@ -118,9 +121,7 @@ ostream* pOutStream ;
 
 vector<byte>* pCurrentOps;
 
-// The word currently being compiled (needs to be global)
 
-WordListEntry* pNewWord;
 //---------------------------------------------------------------
 
 WordListEntry* IsForthWord (char* name)
