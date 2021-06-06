@@ -225,7 +225,8 @@ const char* V_SysDefinedMessages[] =  {
   "Not allowed inside colon definition", // E_V_NOT_IN_DEF
   "Unexpected end of input stream",      // E_V_END_OF_STREAM
   "Unexpected end of string",            // E_V_END_OF_STRING
-  "VM returned unknown error"            // E_V_VM_UNKNOWN_ERROR
+  "VM returned unknown error",           // E_V_VM_UNKNOWN_ERROR
+  "No pending definition"                // E_V_NOPENDING_DEF
 };
 
 // The Dictionary
@@ -2689,11 +2690,18 @@ int CPP_lbracket()
 // Forth 2012 Core Wordset 6.1.2540
 int CPP_rbracket()
 {
+  int ecode = 0;
   State = TRUE;
-  int nPending = PendingDefStack.size();
-  if (nPending) pNewWord = PendingDefStack[nPending - 1];
   pCurrentOps = pPreviousOps;
-  return 0;
+  int nPending = PendingDefStack.size();
+  if (nPending) {
+    pNewWord = PendingDefStack[nPending - 1];
+  }
+  else {
+    pNewWord = NULL;
+    ecode = E_V_NOPENDING_DEF;
+  }
+  return ecode;
 }
 
 // DOES>  ( -- )

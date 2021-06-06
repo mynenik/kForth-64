@@ -1,6 +1,6 @@
 // VMerrors.h
 //
-// Copyright (c) 1996--2019, Krishna Myneni
+// Copyright (c) 1996--2021, Krishna Myneni
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -11,7 +11,7 @@
 #define __VMERRORS_H__
 
 #define MAX_V_RESERVED    80
-#define MAX_V_SYS_DEFINED 25
+#define MAX_V_SYS_DEFINED 26
 
 // Forth 2012 Reserved Throw Codes
 // (see Forth-2012 standard, Table 9.1)
@@ -122,6 +122,6 @@
 #define E_V_END_OF_STREAM    -278
 #define E_V_END_OF_STRING    -279
 #define E_V_VM_UNKNOWN_ERROR -280
-
+#define E_V_NOPENDING_DEF    -281
 #endif
 
