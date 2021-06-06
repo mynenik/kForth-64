@@ -18,7 +18,8 @@
 \                    in comment line.
 \        Revised:  January 26, 2020  km; fixed DU< tests for 64-bit.
 \        Revised:  January 29, 2020  km; added tests for UW@ SW@ UL@ SL@ L!
-\        Revised:  February 13, 2020 km; added tests for NUMBER? 
+\        Revised:  February 13, 2020 km; added tests for NUMBER?
+\        Revised:  June 6, 2021 km; added tests for POSTPONE and COMPILE, 
 s" ans-words.4th" included
 s" ttester.4th" included
 
@@ -723,4 +724,28 @@ SET-NEAR
 t{ 0e   fsincos -> 0e 1e rr}t
 t{ pi/2 fsincos -> 1e 0e rr}t
 t{ 45e deg>rad fsincos ->  1/sqrt2  1/sqrt2  rr}t
+
+TESTING Additional POSTPONE tests
+( Adapted from message posted to comp.lang.forth, 
+by Anton Ertl on 2021-05-17 )
+t{ : foo state @ ; immediate -> }t
+t{ : foo1 postpone foo ; -> }t
+t{ foo1 -> 0 }t
+
+t{ : x] ] ; immediate -> }t
+t{ : y] postpone x] ; -> }t
+t{ : bar [ 2 2 + y] literal ; -> }t
+t{ bar -> 4 }t
+
+TESTING COMPILE,
+( Additional tests for COMPILE, by K. Myneni, 2021/06/03 )
+: CTa ['] 2+ compile, ; immediate
+: add2a CTa ;
+t{ 3 add2a -> 5 }t
+: CTb [ ' 2+ ] literal compile, ; immediate
+: add2b CTb ;
+t{ 4 add2b -> 6 }t
+: CTc [ ' 2+ compile, ] ;  ( non-standard )
+: add2c CTc ;
+t{ 5 add2c -> 7 }t
 
