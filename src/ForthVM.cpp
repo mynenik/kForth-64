@@ -20,6 +20,7 @@ const char* dir_env_var=DIR_ENV_VAR;
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <stack>
 using namespace std;
 
 #include "fbc.h"
@@ -43,16 +44,16 @@ extern long int linecount;
 extern istream* pInStream ;    // global input stream
 extern ostream* pOutStream ;   // global output stream
 extern vector<byte>* pCurrentOps;
-extern vector<int> ifstack;
-extern vector<int> beginstack;
-extern vector<int> whilestack;
-extern vector<int> dostack;
-extern vector<int> querydostack;
-extern vector<int> leavestack;
-extern vector<int> recursestack;
-extern vector<int> casestack;
-extern vector<int> ofstack;
-extern vector<WordListEntry*> PendingDefStack;
+extern stack<int> ifstack;
+extern stack<int> beginstack;
+extern stack<int> whilestack;
+extern stack<int> dostack;
+extern stack<int> querydostack;
+extern stack<int> leavestack;
+extern stack<int> recursestack;
+extern stack<int> casestack;
+extern stack<int> ofstack;
+extern stack<WordListEntry*> PendingDefStack;
 extern WordListEntry* pNewWord;
 
 extern size_t NUMBER_OF_INTRINSIC_WORDS;
@@ -520,14 +521,14 @@ void ClearControlStacks ()
   // Clear the flow control stacks
 
   if (debug) cout << "Clearing all flow control stacks" << endl; 
-  ifstack.erase(ifstack.begin(), ifstack.end());
-  beginstack.erase(beginstack.begin(),beginstack.end());
-  whilestack.erase(whilestack.begin(),whilestack.end());
-  dostack.erase(dostack.begin(), dostack.end());
-  querydostack.erase(querydostack.begin(), querydostack.end());
-  leavestack.erase(leavestack.begin(), leavestack.end());
-  ofstack.erase(ofstack.begin(), ofstack.end());
-  casestack.erase(casestack.begin(), casestack.end());
+  while (!ifstack.empty())    ifstack.pop();
+  while (!beginstack.empty()) beginstack.pop();
+  while (!whilestack.empty()) whilestack.pop();
+  while (!dostack.empty())    dostack.pop();
+  while (!querydostack.empty()) querydostack.pop();
+  while (!leavestack.empty()) leavestack.pop();
+  while (!ofstack.empty())    ofstack.pop();
+  while (!casestack.empty())  casestack.pop();
 }
 //---------------------------------------------------------------
 
@@ -1029,8 +1030,8 @@ int CPP_noname()
 {
     State = TRUE;
     pNewWord = NULL;
-    PendingDefStack.push_back(pNewWord);
-    recursestack.erase(recursestack.begin(), recursestack.end());
+    PendingDefStack.push(pNewWord);
+    while (!recursestack.empty())  recursestack.pop();
     pCurrentOps->erase(pCurrentOps->begin(), pCurrentOps->end());
     return 0;
 }
@@ -1045,13 +1046,13 @@ int CPP_colon()
     pTIB = ExtractName (pTIB, WordToken);
     strupr(WordToken);
     pNewWord = new WordListEntry;
-    PendingDefStack.push_back(pNewWord);
+    PendingDefStack.push(pNewWord);
     strcpy (pNewWord->WordName, WordToken);
     pNewWord->WordCode = OP_DEFINITION;
     pNewWord->Precedence = PRECEDENCE_NONE;
     pNewWord->Pfa = NULL;
     pNewWord->Cfa = NULL;
-    recursestack.erase(recursestack.begin(), recursestack.end());
+    while (!recursestack.empty()) recursestack.pop();
     pCurrentOps->erase(pCurrentOps->begin(), pCurrentOps->end());
     return 0;
 }
@@ -1097,7 +1098,7 @@ int CPP_semicolon()
         *((byte**) pLambda) = lambda;
         PUSH_ADDR( (long int) pLambda )
       }
-      PendingDefStack.pop_back();  
+      PendingDefStack.pop();  
 
       // Resolve any self references (recursion)
 
@@ -1107,10 +1108,10 @@ int CPP_semicolon()
 
       while (recursestack.size())
       {
-         i = recursestack[recursestack.size() - 1];
+         i = recursestack.top();
          ib = pCurrentOps->begin() + i;
          for (i = 0; i < sizeof(void*); i++) *ib++ = *(bp + i);
-         recursestack.pop_back();
+         recursestack.pop();
       }
 
       bp = (byte*) &(*pCurrentOps)[0]; // ->begin();
@@ -2327,7 +2328,7 @@ int CPP_do ()
   pCurrentOps->push_back(OP_PUSH);
   pCurrentOps->push_back(OP_PUSHIP);
 
-  dostack.push_back(pCurrentOps->size());
+  dostack.push(pCurrentOps->size());
   return 0;
 }
 //------------------------------------------------------------------
@@ -2343,7 +2344,7 @@ int CPP_querydo ()
   CPP_else();
   CPP_do();
 
-  querydostack.push_back(pCurrentOps->size());
+  querydostack.push(pCurrentOps->size());
   return 0;
 }
 //------------------------------------------------------------------
@@ -2354,24 +2355,24 @@ int CPP_loop ()
   pCurrentOps->push_back(OP_RTLOOP);  // run-time loop
 
   int i, j, ival;
-  i = dostack[dostack.size() - 1];
+  i = dostack.top();
   if (leavestack.size()) {
     do {
-      j = leavestack[leavestack.size() - 1];
+      j = leavestack.top();
       if (j > i) {
         ival = pCurrentOps->size() - j + 1;
         OpsCopyInt(j, ival); // write relative jump count
-        leavestack.pop_back();
+        leavestack.pop();
       }
     } while ((j > i) && (leavestack.size())) ;
   }
-  dostack.pop_back();
+  dostack.pop();
 
   if (querydostack.size()) {
-    j = querydostack[querydostack.size() - 1];
+    j = querydostack.top();
     if (j >= i) {
       CPP_then();
-      querydostack.pop_back();
+      querydostack.pop();
     }
   }
   return 0;  
@@ -2383,24 +2384,24 @@ int CPP_plusloop ()
   pCurrentOps->push_back(OP_RTPLUSLOOP);  // run-time +loop
 
   int i, j, ival;
-  i = dostack[dostack.size() - 1];
+  i = dostack.top();
   if (leavestack.size()) {
     do {
-      j = leavestack[leavestack.size() - 1];
+      j = leavestack.top();
       if (j > i) {
         ival = pCurrentOps->size() - j + 1;
         OpsCopyInt(j, ival); // write relative jump count
-        leavestack.pop_back();
+        leavestack.pop();
       }
     } while ((j > i) && (leavestack.size())) ;
   }
-  dostack.pop_back();
+  dostack.pop();
 
   if (querydostack.size()) {
-    j = querydostack[querydostack.size() - 1];
+    j = querydostack.top();
     if (j >= i) {
       CPP_then();
-      querydostack.pop_back();
+      querydostack.pop();
     }
   }
   return 0;
@@ -2420,7 +2421,7 @@ int CPP_leave ()
   if (dostack.empty()) return E_V_NO_DO;
   pCurrentOps->push_back(OP_RTUNLOOP);
   pCurrentOps->push_back(OP_JMP);
-  leavestack.push_back(pCurrentOps->size());
+  leavestack.push(pCurrentOps->size());
   OpsPushInt(0);
   return 0;
 }
@@ -2464,7 +2465,7 @@ int CPP_begin()
 {
   // stack: ( -- | mark the start of a begin ... structure )
 
-  beginstack.push_back(pCurrentOps->size());
+  beginstack.push(pCurrentOps->size());
   return 0;
 }
 //------------------------------------------------------------------
@@ -2475,7 +2476,7 @@ int CPP_while()
 
   if (beginstack.empty()) return E_V_NO_BEGIN;
   pCurrentOps->push_back(OP_JZ);
-  whilestack.push_back(pCurrentOps->size());
+  whilestack.push(pCurrentOps->size());
   OpsPushInt(0);
   return 0;
 }
@@ -2487,17 +2488,17 @@ int CPP_repeat()
 
   if (beginstack.empty()) return E_V_NO_BEGIN;  // no matching BEGIN
 
-  int i = beginstack[beginstack.size()-1];
-  beginstack.pop_back();
+  int i = beginstack.top();
+  beginstack.pop();
 
   long int ival;
 
   if (whilestack.size())
     {
-      int j = whilestack[whilestack.size()-1];
+      int j = whilestack.top();
       if (j > i)
 	{
-	  whilestack.pop_back();
+	  whilestack.pop();
 	  ival = pCurrentOps->size() - j + WSIZE + 2;
 	  OpsCopyInt (j, ival);  // write the relative jump count
 	}
@@ -2517,8 +2518,8 @@ int CPP_until()
 
   if (beginstack.empty()) return E_V_NO_BEGIN;  // no matching BEGIN
 
-  int i = beginstack[beginstack.size()-1];
-  beginstack.pop_back();
+  int i = beginstack.top();
+  beginstack.pop();
   long int ival = i - pCurrentOps->size();
   pCurrentOps->push_back(OP_JZ);
   OpsPushInt(ival);   // write the relative jump count
@@ -2533,8 +2534,8 @@ int CPP_again()
 
   if (beginstack.empty()) return E_V_NO_BEGIN;  // no matching BEGIN
 
-  int i = beginstack[beginstack.size()-1];
-  beginstack.pop_back();
+  int i = beginstack.top();
+  beginstack.pop();
   long int ival = i - pCurrentOps->size();
   pCurrentOps->push_back(OP_JMP);
   OpsPushInt(ival);   // write the relative jump count
@@ -2548,7 +2549,7 @@ int CPP_if()
   // stack: ( -- | generate start of an if-then or if-else-then block )
 
   pCurrentOps->push_back(OP_JZ);
-  ifstack.push_back(pCurrentOps->size());
+  ifstack.push(pCurrentOps->size());
   OpsPushInt(0);   // placeholder for jump count
   return 0;
 }
@@ -2562,9 +2563,9 @@ int CPP_else()
   OpsPushInt(0);  // placeholder for jump count
 
   if (ifstack.empty()) return E_V_ELSE_NO_IF;  // ELSE without matching IF
-  int i = ifstack[ifstack.size()-1];
- ifstack.pop_back();
-  ifstack.push_back(pCurrentOps->size() - sizeof(long int));
+  int i = ifstack.top();
+  ifstack.pop();
+  ifstack.push(pCurrentOps->size() - sizeof(long int));
   long int ival = pCurrentOps->size() - i + 1;
   OpsCopyInt (i, ival);  // write the relative jump count
 
@@ -2579,8 +2580,8 @@ int CPP_then()
   if (ifstack.empty()) 
     return E_V_THEN_NO_IF;  // THEN without matching IF or IF-ELSE
 
-  int i = ifstack[ifstack.size()-1];
-  ifstack.pop_back();
+  int i = ifstack.top();
+  ifstack.pop();
   long int ival = (long int) (pCurrentOps->size() - i) + 1;
   OpsCopyInt (i, ival);   // write the relative jump count
 
@@ -2592,7 +2593,7 @@ int CPP_then()
 // Forth 2012
 int CPP_case()
 {
-  casestack.push_back(-1);
+  casestack.push(-1);
   return 0;
 }
 
@@ -2609,8 +2610,8 @@ int CPP_endcase()
   int i; long int ival;
   do
     {
-      i = casestack[casestack.size()-1];
-      casestack.pop_back();
+      i = casestack.top();
+      casestack.pop();
       if (i == -1) break;
       ival = (long int) (pCurrentOps->size() - i) + 1;
       OpsCopyInt (i, ival);   // write the relative jump count
@@ -2627,7 +2628,7 @@ int CPP_of()
   pCurrentOps->push_back(OP_OVER);
   pCurrentOps->push_back(OP_EQ);
   pCurrentOps->push_back(OP_JZ);
-  ofstack.push_back(pCurrentOps->size());
+  ofstack.push(pCurrentOps->size());
   OpsPushInt(0);   // placeholder for jump count
   pCurrentOps->push_back(OP_DROP);
   return 0;
@@ -2639,14 +2640,14 @@ int CPP_of()
 int CPP_endof()
 {
   pCurrentOps->push_back(OP_JMP);
-  casestack.push_back(pCurrentOps->size());
+  casestack.push(pCurrentOps->size());
   OpsPushInt(0);   // placeholder for jump count
 
   if (ofstack.empty())
     return E_V_ENDOF_NO_OF;  // ENDOF without matching OF
 
-  int i = ofstack[ofstack.size()-1];
-  ofstack.pop_back();
+  int i = ofstack.top();
+  ofstack.pop();
   long int ival = (long int) (pCurrentOps->size() - i) + 1;
   OpsCopyInt (i, ival);   // write the relative jump count
 
@@ -2661,7 +2662,7 @@ int CPP_recurse()
   pCurrentOps->push_back(OP_ADDR);
   if (State)
     {
-      recursestack.push_back(pCurrentOps->size());
+      recursestack.push(pCurrentOps->size());
       OpsPushInt(0);
     }
   else
@@ -2695,7 +2696,7 @@ int CPP_rbracket()
   pCurrentOps = pPreviousOps;
   int nPending = PendingDefStack.size();
   if (nPending) {
-    pNewWord = PendingDefStack[nPending - 1];
+    pNewWord = PendingDefStack.top(); // [nPending - 1];
   }
   else {
     pNewWord = NULL;

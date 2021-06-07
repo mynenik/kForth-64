@@ -97,17 +97,17 @@ extern "C"  long int JumpTable[];
 
 // stacks for keeping track of nested control structures
 
-vector<int> ifstack;	// stack for if-then constructs
-vector<int> beginstack;	// stack for begin ... constructs
-vector<int> whilestack;	// stack for while jump holders
-vector<int> dostack;    // stack for do loops
-vector<int> querydostack; // stack for conditional do loops
-vector<int> leavestack; // stack for leave jumps
-vector<int> recursestack; // stack for recursion
-vector<int> casestack;  // stack for case jumps
-vector<int> ofstack;   // stack for of...endof constructs
+stack<int> ifstack;	// stack for if-then constructs
+stack<int> beginstack;	// stack for begin ... constructs
+stack<int> whilestack;	// stack for while jump holders
+stack<int> dostack;    // stack for do loops
+stack<int> querydostack; // stack for conditional do loops
+stack<int> leavestack; // stack for leave jumps
+stack<int> recursestack; // stack for recursion
+stack<int> casestack;  // stack for case jumps
+stack<int> ofstack;   // stack for of...endof constructs
 
-vector<WordListEntry*> PendingDefStack;
+stack<WordListEntry*> PendingDefStack;
 WordListEntry* pNewWord;  // current definition (word or anonymous)
 
 long int linecount;
