@@ -43,7 +43,6 @@ extern const char* C_ErrorMessages[];
 extern long int linecount;
 extern istream* pInStream ;    // global input stream
 extern ostream* pOutStream ;   // global output stream
-extern vector<byte>* pCurrentOps;
 extern stack<int> ifstack;
 extern stack<int> beginstack;
 extern stack<int> whilestack;
@@ -54,7 +53,9 @@ extern stack<int> recursestack;
 extern stack<int> casestack;
 extern stack<int> ofstack;
 extern stack<WordListEntry*> PendingDefStack;
+extern stack<vector<byte>*> PendingOps;
 extern WordListEntry* pNewWord;
+extern vector<byte>* pCurrentOps;
 
 extern size_t NUMBER_OF_INTRINSIC_WORDS;
 
@@ -254,7 +255,6 @@ byte ForthReturnTypeStack[RETURN_STACK_SIZE];// the return value type stack
 
 
 bool FileOutput = FALSE;
-vector<byte>* pPreviousOps;    // copy of ptr to old opcode vector for [ and ]
 vector<byte> tempOps;          // temporary opcode vector for [ and ]
 //---------------------------------------------------------------
 
@@ -487,7 +487,7 @@ void CloseForth ()
         if (*j) delete [] *j;
         ++j;
     }
-    StringTable.erase(StringTable.begin(), StringTable.end());
+    StringTable.clear();
 
     // Delete the floating point stack
     delete [] (((byte*) BottomOfFpStack) + FpSize - FP_STACK_SIZE*FpSize) ;
@@ -1133,10 +1133,11 @@ int CPP_semicolon()
 // Forth 2012 Core Wordset 6.2.0945
 int CPP_compilecomma ()
 {
-    if (State == 0) pCurrentOps = pPreviousOps;
+    vector<byte>* pSaveOps = pCurrentOps;
+    if (State == 0) pCurrentOps = PendingOps.top();
     CPP_literal();
     pCurrentOps->push_back(OP_EXECUTE);
-    if (State == 0) pCurrentOps = &tempOps;
+    if (State == 0) pCurrentOps = pSaveOps;
     return 0;  
 }
 
@@ -2679,11 +2680,11 @@ int CPP_recurse()
 // Forth 2012 Core Wordset 6.1.2500
 int CPP_lbracket()
 {
-  State = FALSE;
-  pPreviousOps = pCurrentOps;
-  tempOps.erase(tempOps.begin(), tempOps.end());
-  pCurrentOps = &tempOps;
-  return 0;
+    PendingOps.push(pCurrentOps);
+    State = FALSE;
+    tempOps.clear();
+    pCurrentOps = &tempOps;
+    return 0;
 }
 
 // ]  "right-bracket" ( -- )
@@ -2693,10 +2694,13 @@ int CPP_rbracket()
 {
   int ecode = 0;
   State = TRUE;
-  pCurrentOps = pPreviousOps;
-  int nPending = PendingDefStack.size();
-  if (nPending) {
-    pNewWord = PendingDefStack.top(); // [nPending - 1];
+  if (PendingOps.size()) {
+     pCurrentOps->clear();
+     pCurrentOps = PendingOps.top();
+     PendingOps.pop();
+  }
+  if (PendingDefStack.size()) {
+    pNewWord = PendingDefStack.top();
   }
   else {
     pNewWord = NULL;
@@ -2865,7 +2869,7 @@ int CPP_included()
   long int *sp;
   byte *tp;
   ecode = ForthVM (&ops, &sp, &tp);
-  ops.erase(ops.begin(), ops.end());
+  ops.clear();
 
   return ecode;
 }

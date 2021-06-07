@@ -108,7 +108,9 @@ stack<int> casestack;  // stack for case jumps
 stack<int> ofstack;   // stack for of...endof constructs
 
 stack<WordListEntry*> PendingDefStack;
-WordListEntry* pNewWord;  // current definition (word or anonymous)
+stack<vector<byte>*> PendingOps;
+WordListEntry* pNewWord;   // current definition (word or anonymous)
+vector<byte>* pCurrentOps; // current opcode vector
 
 long int linecount;
 
@@ -116,11 +118,6 @@ long int linecount;
 
 istream* pInStream ;
 ostream* pOutStream ;
-
-// Global ptr to current opcode vector
-
-vector<byte>* pCurrentOps;
-
 
 //---------------------------------------------------------------
 
