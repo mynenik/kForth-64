@@ -1028,11 +1028,15 @@ int CPP_create ()
 // Forth 2012 Core Extensions Wordset 6.2.0455
 int CPP_noname()
 {
+    if (PendingDefStack.size()) {
+      PendingOps.push(pCurrentOps);
+      pCurrentOps = new vector<byte>;
+    }
     State = TRUE;
     pNewWord = NULL;
     PendingDefStack.push(pNewWord);
     while (!recursestack.empty())  recursestack.pop();
-    pCurrentOps->erase(pCurrentOps->begin(), pCurrentOps->end());
+    // pCurrentOps->erase(pCurrentOps->begin(), pCurrentOps->end());
     return 0;
 }
 
@@ -1098,7 +1102,7 @@ int CPP_semicolon()
         *((byte**) pLambda) = lambda;
         PUSH_ADDR( (long int) pLambda )
       }
-      PendingDefStack.pop();  
+      // PendingDefStack.pop();   
 
       // Resolve any self references (recursion)
 
@@ -1117,7 +1121,16 @@ int CPP_semicolon()
       bp = (byte*) &(*pCurrentOps)[0]; // ->begin();
       while ((vector<byte>::iterator) bp < pCurrentOps->end()) *lambda++ = *bp++;
 
-      pCurrentOps->erase(pCurrentOps->begin(), pCurrentOps->end());
+      pNewWord = PendingDefStack.top();
+      PendingDefStack.pop();
+      if ((pNewWord == NULL) && (PendingDefStack.size())) {
+         delete pCurrentOps;
+	 pCurrentOps = PendingOps.top();
+	 PendingOps.pop();
+      }
+      else {
+         pCurrentOps->erase(pCurrentOps->begin(), pCurrentOps->end());
+      }
       State = FALSE;
     }
   else
