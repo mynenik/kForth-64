@@ -6,6 +6,7 @@
 \
 \ Revised:
 \   2019-11-20  km added linear cross-entropy fidelity calculation.
+\   2021-06-12  km simplified computation of 5-qubit random gate ABCDCDAB
 \
 \ References:
 \   1. F. Arute, et al., Nature vol. 574, pp. 505--511 (2019).
@@ -120,14 +121,8 @@ RQC_gates{
 \ Return the 5-qubit gate for a random circuit executing 
 \ eight cycles (m=8), ABCDCDAB.
 : ABCDCDAB ( -- qgate )
-    UA           5 nRandom1G swap %*%
-    UB swap %*%  5 nRandom1G swap %*%
-    UC swap %*%  5 nRandom1G swap %*%
-    UD swap %*%  5 nRandom1G swap %*%
-    UC swap %*%  5 nRandom1G swap %*%
-    UD swap %*%  5 nRandom1G swap %*%
-    UA swap %*%  5 nRandom1G swap %*%
-    UB swap %*%  5 nRandom1G swap %*% ;
+    UB UA UD UC UD UC UB 5 nRandom1G UA %*%
+    7 0 DO  %*% 5 nRandom1G swap %*%  LOOP ;
 
 \ Return a gate for k iterations of ABCDCDAB
 : iterations ( k -- qgate )
