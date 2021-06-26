@@ -93,15 +93,19 @@ ply      nodes  time score  pv
 \ 2020-12-11  fix to run on 64-bit systems: v 0.4.3
 \ 2020-12-14  add time limit for search; backport other
 \               modifications from versions: v 0.4.4
-\
+\ 2021-06-26  backports from FCP; remove use of PTR;
+\               ver. 0.4.5
+
 \ Requires (kForth only): ans-words.4th      
 \ =================================================
 
 \ ============= ANS Forth definitions =============
 [UNDEFINED] A@ [IF] synonym a@ @ [THEN]
 [UNDEFINED] ALLOT? [IF] : allot? HERE SWAP ALLOT ; [THEN]
-[UNDEFINED] PTR [IF] synonym ptr value [THEN]
 \ ============= end ANS Forth definitions =========
+
+[UNDEFINED] CELL [IF] 1 CELLS CONSTANT CELL [THEN]
+[UNDEFINED] CELL- [IF] : CELL- POSTPONE CELL POSTPONE - ; IMMEDIATE
 
 : table ( v1 ... vn n -- )
 	CREATE DUP CELLS allot? OVER 1- CELLS + SWAP
@@ -146,11 +150,26 @@ LIGHT PAWN + CONSTANT LIGHTPAWN
 : mine? ( [sq] color -- tf ) XOR COLORMASK AND 0= ;
 : enemy? ( [sq] color -- tf ) XOR COLORMASK AND COLORMASK = ;
   \ color can also be a piece+color
-: piece ( [sq] -- piece ) PIECEMASK AND ;
+: piece ( [sq] -- piece ) PIECEMASK AND ; 
 
 \ *** Board ***
 
+\ The board structure is changed from the original TSCP to this Forth
+\  version.  This representation has the advantages of:
+\  1. One board index is used both for the main board and the eval boards
+\     The original TSCP had a 120 element board for the pieces and edge
+\     detection, and 64 element boards for eval piece-square tables, requiring
+\     extra tables for translating between the two indices.  This
+\     design uses one half of a 128 element board for both functions.
+\  2. Edge detection testing on board index vs. board contents
+\  3. One board element contains both piece and color data.  The original
+\     TSCP had two separate boards, one for color and one for piece type.
+\  4. Easy to translate between rank/file and board index.
+\  5. Efficient test for whether a piece on one square can attack a piece
+\     on another square (heavily used by inCheck?)
+
 CREATE board 80 ALLOT
+: eraseBoard  board 80 erase ;
 
 70 CONSTANT sqA1
 72 CONSTANT sqC1
@@ -164,27 +183,28 @@ CREATE board 80 ALLOT
 07 CONSTANT sqH8
 
 : edge? ( sq+offset -- nz ) 88 AND ;
-: eraseBoard  board 80 erase ;
 : bd! ( piece sq -- ) board + c! ;
-: bd@ ( sq -- piece ) s" board + c@ " evaluate ; immediate
+: bd@ ( sq -- piece ) s" board + c@" evaluate ; immediate
 : ?bd@ ( sq -- piece ) DUP edge? IF DROP EDGE ELSE bd@ THEN ;
-\ : bd@else ( fail sq -- piece / fail )
-\   DUP edge? IF DROP ELSE board + c@ NIP THEN ;
+: piece@ ( sq -- piece ) bd@ piece ;
 
 : bdMove ( sqF sqT -- ) OVER bd@ SWAP bd! 0 SWAP bd! ;
 
-: rank ( sq -- rank ) 4 RSHIFT ;
+: rank ( sq -- rank ) 4 rshift ; 
 : file ( sq -- file ) F AND ;
-: frSq ( file rank -- sq ) 4 LSHIFT OR ;
-: epSq ( from to -- ep ) + 2/ ;
-: epCapSq ( from to -- epCap ) F AND SWAP F0 AND OR ;
+: fileRank>sq ( file rank -- sq ) 4 lshift or ;
 
 : rank8? ( sq -- tf ) rank 0= ;
-: rank7? ( sq -- tf ) rank 1 = ;
-: rank2? ( sq -- tf ) rank 6 = ;
+: rank7? ( sq -- tf ) rank 1 = ; 
+: rank2? ( sq -- tf ) rank 6 = ; 
 : rank1? ( sq -- tf ) rank 7 = ;
 
-\ *** Global Variables ***
+: rotate ( sq -- sq ) NEGATE 77 + ;
+
+: cRank ( sq -- c ) rank NEGATE [CHAR] 8 + ;
+: cFile ( sq -- c ) file [CHAR] a + ;
+
+\ *** Globals ***
 
 VARIABLE side           \ color to move during search
 VARIABLE ply            \ depth of search
@@ -197,9 +217,9 @@ VARIABLE fifty          \ fifty move draw count
 : bd@mine? ( sq -- tf ) bd@ color side @ = ;
 : ?bd@enemy? ( sq+dir -- tf ) ?bd@ side @ enemy? ;
 
-\ board mappers (more words could use this)
+\ *** Board Iterator ***
 
-: forSomeSq ( [st] 'word -- ) \ word ( [st] sq -- [st] 0 / [any] nz )
+: forSomeSq ( [st] xt -- ) \ xt ( [st] sq -- [st] 0 / [any] nz )
   80 0 DO
     I 8 + I DO
       I SWAP DUP >R EXECUTE IF
@@ -208,22 +228,17 @@ VARIABLE fifty          \ fifty move draw count
     LOOP
   10 +LOOP DROP ;
 
-: forEverySq ( [st] 'word -- )
+: forEverySq ( [st] xt -- )
   80 0 DO
     I 8 + I DO
       I SWAP DUP >R EXECUTE R>
     LOOP
   10 +LOOP DROP ;
 
-: onlyPieces ( [st] 'word sq -- 'word )    \ word ( [st] sq -- [st] )
-  DUP bd@ IF OVER EXECUTE ELSE DROP THEN ;
-
-: forEachPiece ( [st] 'word -- ) ['] onlyPieces forEverySq ;
-
-: onlyMyColor ( [st] 'word sq -- 'word )
+: onlyMyColor ( [st] xt sq -- xt )
   DUP bd@mine? IF OVER EXECUTE ELSE DROP THEN ;
 
-: forEachMyColor ( [st] 'word -- ) ['] onlyMyColor forEverySq ;
+: forEachMyColor ( [st] xt -- ) ['] onlyMyColor forEverySq ;
 
 \ *** Board Display ***
 
@@ -243,7 +258,6 @@ VARIABLE fifty          \ fifty move draw count
 VARIABLE blackAtBottom?
 VARIABLE showCoords?
 
-: rotate ( sq -- sq ) NEGATE 77 + ;
 
 : .aSq ( sq -- )
   showCoords? @ IF
@@ -265,6 +279,8 @@ VARIABLE showCoords?
 : .sq ( sq -- )
   DUP file [CHAR] a + EMIT
   rank NEGATE [CHAR] 8 + EMIT ;
+
+\ Display board as an Extended Position Definition (EPD) string
 
 VARIABLE epdBlCount
 : 0epdBl! ( -- ) 0 epdBlCount ! ;
@@ -289,21 +305,6 @@ VARIABLE epdBlCount
 : .epd ( -- )
   CR 0epdBl! ['] .epdSq forEverySq SPACE
   wtm? IF [CHAR] w ELSE [CHAR] b THEN EMIT CR ;
-
-\ *** History (for improved move ordering) ***
-
-40 CONSTANT numSquares         \ 64
-
-CREATE history numSquares DUP * CELLS ALLOT
-  \ tradeoff: make 3*64*64 to use sq as index directly
-  \ !!! c,
-
-: historyErase history numSquares DUP * CELLS ERASE ;
-
-: asIndex ( sq -- 0-63 ) DUP file SWAP rank 3 LSHIFT OR ;
-
-: ^history ( from to -- ^hist )
-  asIndex 6 LSHIFT SWAP asIndex + CELLS history + ;
 
 \ *** Attack and check detection ***
 
@@ -432,6 +433,9 @@ VARIABLE lkSq   VARIABLE dkSq
 : mvTo ( mv -- sqTo ) 8 RSHIFT FF AND ;
 : mvPromote ( mv -- piece ) 10 RSHIFT piece ;
 
+: epSq ( from to -- ep ) + 2/ ; 
+: epCapSq ( from to -- epCap ) F AND SWAP F0 AND OR ;
+
 : .move ( mv -- )
   DUP mvFrom .sq
   DUP mvCaptureBit AND IF [CHAR] x ELSE [CHAR] - THEN EMIT
@@ -441,6 +445,22 @@ VARIABLE lkSq   VARIABLE dkSq
     DUP mvPromote CELLS symbols + @ EMIT
   THEN
   mvEPBit AND IF ." ep" THEN ;
+
+\ *** History (for improved move ordering) ***
+
+40 CONSTANT numSquares         \ 64
+
+CREATE history numSquares DUP * CELLS ALLOT
+  \ tradeoff: make 3*64*64 to use sq as index directly
+  \ !!! c,
+
+: historyErase history numSquares DUP * CELLS ERASE ;
+
+: asIndex ( sq -- 0-63 ) DUP file SWAP rank 3 LSHIFT OR ;
+
+: ^history ( from to -- ^hist )
+  asIndex 6 LSHIFT SWAP asIndex + CELLS history + ;
+
 
 \ *** Move Generation ***
 
@@ -680,9 +700,9 @@ VARIABLE histTop
 : histSize* 2* CELLS ;
 
 CREATE hist_dat HIST_STACK histSize* ALLOT
-hist_dat HIST_STACK histSize* + ptr histMax
+hist_dat HIST_STACK histSize* + CONSTANT histMax
 
-: histInit ( -- ) hist_dat histTop ! ;
+: initHist ( -- ) hist_dat histTop ! ;
 
 : .moveList ( -- )
   CR 5 SPACES ." White  Black" 0   ( halfmoveNumber )
@@ -919,6 +939,39 @@ bkCastleBit bqCastleBit OR CONSTANT bCastleBits
 
 \ *** Evaluation ***
 DECIMAL
+
+: evalSetupSq ( sq -- sq )
+  DUP >R bd@ ?DUP IF
+    DUP light? IF 
+      DUP LIGHTPAWN = IF
+        DROP pawnValue lightPawnMat +!
+        R@ file 1+ CELLS lightPawnRank + ( sq ^lpr )
+        DUP @ R@ rank MAX SWAP !
+      ELSE
+        piece CELLS pieceValues + @ lightPieceMat +!
+      THEN
+    ELSE 
+      DUP DARKPAWN = IF
+        DROP pawnValue darkPawnMat +!
+        R@ file 1+ CELLS darkPawnRank +
+        DUP @ R@ rank MIN SWAP !
+      ELSE
+        piece CELLS pieceValues + @ darkPieceMat +!
+      THEN 
+    THEN 
+  THEN R> DROP ;
+
+\ !!! piece lists
+
+: evalSetup ( -- )      \ call after setting up a position or new game
+  10 0 DO
+    0 lightPawnRank I CELLS + !
+    7  darkPawnRank I CELLS + !
+  LOOP
+  0 lightPieceMat ! 0 darkPieceMat !
+  0 lightPawnMat  ! 0 darkPawnMat  !
+  ['] evalSetupSq forEverySq ;
+
 -10 CONSTANT DOUBLED_PAWN_PENALTY
 -20 CONSTANT ISOLATED_PAWN_PENALTY
  -8 CONSTANT BACKWARD_PAWN_PENALTY
@@ -954,7 +1007,7 @@ DECIMAL
    -10  -30  -10  -10  -10  -10  -30  -10 
 16 8 * table pawnPcSq
 
-pawnPcSq 8 CELLS + ptr knightPcSq
+pawnPcSq 8 CELLS + CONSTANT knightPcSq
 
 
 -10  -10  -10  -10  -10  -10  -10  -10 
@@ -975,7 +1028,7 @@ pawnPcSq 8 CELLS + ptr knightPcSq
     0   10   20   30   30   20   10    0 
 16 8 * table bishopPcSq
 
-bishopPcSq 8 CELLS + ptr kingEndgamePcSq
+bishopPcSq 8 CELLS + CONSTANT kingEndgamePcSq
 
 
 -40  -40  -40  -40  -40  -40  -40  -40 
@@ -996,60 +1049,56 @@ bishopPcSq 8 CELLS + ptr kingEndgamePcSq
   -40  -40  -40  -40  -40  -40  -40  -40 
 16 8 * table kingLtPcSq
 
-kingLtPcSq 8 CELLS + ptr kingDkPcSq
+kingLtPcSq 8 CELLS + CONSTANT kingDkPcSq
 
 VARIABLE lightScore      VARIABLE darkScore
 
+  -20   0  -10  -20  -20  -20  -20  -25
+8 table myCastledPawnRankPenalties
+
+    0    0    0    0   -5  -10    0  -15 
+8 table enemyCastledPawnRankPenalties
+
 : evalLightKP ( file+1 -- value )
-  DUP CELLS lightPawnRank + @
-  DUP 6 = IF DROP 0
-  ELSE DUP 5 = IF DROP -10
-  ELSE 0= IF -25
-  ELSE -20 THEN THEN THEN
+  DUP CELLS lightPawnRank + @ NEGATE 7 +
+  CELLS myCastledPawnRankPenalties + @
   SWAP CELLS darkPawnRank + @
-  DUP 7 = IF DROP -15
-  ELSE DUP 5 = IF DROP -10
-  ELSE 4 = IF -5
-  ELSE 0 THEN THEN THEN
+  CELLS enemyCastledPawnRankPenalties + @
   + ;
 
 : evalDarkKP ( file+1 -- value )
   DUP CELLS darkPawnRank + @
-  DUP 1 = IF DROP 0
-  ELSE DUP 2 = IF DROP -10
-  ELSE 7 = IF -25
-  ELSE -20 THEN THEN THEN
-  SWAP CELLS lightPawnRank + @
-  DUP 0= IF DROP -15
-  ELSE DUP 2 = IF DROP -10
-  ELSE 3 = IF -5
-  ELSE 0 THEN THEN THEN
+  CELLS myCastledPawnRankPenalties + @
+  SWAP CELLS lightPawnRank + @ NEGATE 7 +
+  CELLS enemyCastledPawnRankPenalties + @
   + ;
 
 1200 CONSTANT endgameThreshold
 3100 CONSTANT maxPieceMat
-
 
 : evalLK ( sq -- )
   darkPieceMat @ endgameThreshold U< IF
     CELLS kingEndgamePcSq + @
   ELSE
     DUP CELLS kingLtPcSq + @              ( sq value )
-    SWAP file DUP 3 U< IF DROP
+    SWAP file 
+    DUP 3 U< IF DROP
       1 evalLightKP +
       2 evalLightKP +
       3 evalLightKP 2/ +
-    ELSE 4 OVER U< IF DROP
-      8 evalLightKP +
-      7 evalLightKP +
-      6 evalLightKP 2/ +
-    ELSE
-      DUP 3 + SWAP DO
-        I openFile? IF 10 - THEN
-      LOOP
-    THEN THEN
+    ELSE 
+      4 OVER U< IF DROP
+        8 evalLightKP +
+        7 evalLightKP +
+        6 evalLightKP 2/ +
+      ELSE
+        DUP 3 + SWAP DO
+          I openFile? IF 10 - THEN
+        LOOP
+      THEN 
+    THEN
     darkPieceMat @ maxPieceMat */
-  THEN \ dup .
+  THEN
   lightScore +! ;
 
 : evalDK ( sq -- )
@@ -1057,119 +1106,107 @@ VARIABLE lightScore      VARIABLE darkScore
     CELLS kingEndgamePcSq + @
   ELSE
     DUP CELLS kingDkPcSq + @              ( sq value )
-    SWAP file DUP 3 U< IF DROP
+    SWAP file 
+    DUP 3 U< IF DROP
       1 evalDarkKP +
       2 evalDarkKP +
       3 evalDarkKP 2/ +
-    ELSE 4 OVER U< IF DROP
-      8 evalDarkKP +
-      7 evalDarkKP +
-      6 evalDarkKP 2/ +
-    ELSE
-      DUP 3 + SWAP DO
-        I openFile? IF 10 - THEN
-      LOOP
-    THEN THEN
+    ELSE 
+      4 OVER U< IF DROP
+        8 evalDarkKP +
+        7 evalDarkKP +
+        6 evalDarkKP 2/ +
+      ELSE
+        DUP 3 + SWAP DO
+          I openFile? IF 10 - THEN
+        LOOP
+      THEN 
+    THEN
     lightPieceMat @ maxPieceMat */
-  THEN \ dup .
+  THEN
   darkScore +! ;
 
 : evalLP ( sq -- )
   DUP CELLS pawnPcSq + @                        ( sq value )
-  SWAP DUP file 1+ CELLS DUP lightPawnRank + ROT rank  ( value f+1 ^lpr r )
+  SWAP DUP file 1+ CELLS 
+  DUP lightPawnRank + 
+  ROT rank  ( value f+1 ^lpr r )
   OVER @ OVER > IF
-    DOUBLED_PAWN_PENALTY ELSE 0 THEN >R
-  OVER DUP CELL+ @ SWAP CELL- @ OR 0= IF
+    DOUBLED_PAWN_PENALTY 
+  ELSE 0 THEN >R
+  OVER DUP CELL+ @ SWAP CELL- @ OR 
+  0= IF
     R> ISOLATED_PAWN_PENALTY + >R NIP
-  ELSE OVER CELL+ @ ROT CELL- @ MAX OVER U< IF
-    R> BACKWARD_PAWN_PENALTY + >R THEN THEN          ( value f+1 r )
+  ELSE 
+    OVER CELL+ @ ROT CELL- @ MAX 
+    OVER U< IF
+      R> BACKWARD_PAWN_PENALTY + >R 
+    THEN 
+  THEN          ( value f+1 r )
   SWAP darkPawnRank +
   DUP CELL+ @ OVER CELL- @ MIN SWAP @ MIN OVER U< 0= IF  ( value r )
-    7 SWAP - PASSED_PAWN_BONUS * R> +
-    \ !!! optimize: 7 SWAP - R> SWAP 0 DO PASSED_PAWN_BONUS + LOOP
-  ELSE DROP R> THEN
-  + \ dup .
-  lightScore +! ;
+    NEGATE 7 + PASSED_PAWN_BONUS * R> +
+  ELSE 
+    DROP R> 
+  THEN 
+  + lightScore +! ;
 
 : evalDP ( sq -- )
   DUP rotate CELLS pawnPcSq + @                        ( sq value )
-  SWAP DUP file 1+ CELLS DUP darkPawnRank + ROT rank  ( value f+1 ^lpr r )
+  SWAP DUP file 1+ CELLS 
+  DUP darkPawnRank + 
+  ROT rank  ( value f+1 ^lpr r )
   OVER @ OVER U< IF
-    DOUBLED_PAWN_PENALTY ELSE 0 THEN >R
-  OVER DUP CELL+ @ SWAP CELL- @ AND 7 = IF
+    DOUBLED_PAWN_PENALTY 
+  ELSE 0 THEN >R
+  OVER DUP CELL+ @ SWAP CELL- @ AND 
+  7 = IF
     R> ISOLATED_PAWN_PENALTY + >R NIP
-  ELSE OVER CELL+ @ ROT CELL- @ MIN OVER > IF
-    R> BACKWARD_PAWN_PENALTY + >R THEN THEN          ( value f+1 r )
+  ELSE 
+    OVER CELL+ @ ROT CELL- @ MIN OVER > IF
+      R> BACKWARD_PAWN_PENALTY + >R 
+    THEN 
+  THEN          ( value f+1 r )
   SWAP lightPawnRank +
   DUP CELL+ @ OVER CELL- @ MAX SWAP @ MAX OVER > 0= IF  ( value r )
     PASSED_PAWN_BONUS * R> +
-    \ !!! optimize: R> SWAP 0 DO PASSED_PAWN_BONUS + LOOP
   ELSE DROP R> THEN
-  + \ dup .
-  darkScore +! ;
+  +  darkScore +! ;
 
 : evalLR ( sq -- )
-  \ lightScore @ >R
   DUP file 1+ CELLS DUP lightPawnRank + @ 0= IF
-    darkPawnRank + @ 7 = IF ROOK_OPEN_FILE_BONUS
-    ELSE ROOK_SEMI_OPEN_FILE_BONUS THEN
-    lightScore +!
-  ELSE DROP THEN
+    darkPawnRank + @ 7 = IF 
+      ROOK_OPEN_FILE_BONUS
+    ELSE 
+      ROOK_SEMI_OPEN_FILE_BONUS 
+    THEN  lightScore +!
+  ELSE  DROP  THEN
+
   rank7? IF
     ROOK_ON_SEVENTH_BONUS lightScore +!
-  THEN \ lightScore @ R> - .
-  ;
+  THEN ;
 
 : evalDR ( sq -- )
-  \ darkScore @ >R
   DUP file 1+ CELLS DUP darkPawnRank + @ 7 = IF
-    lightPawnRank + @ 0= IF ROOK_OPEN_FILE_BONUS
-    ELSE ROOK_SEMI_OPEN_FILE_BONUS THEN
-    darkScore +!
-  ELSE DROP THEN
+    lightPawnRank + @ 0= IF 
+      ROOK_OPEN_FILE_BONUS
+    ELSE 
+      ROOK_SEMI_OPEN_FILE_BONUS 
+    THEN  darkScore +!
+  ELSE  DROP  THEN
+
   rank2? IF
     ROOK_ON_SEVENTH_BONUS darkScore +!
-  THEN \ darkScore @ R> - .
-  ;
-
-: evalSetup ( -- )      \ call after setting up a position or new game
-  10 0 DO
-    0 lightPawnRank I CELLS + !
-    7 darkPawnRank I CELLS + !
-  LOOP
-  0 lightPieceMat ! 0 darkPieceMat !
-  0 lightPawnMat ! 0 darkPawnMat !
-  128 0 DO
-    I 8 + I DO
-      I bd@ ?DUP IF
-        DUP light? IF
-          DUP LIGHTPAWN = IF
-            DROP pawnValue lightPawnMat +!
-            I file 1+ CELLS lightPawnRank +
-            DUP @  I rank  MAX SWAP !
-          ELSE
-            piece CELLS pieceValues + @ lightPieceMat +!
-          THEN
-        ELSE
-          DUP DARKPAWN = IF
-            DROP pawnValue darkPawnMat +!
-            I file 1+ CELLS darkPawnRank +
-            DUP @ I rank MIN SWAP !
-          ELSE
-            piece CELLS pieceValues + @ darkPieceMat +!
-          THEN
-        THEN
-      THEN
-    LOOP
-  16 +LOOP ;
+  THEN ;
 
 \ all the evalVector words are ( sq -- )
 : noop ;
-: evalLN CELLS knightPcSq + @ ( dup . ) lightScore +! ;
-: evalLB CELLS bishopPcSq + @ ( dup . ) lightScore +! ;
-: evalDN rotate CELLS knightPcSq + @ ( dup . ) darkScore +! ;
-: evalDB rotate CELLS bishopPcSq + @ ( dup . ) darkScore +! ;
-: evalNil DROP ( 0 . ) ;
+: evalLN        CELLS knightPcSq + @  lightScore +! ;
+: evalLB        CELLS bishopPcSq + @  lightScore +! ;
+: evalDN rotate CELLS knightPcSq + @   darkScore +! ;
+: evalDB rotate CELLS bishopPcSq + @   darkScore +! ;
+: evalQ  drop ;
+: evalNil DROP ;
 
   ' noop    ' evalLP   ' evalLN   ' evalLB 
   ' evalLR  ' evalNil  ' evalLK   ' evalNil 
@@ -1179,22 +1216,15 @@ VARIABLE lightScore      VARIABLE darkScore
   ' evalDR  ' evalNil  ' evalDK   ' evalNil 
 24 table evalVector
 
+: evalSq ( sq -- )
+    DUP bd@ ?DUP 
+      IF 16 - CELLS evalVector + a@ EXECUTE 
+    ELSE DROP THEN ;
+
 : eval ( -- value )
-  \ CR
-  \ ." E " depth .
-  \ evalSetup     \ no longer needed here: updated incrementally in makemove
   lightPieceMat @ lightPawnMat @ + lightScore !
    darkPieceMat @  darkPawnMat @ +  darkScore !
-  128 0 DO
-    I 8 + I DO
-      I bd@ ?DUP IF
-        \ DUP .piece depth 1- .
-        16 - CELLS evalVector + A@ I SWAP EXECUTE
-      \ else ." . "
-      THEN
-      \ depth .
-    LOOP \ CR
-  16 +LOOP
+  ['] evalSq forEverySq
   wtm? IF lightScore @ darkScore @ -
   ELSE darkScore @ lightScore @ - THEN ;
 
@@ -1478,16 +1508,13 @@ VARIABLE maxDepth
 \ *** high level (validated) ***
 
 : initVars ( -- )
-  evalSetup
-  0 ply !
-  0 ep !
-  0 fifty !
-  init_first
-  histInit ;
+  0 ply !  0 ep !  0 fifty !
+  evalSetup  initHist 
+  init_first  ;
 
 HEX
 
-: init_board ( -- )
+: initBoard ( -- )
   eraseBoard
   ROOK KNIGHT BISHOP KING QUEEN BISHOP KNIGHT ROOK
   08 00 DO 
@@ -1501,11 +1528,11 @@ HEX
   LIGHT side !
   initVars ;
 
-: strSq ( c-addr -- sq T | F )
+: str>sq ( c-addr -- sq T | F )
   DUP c@ tolower [CHAR] a - ( ^c file )
   SWAP CHAR+ c@ [CHAR] 8 SWAP - ( file rank )
   2DUP OR 0 8 WITHIN IF
-    4 LSHIFT OR TRUE
+    fileRank>sq TRUE
   ELSE 2DROP FALSE THEN ;
 
 : charPiece ( c -- piece | 0 )
@@ -1524,8 +1551,8 @@ HEX
   BL WORD COUNT   ( str count )
   R> BASE !
   3 > IF
-    DUP strSq IF
-      OVER CHAR+ CHAR+ strSq IF  ( str from to )
+    DUP str>sq IF
+      OVER CHAR+ CHAR+ str>sq IF  ( str from to )
         8 LSHIFT OR  ( str packedMv )
         0 ply !
         gen
@@ -1602,8 +1629,7 @@ HEX
 
 \ *** User Commands ***
 
-: newGame init_board .board ;            \ setup a new game
-: new newGame ;
+: newGame initBoard .board ;            \ setup a new game
 
 : sd ( n -- ) 1+ MAX_PLY 2/ MIN maxDepth ! ;
 
@@ -1689,7 +1715,7 @@ HEX
 
 \ *** EXECUTE WHEN LOADING ***
 
-CR .( TSCP 0.4.4 loaded ) CR
+CR .( TSCP 0.4.5 loaded ) CR
 tscp-help CR
 4 sd
 true showCoords? !
