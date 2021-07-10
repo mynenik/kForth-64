@@ -13,7 +13,9 @@
 
 int InitSystemVars ();
 int NullSystemVars ();
+#ifndef __NO_FPSTACK__
 int InitFpStack ();
+#endif
 int OpenForth ();
 void CloseForth ();
 bool InStringTable (char*);
@@ -74,7 +76,9 @@ int CPP_ddot();
 int CPP_fdot();
 int CPP_fsdot();
 int CPP_dots();
+#ifndef __NO_FPSTACK__
 int CPP_fdots();
+#endif
 int CPP_emit();
 int CPP_cr();
 int CPP_spaces();
@@ -143,7 +147,9 @@ int CPP_refill();
 int CPP_state();
 int CPP_spstore();
 int CPP_rpstore();
+#ifndef __NO_FPSTACK__
 int CPP_fpstore();
+#endif
 }
 #endif
 

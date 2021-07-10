@@ -30,8 +30,10 @@ using namespace std;
 #include "kfmacros.h"
 
 #define STACK_SIZE 32768
-#define FP_STACK_SIZE 16384
 #define RETURN_STACK_SIZE 4096
+#ifndef __NO_FPSTACK__
+#define FP_STACK_SIZE 16384
+#endif
 
 extern bool debug;
 
@@ -80,7 +82,9 @@ extern "C" {
 
   int L_initfpu();
   int L_depth();
+#ifndef __NO_FPSTACK__
   int L_fdepth();
+#endif
   int L_abort();
   int L_ret();
   int L_dabs();
@@ -89,12 +93,16 @@ extern "C" {
   // global pointers exported to other modules
 
   long int* GlobalSp;  // the typed global stack pointer
+#ifndef __NO_FPSTACK__
   void* GlobalFp;      // the untyped floating point stack pointer
+#endif
   byte* GlobalIp;      // the global instruction pointer
   long int* GlobalRp;      // the global return stack pointer
   long int* BottomOfStack;
   long int* BottomOfReturnStack;
+#ifndef __NO_FPSTACK__
   void* BottomOfFpStack;
+#endif
 
 #ifndef __FAST__
   byte* GlobalTp;     // the global type stack pointer
@@ -107,7 +115,9 @@ extern "C" {
   long int Base;
   long int State;
   long int Precision;
+#ifndef __NO_FPSTACK__
   long int FpSize;
+#endif
   char* pTIB;
   long int NumberCount;
   char WordBuf[256];
@@ -377,7 +387,9 @@ int InitSystemVars ()
     Base = 10;
     State = FALSE;
     Precision = 15;  // Default FP output precision
+#ifndef __NO_FPSTACK__
     FpSize = 8;      // Default FP size in bytes
+#endif
 
     WordListEntry* pWord;
     pWord = Voc_Forth.GetFromName("STATE");
@@ -448,7 +460,9 @@ int OpenForth ()
    // Other initialization
     vmEntryRp = BottomOfReturnStack;
     InitSystemVars();
+#ifndef __NO_FPSTACK__
     InitFpStack();
+#endif
     set_start_time();
     save_term();
     L_initfpu();
@@ -489,8 +503,10 @@ void CloseForth ()
     }
     StringTable.clear();
 
+#ifndef __NO_FPSTACK__
     // Delete the floating point stack
     delete [] (((byte*) BottomOfFpStack) + FpSize - FP_STACK_SIZE*FpSize) ;
+#endif
 
     restore_term();
 }
@@ -700,8 +716,8 @@ int CPP_cold ()
 // Create a new empty wordlist
 // Forth 2012 Search-Order Wordset 16.6.1.2460
 int CPP_wordlist()
-{
-    Vocabulary* pVoc = new Vocabulary(""); // create an unnamed vocabulary
+{   // create an unnamed vocabulary
+    Vocabulary* pVoc = new Vocabulary("");
     PUSH_ADDR( (long int) pVoc )
     Dictionary.push_back(pVoc); 
     return 0;
@@ -1901,7 +1917,7 @@ int CPP_resize()
 // Reserve n bytes of memory
 // Forth 2012 Core Wordset 6.1.0710
 // System-specific: if n <= 0, ALLOT does not do anything.
-// All memory is dynamically allocated in kForth (see ?ALLOT).
+// All memory is dynamically allocated in kForth (see ALLOT?).
 // ALLOT must only be used following CREATE.
 int CPP_allot ()
 {
@@ -1938,7 +1954,7 @@ int CPP_allot ()
   return 0;
 }
 
-// ?ALLOT  ( n -- a )
+// ALLOT?  ( n -- a )
 // Perform ALLOT and return starting address of allotted region.
 // Non-standard
 int CPP_queryallot ()
@@ -2114,7 +2130,11 @@ int CPP_myname()
 }
 
 //-------------------------------------------------------------------
-
+// FORGET  ( "<spaces>name" -- )
+// Parse "name", find "name" in the compilation wordlist, then delete 
+//   "name" from the dictionary along with all words added to the 
+//   compilation wordlist after "name".
+// Forth 2012 Tools Extensions Wordset 15.6.2.1580
 int CPP_forget ()
 {
   char token[128];
@@ -2693,11 +2713,11 @@ int CPP_recurse()
 // Forth 2012 Core Wordset 6.1.2500
 int CPP_lbracket()
 {
-    PendingOps.push(pCurrentOps);
-    State = FALSE;
-    tempOps.clear();
-    pCurrentOps = &tempOps;
-    return 0;
+  PendingOps.push(pCurrentOps);
+  State = FALSE;
+  tempOps.clear();
+  pCurrentOps = &tempOps;
+  return 0;
 }
 
 // ]  "right-bracket" ( -- )
@@ -2793,18 +2813,18 @@ int CPP_evaluate ()
 	  strcpy (s2, pTIB);  // save remaining part of input line in TIB
 	  pSS = new istringstream(s);
 	  SetForthInputStream(*pSS);
-	  vector<byte> op, *pOps, *pOldOps;
-	  
-	  pOldOps = pCurrentOps;
-	  pOps = State ? pCurrentOps : &op;
+
+	  vector<byte>* pSaveOps = pCurrentOps;
+	  if (State == 0) pCurrentOps = new vector<byte>;
 
 	  --linecount;
-	  ec = ForthCompiler(pOps, &linecount);
+	  ec = ForthCompiler(pCurrentOps, &linecount);
 	  if ( State && (ec == E_V_END_OF_STREAM)) ec = 0;
 
 	  // Restore the opcode vector, the input stream, and the input buffer
 
-	  pCurrentOps = pOldOps;
+	  if (State == 0) delete pCurrentOps;
+	  pCurrentOps = pSaveOps;
 	  SetForthInputStream(*pOldStream);  // restore old input stream
 	  strcpy(TIB, s2);  // restore TIB with remaining input line
 	  pTIB = TIB;      // restore ptr

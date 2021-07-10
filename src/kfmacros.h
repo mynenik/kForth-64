@@ -14,8 +14,10 @@
 #define DEC_DSP   --GlobalSp;
 #define TOS       (*GlobalSp)
 
+#ifndef __NO_FPSTACK__
 #define INC_FSP   (GlobalFp = (void*)((byte*)GlobalFp + FpSize));
 #define DEC_FSP   (GlobalFp = (void*)((byte*)GlobalFp - FpSize));
+#endif
 
 #ifndef __FAST__
 

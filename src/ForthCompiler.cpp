@@ -81,10 +81,14 @@ extern "C" {
 // Provided by ForthVM.cpp
 extern "C"  long int* GlobalSp;
 extern "C"  long int* GlobalRp;
+#ifndef __NO_FPSTACK__
 extern "C"  void* GlobalFsp;
+#endif
 extern "C"  long int Base;
 extern "C"  long int State;  // TRUE = compile, FALSE = interpret
+#ifndef __NO_FPSTACK__
 extern "C"  long int FpSize;
+#endif
 extern "C"  char* pTIB; 
 extern "C"  char TIB[];  // contains current line of input
 #ifndef __FAST__

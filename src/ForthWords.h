@@ -88,12 +88,19 @@ WordTemplate ForthWords[] =
     { "CELLS",     OP_CELLS,        0 },
     { "CELL+",     OP_CELLPLUS,     0 },
     { "CHAR+",     OP_INC,          0 },
-    { "FLOATS",    OP_FLOATS,       0 },
-    { "FLOAT+",    OP_FLOATPLUS,    0 },
     { "DFLOATS",   OP_DFLOATS,      0 },
     { "DFLOAT+",   OP_DFLOATPLUS,   0 },
+#ifdef __NO_FPSTACK__
+    { "FLOATS",    OP_DFLOATS,      0 },
+    { "FLOAT+",    OP_DFLOATPLUS,   0 },
+    { "SFLOATS",   OP_CELLS,        0 },
+    { "SFLOAT+",   OP_CELLPLUS,     0 },
+#else
+    { "FLOATS",    OP_FLOATS,       0 },
+    { "FLOAT+",    OP_FLOATPLUS,    0 },
     { "SFLOATS",   OP_SFLOATS,      0 },
     { "SFLOAT+",   OP_SFLOATPLUS,   0 },
+#endif
     { "?",         OP_QUESTION,     0 },
     { "@",         OP_FETCH,        0 },
     { "!",         OP_STORE,        0 },
@@ -119,8 +126,10 @@ WordTemplate ForthWords[] =
     { "SP!",       OP_SPSTORE,      0 },
     { "RP@",       OP_RPFETCH,      0 },
     { "RP!",       OP_RPSTORE,      0 },
+#ifndef __NO_FPSTACK__
     { "FP@",       OP_FPFETCH,      0 },
     { "FP!",       OP_FPSTORE,      0 },
+#endif
     { ">R",        OP_PUSH,         0 },
     { "R>",        OP_POP,          0 },
     { "R@",        OP_RFETCH,       0 },
@@ -144,7 +153,9 @@ WordTemplate ForthWords[] =
     { "2OVER",     OP_2OVER,        0 },
     { "2ROT",      OP_2ROT,         0 },
     { "DEPTH",     OP_DEPTH,        0 },
+#ifndef __NO_FPSTACK__
     { "FDEPTH",    OP_FDEPTH,       0 },
+#endif
     { "BASE",      OP_BASE,         0 },
     { "BINARY",    OP_BINARY,       NONDEFERRED },
     { "DECIMAL",   OP_DECIMAL,      NONDEFERRED },
@@ -235,7 +246,9 @@ WordTemplate ForthWords[] =
     { "FS.",       OP_FSDOT,        0 },
     { ".\x22",     OP_DOTQUOTE,     IMMEDIATE },
     { ".S",        OP_DOTS,         0 },
+#ifndef __NO_FPSTACK__
     { "F.S",       OP_FDOTS,        0 },
+#endif
     { "CR",        OP_CR,           0 },
     { "SPACES",    OP_SPACES,       0 },
     { "EMIT",      OP_EMIT,         0 },
@@ -331,13 +344,21 @@ WordTemplate ForthWords[] =
     { "MOVE",      OP_MOVE,         0 },
     { "CMOVE",     OP_CMOVE,        0 },
     { "CMOVE>",    OP_CMOVEFROM,    0 },
+#ifdef __NO_FPSTACK__
+    { "FDUP",      OP_2DUP,         0 },
+    { "FDROP",     OP_2DROP,        0 },
+    { "FSWAP",     OP_2SWAP,        0 },
+    { "FOVER",     OP_2OVER,        0 },
+    { "FROT",      OP_2ROT,         0 },
+#else
     { "FDUP",      OP_FDUP,         0 },
     { "FDROP",     OP_FDROP,        0 },
-    { "F2DROP",    OP_F2DROP,       0 },
-    { "F2DUP",     OP_F2DUP,        0 },
     { "FSWAP",     OP_FSWAP,        0 },
     { "FOVER",     OP_FOVER,        0 },
     { "FROT",      OP_FROT,         0 },
+#endif
+    { "F2DROP",    OP_F2DROP,       0 },
+    { "F2DUP",     OP_F2DUP,        0 },
     { "F=",        OP_FEQ,          0 },
     { "F<>",       OP_FNE,          0 },
     { "F<",        OP_FLT,          0 },
