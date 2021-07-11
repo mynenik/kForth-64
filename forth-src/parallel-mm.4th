@@ -61,7 +61,7 @@ include fsl/extras/mmul
 Also syscalls
 
 variable cpid        \ child process id
-create status 256 allot
+create status 128 allot
 variable shared_mem  \ address of shared memory buffer used by
                      \   both child and parent.
 

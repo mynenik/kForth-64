@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
         PrintVM_Error(ec); exit(ec);
       }
       delete pSS; pSS = NULL;
-      op.erase(op.begin(), op.end());
+      op.clear();
       cout << prompt ;
     }
     else
@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
         }
 	else
 	    cout << prompt;
-        op.erase(op.begin(), op.end());
+        op.clear();
     }
 }
 //---------------------------------------------------------------

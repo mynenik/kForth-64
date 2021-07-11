@@ -43,6 +43,7 @@ CC  = ${GCCDIR}/gcc
 CPPFLAGS = -c -fpie -Wall
 CFLAGS = -c -fpie -Wall
 FAST = -D__FAST__
+NOFPSTACK =
 OBJS = kforth.o ForthVM.o ForthCompiler.o vm64.o vmc.o
 FOBJS = kforth-fast.o ForthVM-fast.o ForthCompiler-fast.o vm64-fast.o vmc-fast.o
 # LIBS = -pie -lreadline -lncurses -ldl -lm

@@ -212,8 +212,6 @@ set-near
 NP FLOAT array x{ 0e  1e  2e  3e  4e  5e  6e  7e  8e  9e  NP x{ }fput
 NP FLOAT array y{ 0e  1e  4e  9e 16e 25e 36e 49e 64e 81e  NP y{ }fput
 
-NP x{ }fprint
-NP y{ }fprint
 \ Array for fitted polynomial coefficients.
 
 4 FLOAT array coeffs{
