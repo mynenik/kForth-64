@@ -47,6 +47,8 @@
 \   2020-01-21  km  added SYNONYM
 \   2020-01-25  km  revised defn. of VALUE for improved efficiency.
 \   2021-05-08  km  added defn. of F~ for 64-bit separate fp stack.
+\   2021-07-11  km  add DEFER@ and DEFER! and ACTION-OF.
+\                   use standard definition of IS .
 BASE @
 DECIMAL
 \ ============== From the CORE wordset
@@ -178,16 +180,26 @@ variable handler
 \ ============= Forth 200x Standard Words
 
 : DEFER  ( "name" -- )
-      CREATE 1 CELLS ?ALLOT ['] ABORT SWAP ! DOES> A@ EXECUTE ;
+      CREATE 1 CELLS ?ALLOT ['] ABORT SWAP ! 
+      DOES> ( ... -- ... ) A@ EXECUTE ;
 
-: IS    ( xt "name" -- )
-      '
-      STATE @ IF
-        postpone LITERAL postpone >BODY postpone !
-      ELSE
-        >BODY !
-      THEN ; IMMEDIATE
+: DEFER@ ( xt1 -- xt2 )  >BODY A@ ;
+: DEFER! ( xt2 xt1 -- )  >BODY ! ;
 
+: IS  ( xt "name" -- )
+    STATE @ IF
+      POSTPONE ['] POSTPONE DEFER!
+    ELSE
+      ' DEFER!
+    THEN ; IMMEDIATE
+
+: ACTION-OF ( "name" -- xt )
+    STATE @ IF
+      POSTPONE ['] POSTPONE DEFER@
+    ELSE
+      ' DEFER@
+    THEN ; IMMEDIATE
+ 
 \ === Non-standard words commonly needed for kForth programs ===
 : PTR ( a "name" -- ) CREATE 1 CELLS ALLOT? ! DOES> A@ ;
 
