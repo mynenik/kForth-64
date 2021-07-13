@@ -17,7 +17,7 @@
 \	"Paradigms of Artificial Intelligence Programming", 
 \	Peter Norvig, 1992, Morgan Kaufmann Publishers, pp. 109--120.
 \
-\ Copyright (c) 2003 Krishna Myneni
+\ Ported to ANS Forth by Krishna Myneni
 \
 \ Revisions:
 \
@@ -76,14 +76,13 @@ defer achieve
 
 	
  
-: noname ( goal -- flag )
+:noname ( goal -- flag )
 	dup  *state* memberp IF drop true
 	ELSE
 	  *ops*  ['] appropriate-p  find-all
 	  ['] apply-op some 
-	THEN ;
-
-' noname is achieve
+	THEN ; 
+  is achieve
 
 
 : gps ( state-list  goals-list  ops-list -- )
