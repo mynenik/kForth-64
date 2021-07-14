@@ -49,8 +49,10 @@
 \   2021-05-08  km  added defn. of F~ for 64-bit separate fp stack.
 \   2021-07-11  km  add DEFER@ and DEFER! and ACTION-OF.
 \                   use standard definition of IS .
+\   2021-07-13  km  added alignment words (for structures support).
 BASE @
 DECIMAL
+
 \ ============== From the CORE wordset
 
 : SPACE BL EMIT ;
@@ -63,7 +65,16 @@ CREATE PAD 512 ALLOT
 : TO ' >BODY STATE @ IF POSTPONE LITERAL POSTPONE ! ELSE ! THEN ; IMMEDIATE
 : VALUE CREATE 1 CELLS ?ALLOT ! IMMEDIATE DOES> POSTPONE LITERAL POSTPONE @ ;
 
+\ ============== Alignment words: from CORE and Extended Wordsets
+: UNITS-ALIGNED ( a xt -- a' )
+   >R ?DUP IF 
+     1- 1 R@ EXECUTE / 1+ R> EXECUTE 
+   ELSE R> DROP 0 THEN ;
 
+: ALIGNED   ( a -- a' ) ['] CELLS   UNITS-ALIGNED ;
+: FALIGNED  ( a -- a' ) ['] FLOATS  UNITS-ALIGNED ;
+: SFALIGNED ( a -- a' ) ['] SFLOATS UNITS-ALIGNED ;
+: DFALIGNED ( a -- a' ) ['] DFLOATS UNITS-ALIGNED ;
 
 \ ============ From the PROGRAMMING TOOLS wordset
 

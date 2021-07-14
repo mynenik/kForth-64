@@ -21,27 +21,27 @@
 \
 \ Revisions:
 \
-\	 2003-04-15  -- created
-\
-\
+\  2003-04-15  -- created
+\  2021-07-13  -- replace older struct.4th structures package
+\                 with Forth 200x standardized data structures.
 \ Requires:
 \
 \	ans-words.4th
-\	struct.4th
+\	struct-200x.4th
 \	strings.4th
 \	lists.4th
 \
 include ans-words
-include struct
+include struct-200x
 include strings
 include lists
 
-struct
-	cell%  field  action
-	cell%  field  preconds
-	cell%  field  add-list
-	cell%  field  del-list
-end-struct  op%
+BEGIN-STRUCTURE op%
+  FIELD: action
+  FIELD: preconds
+  FIELD: add-list
+  FIELD: del-list
+END-STRUCTURE
 
 nil  ptr  *state*
 nil  ptr  *ops*
@@ -97,46 +97,47 @@ defer achieve
 \ Example of using the "General Problem Solver" (from Norvig, 1992):
 
 
-create op  op% %allot  
+create op  op% allot  
 quote  drive-son-to-school	 op  action !
 '(  son-at-home  car-works  )    op  preconds !
 '(  son-at-school  )	         op  add-list !
 '(  son-at-home  )		 op  del-list !
+op
 
-
-create op  op% %allot
+create op  op% allot
 quote  shop-installs-battery    op action !
 '(  car-needs-battery  shop-knows-problem  shop-has-money  )  op preconds !
 '(  car-works  )                op add-list !
 nil                             op del-list !
+op
 
-
-create op  op% %allot
+create op  op% allot
 quote  tell-shop-problem         op action !
 '(  in-communication-with-shop  )  op preconds !
 '(  shop-knows-problem  )       op add-list !
 nil                             op del-list !
+op
 
-
-create op  op% %allot
+create op  op% allot
 quote  telephone-shop           op action !
 '(  know-phone-number  )        op preconds !
 '(  in-communication-with-shop  )  op add-list !
 nil                             op del-list !
+op
 
-
-create op  op% %allot
+create op  op% allot
 quote  look-up-number           op action !
 '(  have-phone-book  )          op preconds !
 '(  know-phone-number  )        op add-list !
 nil                             op del-list !
+op
 
-
-create op op% %allot
+create op op% allot
 quote  give-shop-money          op action !
 '(  have-money )                op preconds !
 '(  shop-has-money  )           op add-list !
 '(  have-money  )               op del-list !
+op
 
 6 make-non-atomic-list  ptr *school-ops*  \ list of structure addresses
 
