@@ -39,11 +39,6 @@
 \
 \ =======  kForth requires =======================
 \ include ans-words  ( commented out here, but include in main program file)
-[undefined] floats [if] : floats dfloats ; [then]
-: aligned  ( n -- m ) dup 0> if 1- 1 cells / 1+ cells else drop 0 then ;  
-: faligned ( n -- m ) dup 0> if 1- 1 floats / 1+ floats else drop 0 then ;
-: dfaligned  faligned ;
-: sfaligned  aligned ;
 \ ================================================
 
 : naligned ( addr1 n -- addr2 )
