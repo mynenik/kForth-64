@@ -21,6 +21,9 @@ BEGIN-MODULE
 
 DECIMAL
 
+1 CELLS 4 = constant 32-bit?
+[DEFINED] FDEPTH constant fp-stack?
+
 Public:
 
 BEGIN-STRUCTURE TInfo%  \ byte code token info
@@ -520,7 +523,8 @@ create SingleITCBuf 3 cells allot
        OP_IVAL OF drop cell- @ #num. ENDOF
        OP_2VAL OF drop cell- cell- 
            dup @ #num. cell+ @ #num. ENDOF
-       OP_FVAL OF drop cell- cell- df@ f.s ENDOF
+       OP_FVAL OF drop 1 floats 1 cells / cells -  
+           f@ fs. ENDOF
        OP_ADDR OF drop cell- a@ addr. ENDOF
        OP_CALLADDR OF
            swap cell- a@ swap
@@ -629,7 +633,13 @@ S" BASE"    0  OP_BASE    ti!
 S" CALL"    0  OP_CALL    ti!
 S" DEFINITION" 1 OP_DEFINITION ti!
 S" ERASE"   0  OP_ERASE   ti!
+
+32-bit? [IF]  
 S" FVAL"    2  OP_FVAL    ti!
+[ELSE]
+S" FVAL"    1  OP_FVAL    ti!
+[THEN]
+
 S" CALLADDR" 1 OP_CALLADDR ti!
 S" >BODY"   0  OP_>BODY   ti!
 S" IVAL"    1  OP_IVAL    ti!
@@ -748,7 +758,7 @@ S" FNEGATE" 0  OP_FNEGATE ti!
 S" F**"     0  OP_F**    ti!
 S" FSQRT"   0  OP_FSQRT  ti!
 S" SP!"     0  OP_SP!    ti!
-S" SP@"     0  OP_SP@    ti!
+S" RP!"     0  OP_RP!    ti!
 S" F="      0  OP_F=     ti!
 S" F<>"     0  OP_F<>    ti!
 S" F<"      0  OP_F<     ti!
@@ -907,10 +917,14 @@ S" UD.R"           0 nc' UD.R           OP_UD.R           eti!
 S" D.R"            0 nc' D.R            OP_D.R            eti!
 S" F2DROP"         0 nc' F2DROP         OP_F2DROP         eti!
 S" F2DUP"          0 nc' F2DUP          OP_F2DUP          eti!
+
+fp-stack? [IF]
 S" FDEPTH"         0 nc' FDEPTH         OP_FDEPTH         eti!
 S" FP@"            0 nc' FP@            OP_FP@            eti!
 S" FP!"            0 nc' FP!            OP_FP!            eti!
 S" F.S"            0 nc' F.S            OP_F.S            eti!
+[THEN]
+
 S" FDUP"           0 nc' FDUP           OP_FDUP           eti!
 S" FSWAP"          0 nc' FSWAP          OP_FSWAP          eti!
 S" FROT"           0 nc' FROT           OP_FROT           eti!
