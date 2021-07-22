@@ -9,6 +9,7 @@
 \ Revisions:
 \   2021-07-19  km  first release; SEE works;
 \                   single step debug is limited.
+\   2021-07-21  km  code cleanup and one fix to OP.
 
 [UNDEFINED] BEGIN-STRUCTURE [IF] include struct-200x [THEN]
 [UNDEFINED] BEGIN-MODULE [IF] include modules [THEN]
@@ -33,9 +34,7 @@ BEGIN-STRUCTURE TInfo%  \ byte code token info
 END-STRUCTURE
 
 BEGIN-STRUCTURE ExtTInfo%  \ extended token info
-  FIELD:  ET->NameCount
-  FIELD:  ET->Name
-  FIELD:  ET->OpCount
+  drop TInfo%              \ structure inherits TInfo% fields
   FIELD:  ET->NCaddr       \ native code address
 END-STRUCTURE
 
@@ -45,41 +44,40 @@ END-STRUCTURE
 Create TI TInfo%     MAX_TOKENS     * ALLOT
 Create ETI ExtTInfo% MAX_EXT_TOKENS * ALLOT
 
-: ti! ( c-addr u noperands op -- )
-    swap >r TI swap TInfo% * + dup >r 2! 2r> 2 cells + ! ;
-
-: eti! ( c-addr u noperands addr-nc op -- )
-    MAX_TOKENS - dup 0< ABORT" Not an extended token!"
-    -rot 2>r ETI swap ExtTInfo% * + dup >r 2!
-    r> 2r> ( addr nop nc ) 2 pick 3 cells + !
-    swap 2 cells + ! ;
-
- 
-\ XT>ITC, NT>ITC, and XT>NC are kForth-specific!
-
-: xt>ITC ( xt -- aITC ) a@ ;
-: nt>ITC ( nt -- aITC | 0 ) name>interpret dup IF xt>ITC THEN ;
-: xt>NC  ( xt -- addr ) a@ 1+ a@ ; \ for use with extended byte codes
-
-: nc' ( "name" -- addr-nc ) ' xt>nc ;
-
-: opname@ ( op -- caddr u )
+\ index token structure for given opcode 
+: op[] ( op -- addr )
     dup MAX_TOKENS < IF
       TInfo% * TI
     ELSE
-      MAX_TOKENS - ExtTInfo% * ETI 
-    THEN
-    + dup @ swap cell+ a@ swap
+      MAX_TOKENS - ExtTInfo% * ETI
+    THEN + ;
+
+
+: ti! ( c-addr u noperands op | c-addr u nop addr-nc op -- )
+    dup MAX_TOKENS >= >r
+    op[]
+    r> IF tuck ET->NCaddr ! THEN
+    tuck T->OpCount !  
+    tuck T->NameCount !
+         T->Name ! ;
+
+: opname@ ( op -- caddr u )
+    op[] dup 
+    T->NameCount @ swap 
+    T->Name a@ swap
 ;
 
 : operand-count@ ( op -- u )
-    dup MAX_TOKENS < IF
-      TInfo% * TI 
-    ELSE
-      MAX_TOKENS - ExtTInfo% * ETI 
-    THEN
-    + 2 cells + @ ;
+    op[] T->OpCount @ ;
  
+
+\ XT>ITC and XT>NC are kForth-specific!
+
+: xt>ITC ( xt -- aITC ) a@ ;
+: xt>NC  ( xt -- addr ) a@ 1+ a@ ; \ for use with extended byte codes
+: nt>ITC ( nt -- aITC | 0 ) name>interpret dup IF xt>ITC THEN ;
+: nc' ( "name" -- addr-nc ) ' xt>nc ;
+
 variable searchITC
 variable searchName
 variable searchCount
@@ -101,10 +99,9 @@ variable searchCount
     searchName a@ searchCount @ ;
 
 : NC>string ( addr-nc -- caddr u )
-    MAX_EXT_TOKENS 0 DO
-      dup I ExtTInfo% * ETI +
-      ET->NCaddr a@ = IF
-        drop I MAX_TOKENS + opname@
+    MAX_EXT_TOKENS MAX_TOKENS + MAX_TOKENS DO
+      dup I op[] ET->NCaddr a@ = IF
+        drop I opname@
         UNLOOP EXIT
       THEN
     LOOP
@@ -506,7 +503,10 @@ Public:
 
 create SingleITCBuf 3 cells allot
 
-\ Fetch opcodes associated with next primitive word
+\ Fetch opcode+operands for next primitive word from byte code
+\ sequence aITC and place in SingleITC Buf for single word
+\ execution. Return pointer to beginning of next opcode in the 
+\ sequence
 : ITC-packet@ ( aITC -- aITC' ) 
     next-ITC-count 
     2dup SingleITCBuf swap move 
@@ -514,6 +514,7 @@ create SingleITCBuf 3 cells allot
     + ;
 
 : addr. ( a -- ) [char] $ emit .address ;
+: ptr.  ( a -- ) [char] * addr. ;
 : #num. ( n -- ) [char] # emit base @ swap decimal . base ! ;
 : $num. ( n -- ) [char] $ emit base @ swap hex . base ! ;
  
@@ -523,9 +524,10 @@ create SingleITCBuf 3 cells allot
        OP_IVAL OF drop cell- @ #num. ENDOF
        OP_2VAL OF drop cell- cell- 
            dup @ #num. cell+ @ #num. ENDOF
-       OP_FVAL OF drop 1 floats 1 cells / cells -  
-           f@ fs. ENDOF
+       OP_FVAL OF drop 1 floats 1 cells /
+           1 MAX cells - f@ fs. ENDOF
        OP_ADDR OF drop cell- a@ addr. ENDOF
+       OP_PTR  OF drop cell- a@ ptr.  ENDOF
        OP_CALLADDR OF
            swap cell- a@ swap
            over NC>String
@@ -553,7 +555,8 @@ create SingleITCBuf 3 cells allot
     BEGIN
       dup .address 
       ITC-packet@ >r
-      r@ SingleITCBuf c@ swap over 3 spaces op. cr
+      r@ SingleITCBuf c@ swap 
+      over 3 spaces op. cr
       r> swap OP_RET =
     UNTIL drop ;
 
@@ -828,120 +831,120 @@ S" BYE"     0  OP_BYE      ti!
 
 \ Extended byte-code primitives in kForth 2.x
 
-S" UTM/"    0  nc' UTM/      OP_UTM/     eti!
-S" UTS/MOD" 0  nc' UTS/MOD   OP_UTS/MOD  eti!
-S" STS/REM" 0  nc' STS/REM   OP_STS/REM  eti!
-S" UDM*"    0  nc' UDM*      OP_UDM*     eti!
-S" INCLUDED" 0 nc' INCLUDED  OP_INCLUDED eti!
-S" INCLUDE" 0  nc' INCLUDE   OP_INCLUDE  eti!
-S" SOURCE"  0  nc' SOURCE    OP_SOURCE   eti!
-S" REFILL"  0  nc' REFILL    OP_REFILL   eti!
-S" STATE"   0  nc' STATE     OP_STATE    eti!
-S" ALLOCATE" 0 nc' ALLOCATE  OP_ALLOCATE eti!
-S" FREE"    0  nc' FREE      OP_FREE     eti!
-S" RESIZE"  0  nc' RESIZE    OP_RESIZE   eti!
-S" DS*"     0  nc' DS*       OP_DS*      eti!
-S" COMPILE," 0 nc' COMPILE,  OP_COMPILE, eti!
-S" COMPILE-NAME" 0 nc' COMPILE-NAME OP_COMPILE-NAME eti!
-S" POSTPONE" 0 nc' POSTPONE  OP_POSTPONE eti!
-S" NONDEFERRED" 0 nc' NONDEFERRED OP_NONDEFERRED eti!
-S" FORGET"   0 nc' FORGET    OP_FORGET   eti!
-S" FORTH-SIGNAL" 0 nc' FORTH-SIGNAL OP_FORTH-SIGNAL eti!
-S" RAISE"    0 nc' RAISE     OP_RAISE    eti!
-S" SET-ITIMER" 0 nc' SET-ITIMER OP_SET-ITIMER eti!
-S" GET-ITIMER" 0 nc' GET-ITIMER OP_GET-ITIMER eti!
-S" US2@"     0 nc' US2@      OP_US2@     eti!
-S" >FLOAT"   0 nc' >FLOAT    OP_>FLOAT   eti!
-S" FSINCOS"  0 nc' FSINCOS   OP_FSINCOS  eti!
-S" FACOSH"   0 nc' FACOSH    OP_FACOSH   eti!
-S" FASINH"   0 nc' FASINH    OP_FASINH   eti!
-S" FATANH"   0 nc' FATANH    OP_FATANH   eti!
-S" FCOSH"    0 nc' FCOSH     OP_FCOSH    eti!
-S" FSINH"    0 nc' FSINH     OP_FSINH    eti!
-S" FTANH"    0 nc' FTANH     OP_FTANH    eti!
-S" FALOG"    0 nc' FALOG     OP_FALOG    eti!
-S" D0<"      0 nc' D0<       OP_D0<      eti!
-S" DMAX"     0 nc' DMAX      OP_DMAX     eti!
-S" DMIN"     0 nc' DMIN      OP_DMIN     eti!
-S" D2*"      0 nc' D2*       OP_D2*      eti!
-S" D2/"      0 nc' D2/       OP_D2/      eti!
-S" UD."      0 nc' UD.       OP_UD.      eti!
-S" WITHIN"   0 nc' WITHIN    OP_WITHIN   eti!
-S" 2LITERAL" 0 nc' 2LITERAL  OP_2LITERAL eti!
-S" >NUMBER"  0 nc' >NUMBER   OP_>NUMBER  eti!
-S" NUMBER?"  0 nc' NUMBER?   OP_NUMBER?  eti!
-S" SLITERAL" 0 nc' SLITERAL  OP_SLITERAL eti!
-S" FLITERAL" 0 nc' FLITERAL  OP_FLITERAL eti!
-S" 2VARIABLE" 0 nc' 2VARIABLE OP_2VARIABLE eti!
-S" 2CONSTANT" 0 nc' 2CONSTANT OP_2CONSTANT eti!
-S" >FILE"    0 nc' >FILE     OP_>FILE     eti!
-S" CONSOLE"  0 nc' CONSOLE   OP_CONSOLE   eti!
-S" :NONAME"  0 nc' :NONAME   OP_:NONAME   eti!
-S" SPACE"    0 nc' SPACE     OP_SPACE     eti!
-S" BLANK"    0 nc' BLANK     OP_BLANK     eti!
-S" /STRING"  0 nc' /STRING   OP_/STRING   eti!
-S" -TRAILING" 0 nc' -TRAILING  OP_-TRAILING  eti!
-S" PARSE"    0 nc' PARSE     OP_PARSE     eti!
-S" PARSE-NAME" 0 nc' PARSE-NAME OP_PARSE-NAME eti!
-S" DLOPEN"   0 nc' DLOPEN    OP_DLOPEN    eti!
-S" DLERROR"  0 nc' DLERROR   OP_DLERROR   eti!
-S" DLSYM"    0 nc' DLSYM     OP_DLSYM     eti!
-S" DLCLOSE"  0 nc' DLCLOSE   OP_DLCLOSE   eti!
-S" US"       0 nc' US        OP_US        eti!
-S" ALIAS"    0 nc' ALIAS     OP_ALIAS     eti!
-S" SYSTEM"   0 nc' SYSTEM    OP_SYSTEM    eti!
-S" CHDIR"    0 nc' CHDIR     OP_CHDIR     eti!
-S" TIME&DATE" 0 nc' TIME&DATE OP_TIME&DATE eti!
-S" WORDLIST" 0 nc' WORDLIST  OP_WORDLIST  eti!
-S" FORTH-WORDLIST" 0 nc' FORTH-WORDLIST OP_FORTH-WORDLIST eti!
-S" GET-CURRENT" 0 nc' GET-CURRENT OP_GET-CURRENT eti!
-S" SET-CURRENT" 0 nc' SET-CURRENT OP_SET-CURRENT eti!
-S" GET-ORDER"   0 nc' GET-ORDER   OP_GET-ORDER   eti!
-S" SET-ORDER"   0 nc' SET-ORDER   OP_SET-ORDER   eti!
-S" ONLY"        0 nc' ONLY        OP_ONLY        eti!
-S" ALSO"        0 nc' ALSO        OP_ALSO        eti!
-S" ORDER"       0 nc' ORDER       OP_ORDER       eti!
-S" PREVIOUS"    0 nc' PREVIOUS    OP_PREVIOUS    eti!
-S" FORTH"       0 nc' FORTH       OP_FORTH       eti!
-S" ASSEMBLER"   0 nc' ASSEMBLER   OP_ASSEMBLER   eti!
-S" TRAVERSE-WORDLIST" 0 nc' TRAVERSE-WORDLIST OP_TRAVERSE-WORDLIST eti!
-S" NAME>STRING" 0 nc' NAME>STRING OP_NAME>STRING eti!
-S" NAME>INTERPRET" 0 nc' NAME>INTERPRET OP_NAME>INTERPRET eti!
-S" NAME>COMPILE"   0 nc' NAME>COMPILE   OP_NAME>COMPILE   eti!
-S" PRECISION"      0 nc' PRECISION      OP_PRECISION  eti!
-S" SET-PRECISION"  0 nc' SET-PRECISION  OP_SET-PRECISION  eti!
-S" FS."            0 nc' FS.            OP_FS.            eti!
-S" FEXPM1"         0 nc' FEXPM1         OP_FEXPM1         eti!
-S" FLNP1"          0 nc' FLNP1          OP_FLNP1          eti!
-S" UD.R"           0 nc' UD.R           OP_UD.R           eti!
-S" D.R"            0 nc' D.R            OP_D.R            eti!
-S" F2DROP"         0 nc' F2DROP         OP_F2DROP         eti!
-S" F2DUP"          0 nc' F2DUP          OP_F2DUP          eti!
+S" UTM/"    0  nc' UTM/      OP_UTM/     ti!
+S" UTS/MOD" 0  nc' UTS/MOD   OP_UTS/MOD  ti!
+S" STS/REM" 0  nc' STS/REM   OP_STS/REM  ti!
+S" UDM*"    0  nc' UDM*      OP_UDM*     ti!
+S" INCLUDED" 0 nc' INCLUDED  OP_INCLUDED ti!
+S" INCLUDE" 0  nc' INCLUDE   OP_INCLUDE  ti!
+S" SOURCE"  0  nc' SOURCE    OP_SOURCE   ti!
+S" REFILL"  0  nc' REFILL    OP_REFILL   ti!
+S" STATE"   0  nc' STATE     OP_STATE    ti!
+S" ALLOCATE" 0 nc' ALLOCATE  OP_ALLOCATE ti!
+S" FREE"    0  nc' FREE      OP_FREE     ti!
+S" RESIZE"  0  nc' RESIZE    OP_RESIZE   ti!
+S" DS*"     0  nc' DS*       OP_DS*      ti!
+S" COMPILE," 0 nc' COMPILE,  OP_COMPILE, ti!
+S" COMPILE-NAME" 0 nc' COMPILE-NAME OP_COMPILE-NAME ti!
+S" POSTPONE" 0 nc' POSTPONE  OP_POSTPONE ti!
+S" NONDEFERRED" 0 nc' NONDEFERRED OP_NONDEFERRED ti!
+S" FORGET"   0 nc' FORGET    OP_FORGET   ti!
+S" FORTH-SIGNAL" 0 nc' FORTH-SIGNAL OP_FORTH-SIGNAL ti!
+S" RAISE"    0 nc' RAISE     OP_RAISE    ti!
+S" SET-ITIMER" 0 nc' SET-ITIMER OP_SET-ITIMER ti!
+S" GET-ITIMER" 0 nc' GET-ITIMER OP_GET-ITIMER ti!
+S" US2@"     0 nc' US2@      OP_US2@     ti!
+S" >FLOAT"   0 nc' >FLOAT    OP_>FLOAT   ti!
+S" FSINCOS"  0 nc' FSINCOS   OP_FSINCOS  ti!
+S" FACOSH"   0 nc' FACOSH    OP_FACOSH   ti!
+S" FASINH"   0 nc' FASINH    OP_FASINH   ti!
+S" FATANH"   0 nc' FATANH    OP_FATANH   ti!
+S" FCOSH"    0 nc' FCOSH     OP_FCOSH    ti!
+S" FSINH"    0 nc' FSINH     OP_FSINH    ti!
+S" FTANH"    0 nc' FTANH     OP_FTANH    ti!
+S" FALOG"    0 nc' FALOG     OP_FALOG    ti!
+S" D0<"      0 nc' D0<       OP_D0<      ti!
+S" DMAX"     0 nc' DMAX      OP_DMAX     ti!
+S" DMIN"     0 nc' DMIN      OP_DMIN     ti!
+S" D2*"      0 nc' D2*       OP_D2*      ti!
+S" D2/"      0 nc' D2/       OP_D2/      ti!
+S" UD."      0 nc' UD.       OP_UD.      ti!
+S" WITHIN"   0 nc' WITHIN    OP_WITHIN   ti!
+S" 2LITERAL" 0 nc' 2LITERAL  OP_2LITERAL ti!
+S" >NUMBER"  0 nc' >NUMBER   OP_>NUMBER  ti!
+S" NUMBER?"  0 nc' NUMBER?   OP_NUMBER?  ti!
+S" SLITERAL" 0 nc' SLITERAL  OP_SLITERAL ti!
+S" FLITERAL" 0 nc' FLITERAL  OP_FLITERAL ti!
+S" 2VARIABLE" 0 nc' 2VARIABLE OP_2VARIABLE ti!
+S" 2CONSTANT" 0 nc' 2CONSTANT OP_2CONSTANT ti!
+S" >FILE"    0 nc' >FILE     OP_>FILE     ti!
+S" CONSOLE"  0 nc' CONSOLE   OP_CONSOLE   ti!
+S" :NONAME"  0 nc' :NONAME   OP_:NONAME   ti!
+S" SPACE"    0 nc' SPACE     OP_SPACE     ti!
+S" BLANK"    0 nc' BLANK     OP_BLANK     ti!
+S" /STRING"  0 nc' /STRING   OP_/STRING   ti!
+S" -TRAILING" 0 nc' -TRAILING  OP_-TRAILING  ti!
+S" PARSE"    0 nc' PARSE     OP_PARSE     ti!
+S" PARSE-NAME" 0 nc' PARSE-NAME OP_PARSE-NAME ti!
+S" DLOPEN"   0 nc' DLOPEN    OP_DLOPEN    ti!
+S" DLERROR"  0 nc' DLERROR   OP_DLERROR   ti!
+S" DLSYM"    0 nc' DLSYM     OP_DLSYM     ti!
+S" DLCLOSE"  0 nc' DLCLOSE   OP_DLCLOSE   ti!
+S" US"       0 nc' US        OP_US        ti!
+S" ALIAS"    0 nc' ALIAS     OP_ALIAS     ti!
+S" SYSTEM"   0 nc' SYSTEM    OP_SYSTEM    ti!
+S" CHDIR"    0 nc' CHDIR     OP_CHDIR     ti!
+S" TIME&DATE" 0 nc' TIME&DATE OP_TIME&DATE ti!
+S" WORDLIST" 0 nc' WORDLIST  OP_WORDLIST  ti!
+S" FORTH-WORDLIST" 0 nc' FORTH-WORDLIST OP_FORTH-WORDLIST ti!
+S" GET-CURRENT" 0 nc' GET-CURRENT OP_GET-CURRENT ti!
+S" SET-CURRENT" 0 nc' SET-CURRENT OP_SET-CURRENT ti!
+S" GET-ORDER"   0 nc' GET-ORDER   OP_GET-ORDER   ti!
+S" SET-ORDER"   0 nc' SET-ORDER   OP_SET-ORDER   ti!
+S" ONLY"        0 nc' ONLY        OP_ONLY        ti!
+S" ALSO"        0 nc' ALSO        OP_ALSO        ti!
+S" ORDER"       0 nc' ORDER       OP_ORDER       ti!
+S" PREVIOUS"    0 nc' PREVIOUS    OP_PREVIOUS    ti!
+S" FORTH"       0 nc' FORTH       OP_FORTH       ti!
+S" ASSEMBLER"   0 nc' ASSEMBLER   OP_ASSEMBLER   ti!
+S" TRAVERSE-WORDLIST" 0 nc' TRAVERSE-WORDLIST OP_TRAVERSE-WORDLIST ti!
+S" NAME>STRING" 0 nc' NAME>STRING OP_NAME>STRING ti!
+S" NAME>INTERPRET" 0 nc' NAME>INTERPRET OP_NAME>INTERPRET ti!
+S" NAME>COMPILE"   0 nc' NAME>COMPILE   OP_NAME>COMPILE   ti!
+S" PRECISION"      0 nc' PRECISION      OP_PRECISION  ti!
+S" SET-PRECISION"  0 nc' SET-PRECISION  OP_SET-PRECISION  ti!
+S" FS."            0 nc' FS.            OP_FS.            ti!
+S" FEXPM1"         0 nc' FEXPM1         OP_FEXPM1         ti!
+S" FLNP1"          0 nc' FLNP1          OP_FLNP1          ti!
+S" UD.R"           0 nc' UD.R           OP_UD.R           ti!
+S" D.R"            0 nc' D.R            OP_D.R            ti!
+S" F2DROP"         0 nc' F2DROP         OP_F2DROP         ti!
+S" F2DUP"          0 nc' F2DUP          OP_F2DUP          ti!
 
 fp-stack? [IF]
-S" FDEPTH"         0 nc' FDEPTH         OP_FDEPTH         eti!
-S" FP@"            0 nc' FP@            OP_FP@            eti!
-S" FP!"            0 nc' FP!            OP_FP!            eti!
-S" F.S"            0 nc' F.S            OP_F.S            eti!
+S" FDEPTH"         0 nc' FDEPTH         OP_FDEPTH         ti!
+S" FP@"            0 nc' FP@            OP_FP@            ti!
+S" FP!"            0 nc' FP!            OP_FP!            ti!
+S" F.S"            0 nc' F.S            OP_F.S            ti!
 [THEN]
 
-S" FDUP"           0 nc' FDUP           OP_FDUP           eti!
-S" FSWAP"          0 nc' FSWAP          OP_FSWAP          eti!
-S" FROT"           0 nc' FROT           OP_FROT           eti!
-S" FOVER"          0 nc' FOVER          OP_FOVER          eti!
-S" .NOT."          0 nc' .NOT.          OP_.NOT.          eti!
-S" .AND."          0 nc' .AND.          OP_.AND.          eti!
-S" .OR."           0 nc' .OR.           OP_.OR.           eti!
-S" .XOR."          0 nc' .XOR.          OP_.XOR.          eti!
-S" BOOLEAN?"       0 nc' BOOLEAN?       OP_BOOLEAN?       eti!
-S" UW@"            0 nc' UW@            OP_UW@            eti!
-S" UL@"            0 nc' UL@            OP_UL@            eti!
-S" SL@"            0 nc' SL@            OP_SL@            eti!
-S" L!"             0 nc' L!             OP_L!             eti!
-S" SFLOATS"        0 nc' SFLOATS        OP_SFLOATS        eti!
-S" SFLOAT+"        0 nc' SFLOAT+        OP_SFLOAT+        eti!
-S" FLOATS"         0 nc' FLOATS         OP_FLOATS         eti!
-S" FLOAT+"         0 nc' FLOAT+         OP_FLOAT+         eti!
+S" FDUP"           0 nc' FDUP           OP_FDUP           ti!
+S" FSWAP"          0 nc' FSWAP          OP_FSWAP          ti!
+S" FROT"           0 nc' FROT           OP_FROT           ti!
+S" FOVER"          0 nc' FOVER          OP_FOVER          ti!
+S" .NOT."          0 nc' .NOT.          OP_.NOT.          ti!
+S" .AND."          0 nc' .AND.          OP_.AND.          ti!
+S" .OR."           0 nc' .OR.           OP_.OR.           ti!
+S" .XOR."          0 nc' .XOR.          OP_.XOR.          ti!
+S" BOOLEAN?"       0 nc' BOOLEAN?       OP_BOOLEAN?       ti!
+S" UW@"            0 nc' UW@            OP_UW@            ti!
+S" UL@"            0 nc' UL@            OP_UL@            ti!
+S" SL@"            0 nc' SL@            OP_SL@            ti!
+S" L!"             0 nc' L!             OP_L!             ti!
+S" SFLOATS"        0 nc' SFLOATS        OP_SFLOATS        ti!
+S" SFLOAT+"        0 nc' SFLOAT+        OP_SFLOAT+        ti!
+S" FLOATS"         0 nc' FLOATS         OP_FLOATS         ti!
+S" FLOAT+"         0 nc' FLOAT+         OP_FLOAT+         ti!
 END-MODULE
 
 Also ssd
