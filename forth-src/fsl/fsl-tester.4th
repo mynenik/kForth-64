@@ -30,12 +30,13 @@
 \    2011-01-20  km; added dfourier
 \    2011-01-25  km; added elip12
 \    2011-01-29  km; added quadratic
+\    2021-07-22  km; use Forth 200x structures
 
 include ans-words
 include fsl-util
 include dynmem
 include strings
-include struct
+include struct-200x
 include complex
 include fsl-test-utils
 include ttester
@@ -44,9 +45,12 @@ DECIMAL
 true to TEST-CODE?
 true verbose !
 
+1 cells 4 = constant 32-bit?
 
+32-bit? [IF]
 CR CR
-\ include isaac
+include isaac
+[THEN]
 
 CR CR
 include prng

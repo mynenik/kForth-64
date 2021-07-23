@@ -57,7 +57,8 @@
 \   2011-09-16  km; use Neal Bridges' anonymous modules
 \   2012-02-19  km; use KM/DNW's modules library     
 \   2021-05-16  km; update for use in separate fp stack system.
-CR .( LUFACT            V1.6h         16 May       2021   EFC )
+\   2021-07-22  km; use Forth 200x data structures.
+CR .( LUFACT            V1.6i         22 July      2021   EFC )
 BEGIN-MODULE
 
 BASE @ DECIMAL
@@ -65,14 +66,14 @@ BASE @ DECIMAL
 Public:
 
 \ a data structure for LU factored matrices
-struct
-      cell% field  ->matrix{{
-      cell% field  ->pivot{
-      cell% field  ->N                  \ the size of the matrix
-      cell% field  ->status             \ = 0 if Ok
-end-struct lumatrix%
+begin-structure lumatrix%
+      field:  ->matrix{{
+      field:  ->pivot{
+      field:  ->N                  \ the size of the matrix
+      field:  ->status             \ = 0 if Ok
+end-structure
 
-: LUMATRIX  create lumatrix% %allot drop ;  \ defining word for data structure
+: LUMATRIX  create lumatrix% allot ;  \ defining word for data structure
 
 Private:
 

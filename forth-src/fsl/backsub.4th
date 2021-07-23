@@ -41,8 +41,8 @@
 \  ans-words.4th
 \  fsl-util.4th
 \  dynmem.4th
-\  struct.4th       \ The Gforth structures package is used
-\  lufact.4th       \   in place of the FSL structures package.
+\  struct-200x.4th  \ Forth 200x structures are used in place of
+\  lufact.4th       \   the FSL structures package.
 \
 \ ======================================================================
 
