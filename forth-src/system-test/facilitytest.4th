@@ -27,7 +27,7 @@
 \     - the Core word set is available and tested
 \ -----------------------------------------------------------------------------
 include ans-words
-include struct-2012
+include struct-200x
 include ttester
 
 TESTING Facility words
