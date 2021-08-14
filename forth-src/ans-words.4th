@@ -50,6 +50,7 @@
 \   2021-07-11  km  add DEFER@ and DEFER! and ACTION-OF.
 \                   use standard definition of IS .
 \   2021-07-13  km  added alignment words (for structures support).
+\   2021-08-14  km  fix of FP@ required change to F~
 BASE @
 DECIMAL
 
@@ -134,7 +135,7 @@ fvariable rhs
     ELSE
       r3 f@ 
       f0= IF  
-        fp@ dfloat+ 
+        fp@ 
         dup >r @ r> dfloat+ @ =
         f2drop
       ELSE  

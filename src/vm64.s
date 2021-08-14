@@ -838,6 +838,7 @@ L_spfetch:
 L_fpfetch:
         LDSP
 	movq GlobalFp(%rip), %rax
+        addq FpSize(%rip), %rax
 	movq %rax, (%rbx)
 	DEC_DSP
 	STSP

@@ -41,7 +41,6 @@
 \ ==== kForth preliminaries ==========
 s" ans-words.4th" included
 s" ttester.4th" included
-: aligned ;
 \ ==== end of kForth preliminaries ===
 
 TESTING Memory-Allocation word set
