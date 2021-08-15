@@ -126,7 +126,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad L_nop, L_nop, L_nop, CPP_myname       # 352--355
            .quad L_nop, L_nop, C_used, L_nop           # 356--359
            .quad L_precision, L_setprecision, L_nop, CPP_fsdot   # 360--363
-           .quad L_nop, L_nop, C_fexpm1, C_flnp1	    # 364--367
+           .quad L_nop, L_fpick, C_fexpm1, C_flnp1	    # 364--367
            .quad CPP_uddotr, CPP_ddotr, L_f2drop, L_f2dup   # 368--371
            .quad L_nop, L_nop, L_nop, L_nop                 # 372--375
            .quad L_nop, L_nop, L_nop, L_nop                 # 376--379

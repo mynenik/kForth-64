@@ -356,6 +356,7 @@ WordTemplate ForthWords[] =
     { "FSWAP",     OP_FSWAP,        0 },
     { "FOVER",     OP_FOVER,        0 },
     { "FROT",      OP_FROT,         0 },
+    { "FPICK",     OP_FPICK,        0 },
 #endif
     { "F2DROP",    OP_F2DROP,       0 },
     { "F2DUP",     OP_F2DUP,        0 },

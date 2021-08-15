@@ -2,7 +2,7 @@
 //
 // The assembler portion of kForth 64-bit Virtual Machine
 //
-// Copyright (c) 1998--2020 Krishna Myneni,
+// Copyright (c) 1998--2021 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU 
@@ -1516,9 +1516,26 @@ L_frot:
         sub %rax, %rbx
         movq %rcx, (%rbx)
         sub %rax, %rbx
-        xor %eax, %eax 
+        xor %rax, %rax 
 	NEXT
 
+L_fpick:
+        LDSP
+        DROP
+        movq (%rbx), %rcx  # pick offset
+        LDFSP
+        movq %rbx, %rdx  # rdx = dest addr
+        addq %rax, %rbx
+        imulq %rcx, %rax
+        addq %rax, %rbx  # rbx = src addr
+        movq (%rbx), %rcx
+        movq %rdx, %rbx
+        movq %rcx, (%rbx)
+        DEC_FSP
+        STFSP
+        xor %rax, %rax
+        NEXT
+        
 L_f2drop:
 	LDFSP
 	add %rax, %rbx
