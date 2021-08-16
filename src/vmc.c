@@ -66,7 +66,6 @@ extern long int JumpTable[];
 extern char WordBuf[];
 extern char TIB[];
 extern char NumberBuf[];
-extern char ParseBuf[];
 
 //  Provided by vmxx.s/vmxx-fast.s
 int L_dnegate();
@@ -673,7 +672,7 @@ int C_parse ()
 {
   DROP
   char delim = TOS;
-  char *dp = ParseBuf;
+  char *cp = pTIB; 
   long int count = 0;
   if (*pTIB)
     {
@@ -681,29 +680,34 @@ int C_parse ()
       while (*pTIB)
 	{
 	  if (*pTIB == delim) break;
-	  *dp++ = *pTIB++;
+	  ++pTIB; 
 	  ++count;
 	}
       if (*pTIB) ++pTIB;  /* consume the delimiter */
     }
-  PUSH_ADDR((long int) ParseBuf)
+  PUSH_ADDR((long int) cp)
   PUSH_IVAL(count)
   return 0;
 }
 
 // PARSE-NAME  ( "<spaces>name<space>" -- c-addr u )
-// Skip leading spaces and parse name delimited by space;
-//   return string address and count.
+// Skip leading whitespace and parse name delimited by
+// whitespace character; return string address and count.
 // Forth 2012 Core Extensions wordset 6.2.2020
 int C_parsename ()
 {
   long int count = 0;
-  char *cp;
-  cp = ExtractName(pTIB, ParseBuf);
-  count = strlen(ParseBuf);
-  PUSH_ADDR((long int) pTIB)
+  char *cp = pTIB;
+  const char* delim = "\t ";
+  // Skip leading delimiters
+  while (*pTIB && strchr(delim, *pTIB)) ++pTIB;
+  cp = pTIB;
+  while (*pTIB && (strchr(delim, *pTIB) == NULL)) {
+    ++pTIB;
+    ++count;
+  }
+  PUSH_ADDR((long int) cp)
   PUSH_IVAL(count)
-  pTIB = cp;
   return 0;
 }
 

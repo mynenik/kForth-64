@@ -123,8 +123,6 @@ extern "C" {
   char WordBuf[256];
   char TIB[256];
   char NumberBuf[256];
-  char ParseBuf[1024];
-
 }
 extern "C" long int JumpTable[];
 extern "C" void dump_return_stack(void); 

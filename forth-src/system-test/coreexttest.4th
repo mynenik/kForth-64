@@ -671,8 +671,6 @@ T{ CHAR Z PARSE
 T{ CHAR " PARSE 4567 "DUP ROT ROT EVALUATE -> 5 4567 }T
  
 \ -----------------------------------------------------------------------------
-COMMENT Skipping tests of PARSE-NAME
-0 [IF]
 TESTING PARSE-NAME  (Forth 2012)
 \ Adapted from the PARSE-NAME RfD tests
 
@@ -696,7 +694,6 @@ T{ PARSE-NAME-TEST abcde abcde
    -> TRUE }T         \ Parse to end of line
 T{ PARSE-NAME-TEST abcde           abcde         
    -> TRUE }T         \ Leading and trailing spaces
-[THEN]
 \ -----------------------------------------------------------------------------
 TESTING DEFER DEFER@ DEFER! IS ACTION-OF (Forth 2012)
 \ Adapted from the Forth 200X RfD tests

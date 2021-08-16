@@ -895,7 +895,6 @@ L_backslash:
 	.comm pTIB, WSIZE,WSIZE
 	.comm TIB, 256,1
 	.comm WordBuf, 256,1
-	.comm ParseBuf, 1024,1
 	.comm NumberCount, WSIZE,WSIZE
 	.comm NumberBuf, 256,1
 
