@@ -73,7 +73,7 @@
 \      Angle assignments for the three positions of a detector
 \      (left or right) may be set via a command such as
 \
-\        0.0e 30.0e 45.0e leftDet axisSel a@ assign-angles
+\        0.0e 30.0e 45.0e leftDet map-angles
 \
 \      which will set the three selectable angles for the left
 \      detector to 0 degrees, 30 deg, and 45 deg, for selector
@@ -319,7 +319,7 @@ object class
     method init          ( ... o -- )
     method get-height    ( o -- w )
     method get-width     ( o -- h )
-    method set-fg-colors ( o -- )
+    method set-fb-colors ( o -- )
     method fill-area     ( color o -- )
     method clear-area    ( o -- )
     method draw          ( ... o -- )
@@ -332,7 +332,7 @@ text-graphic defines init
 :noname ( o -- h ) dims @ ;       text-graphic defines get-height
 :noname ( o -- w ) dims cell+ @ ; text-graphic defines get-width
 :noname ( o -- ) colors 2@ background foreground ;
-text-graphic defines set-fg-colors
+text-graphic defines set-fb-colors
 
 :noname ( color o -- )
    over background
@@ -391,7 +391,7 @@ HEX
 :noname ( o -- )
     dup >r 
     topLeft 2@ at-xy
-    r@ set-fg-colors
+    r@ set-fb-colors
     space
     r@ colors 2@ nip r@ auxColors @
     r@ pos @   \ bkg aux pos
@@ -622,7 +622,7 @@ emitter defines init
 
 :noname ( o -- )
    dup topLeft 2@ at-xy
-       set-fg-colors
+       set-fb-colors
    25b6 xemit
    2588 xemit
    25c0 xemit ;
@@ -664,7 +664,7 @@ histogram defines init
 histogram defines add-event?
 
 :noname ( ntotalevents o -- )
-   dup set-fg-colors
+   dup set-fb-colors
    dup >r topLeft 2@ at-xy
    r@ get-height 0 do space 1 cur_left 1 cur_down  loop
    r@ colors 2@ drop background
