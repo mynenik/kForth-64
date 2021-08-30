@@ -6,14 +6,14 @@
 \ Provided under the GNU General Public License
 \
 \ Requires:
-\
-\	strings.4th
-\	ans-words.4th
-\	ansi.4th
-\	mini-oof.4th
+\   ans-words.4th
+\   mini-oof.4th
+\   strings.4th
+\   ansi.4th
 \
 \ Revisions:
 \   2020-02-02  km; use :NONAME  
+\   2021-08-27  km; update for revised mini-oof library
 
 1 cells constant cell
 
@@ -70,12 +70,12 @@ textbox defines tb-init
 
 \ Demonstration of text boxes:
 
-(
-textbox new tb1 drop
+1 [IF]
+textbox new constant tb1
 2 1 8 6 RED WHITE BLUE  tb1 tb-init
-textbox new tb2 drop
+textbox new constant tb2
 12 4 20 5 YELLOW RED CYAN tb2 tb-init
-textbox new tb3 drop
+textbox new constant tb3
 16 12 10 10 BLACK GREEN GREEN tb3 tb-init
 
 page
@@ -83,7 +83,7 @@ tb1 tb-draw
 tb2 tb-draw
 tb3 tb-draw
 text_normal
-)
+[THEN]
 
 
 
