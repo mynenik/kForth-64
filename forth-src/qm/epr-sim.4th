@@ -17,6 +17,10 @@
 \
 \   2021-08-21  km  first working version.
 \   2021-08-29  km  first release version.
+\   2021-09-01  km  added method SET-RANDOM-AXIS for detector
+\     class; added word, AT-BELOW-EXPERIMENT ; revised GO to 
+\     not initialize HALTED? flag; revised DRAW-EXPERIMENT to
+\     show histograms.
 \
 \ References:
 \
@@ -448,6 +452,7 @@ text-graphic class
     method map-angles ( o -- ) ( F: deg1 deg2 deg3 -- )
     method show-axis ( o -- )
     method set-axis ( u o -- )
+    method set-random-axis ( o -- )
     method measure ( ostate o -- ostate' m )
     method show-measurement ( m o -- )
 end-class detector
@@ -490,6 +495,10 @@ detector defines map-angles
 :noname ( u o -- )
    swap 1 max 3 min swap axisSel a@ pos ! ;
 detector defines set-axis
+
+:noname ( o -- )
+   begin rng 3 and ?dup until swap set-axis ;
+detector defines set-random-axis
 
 :noname ( ostate odet -- ostate' m )
    2dup 2>r 
@@ -889,27 +898,17 @@ histogram new constant H_P_dd
 
 DECIMAL
 
+\ Position cursor below the experiment display
+: at-below-experiment ( -- )
+    leftTape topLeft 2@ 
+    leftTape get-height + 1+ at-xy ;
+
 : .status ( caddr u -- )
     blue background white foreground
     0 0 at-xy clrtoeol 
     0 0 at-xy
     type ;     
 
-: draw-experiment ( -- )
-    black background
-    text_bold
-    page
-    leftDet   draw
-    rightDet  draw
-    EM        draw
-    leftTape  dup clear-area draw
-    rightTape dup clear-area draw
-    draw-histogram-labels
-    rightTape recordCount @ IF
-      show-jp
-      show-correlation
-    THEN 
-    ConfigInfo dup clear-area draw ;
 
 : launch-particles ( -- qstate )
     EM topLeft 2@ swap 1-  swap leftParticlePos  2!
@@ -988,6 +987,22 @@ DECIMAL
       drop
     LOOP 0 ;
 
+: draw-experiment ( -- )
+    black background
+    text_bold
+    page
+    leftDet   draw
+    rightDet  draw
+    EM        draw
+    leftTape  dup clear-area draw
+    rightTape dup clear-area draw
+    draw-histogram-labels
+    rightTape recordCount @ IF
+      show-jp  show-histograms
+      show-correlation
+    THEN 
+    ConfigInfo dup clear-area draw 
+    at-below-experiment ;
 
 variable sel_det  \ selected detector: 0 = left, 1 = right
 0 sel_det !
@@ -1045,8 +1060,9 @@ variable lastTrials
     black background  
     show-statistics ;
 
+
 : go ( -- )
-    true to halted?
+    \ true to halted?
     s" Ready. Use key commands -- 'Q' to return to Forth." .status
     ConfigInfo draw
     BEGIN
@@ -1071,8 +1087,7 @@ variable lastTrials
                  s" Returned to Forth. Type 'go' to start user interface."
                  .status
                  black background white foreground
-                 leftTape topLeft 2@ 
-                 leftTape get-height + 1+ at-xy
+                 at-below-experiment
                  exit  endof
         endcase
       ELSE
