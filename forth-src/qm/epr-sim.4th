@@ -774,7 +774,7 @@ InfoBox defines show-det-angles
    space ." Key Commands:"
    r@ topLeft   2@ 10 + at-xy
    r@ auxColors 2@ foreground drop
-   s"  L R 1 2 3 E H T X Q" type 
+   s"  L R 1 2 3 E C H T X Q" type 
    r> drop
    black background ;
 InfoBox defines show-key-commands
