@@ -78,13 +78,14 @@
 \   2021-05-09  km;  provide defs. of  }FCOPY and }FPUT for separate FP stack. 
 \   2021-05-16  km;  provide def. of }}FCOPY for separate FP stack.
 \   2021-05-18  km;  define FP-STACK? for conditional compilation.
+\   2021-09-11  km;  replace instances of ?ALLOT with ALLOT?
 \ ================= kForth specific defs/notes ==============================
 \ Requires ans-words.4th
 
 [undefined] ptr [IF] : ptr create 1 cells allot? ! does> a@ ; [THEN]
 \ ================= end of kForth specific defs ==============================
 
-CR .( FSL-UTIL          V1.3b          18 May 2021   EFC, KM )
+CR .( FSL-UTIL          V1.3c          11 Sep 2021   EFC, KM )
 BASE @ DECIMAL
 
 \ ================= compilation control ======================================
@@ -211,7 +212,7 @@ TRUE  VALUE is-static?     \ TRUE for statically allocated structs and arrays
 : MARRAY ( n cell_size -- | -- addr ) 
     CREATE
       \ DUP , * ALLOT
-    2DUP SWAP 1+ * ?ALLOT ! DROP
+    2DUP SWAP 1+ * ALLOT? ! DROP
     DOES> CELL+ ;
 
 \    -----------------------------
@@ -223,7 +224,7 @@ TRUE  VALUE is-static?     \ TRUE for statically allocated structs and arrays
     CREATE
       \ TYPE-ID ,
       \ DUP , * ALLOT
-    2DUP SWAP 2+ * ?ALLOT
+    2DUP SWAP 2+ * ALLOT?
     TYPE-ID OVER !
     CELL+ ! DROP
      DOES> DUP @ SWAP [ 2 CELLS ] LITERAL + ;
@@ -259,7 +260,7 @@ TRUE  VALUE is-static?     \ TRUE for statically allocated structs and arrays
 : DSARRAY   ( cell_size -- )  
     CREATE  
     \ 0 , , TYPE-ID ,
-    3 CELLS ?ALLOT
+    3 CELLS ALLOT?
     0 OVER ! CELL+ SWAP OVER !
     TYPE-ID SWAP CELL+ !
     DOES>
@@ -329,7 +330,7 @@ fp-stack? [IF]
     CREATE
     \ OVER , DUP ,
     \ * * ALLOT
-    >R 2DUP * R@ * 2 CELLS + ?ALLOT
+    >R 2DUP * R@ * 2 CELLS + ALLOT?
     2DUP ! CELL+ R> SWAP ! 2DROP
     DOES>  [ 2 CELLS ] LITERAL + ;
 

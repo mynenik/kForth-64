@@ -348,7 +348,7 @@ comp.lang.forth, "Re: Alternative DEFER strategies?", 16 Dec
 )
 \  [ fnoname ] LITERAL z!
 \  : [ fnoname ] LITERAL z@ POSTPONE zliteral POSTPONE ; ;
-: zconstant   FSWAP  CREATE  2 FLOATS  ?allot  
+: zconstant   FSWAP  CREATE  2 FLOATS  allot?  
 	      DUP >R  F!  R>  FLOAT+  F!  
 	      DOES>  DUP >R  F@  R>  FLOAT+  F@  ;
 
