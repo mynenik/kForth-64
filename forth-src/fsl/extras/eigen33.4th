@@ -5,7 +5,7 @@
 \ Requires:
 \
 \   ans-words.4th
-\   struct.4th
+\   struct-200x.4th
 \   fsl/fsl-util.4th
 \   fsl/dynmem.4th
 \   fsl/extras/vector.4th
