@@ -368,7 +368,7 @@ VARIABLE special                                \ special action, 0=none
 
 : std    ( word 2nd_fn color filename label -- )
    \ CREATE ' , ' , BL WORD COUNT ,$ BL WORD COUNT ,$
-   CREATE 512 ?ALLOT ' OVER ! CELL+ ' OVER ! CELL+
+   CREATE 512 allot? ' OVER ! CELL+ ' OVER ! CELL+
    BL WORD COUNT ROT $!+
    BL WORD COUNT ROT pack  
  

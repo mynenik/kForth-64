@@ -51,6 +51,7 @@
 \                   use standard definition of IS .
 \   2021-07-13  km  added alignment words (for structures support).
 \   2021-08-14  km  fix of FP@ required change to F~
+\   2021-09-18  km  replace instances of ?ALLOT with ALLOT?
 BASE @
 DECIMAL
 
@@ -64,7 +65,7 @@ DECIMAL
 CREATE PAD 512 ALLOT
 
 : TO ' >BODY STATE @ IF POSTPONE LITERAL POSTPONE ! ELSE ! THEN ; IMMEDIATE
-: VALUE CREATE 1 CELLS ?ALLOT ! IMMEDIATE DOES> POSTPONE LITERAL POSTPONE @ ;
+: VALUE CREATE 1 CELLS allot? ! IMMEDIATE DOES> POSTPONE LITERAL POSTPONE @ ;
 
 \ ============== Alignment words: from CORE and Extended Wordsets
 : UNITS-ALIGNED ( a xt -- a' )
@@ -120,7 +121,7 @@ CREATE PAD 512 ALLOT
 
 \ Forth-2012 Programming Tools 15.6.2.2264
 : SYNONYM ( "<newname>" "<oldname>" -- )
-   CREATE ' 1 CELLS ?ALLOT ! DOES> A@ EXECUTE ; 
+   CREATE ' 1 CELLS allot? ! DOES> a@ EXECUTE ; 
 
 \ ============ From the FLOATING EXT wordset
 
@@ -169,7 +170,7 @@ variable handler
 
 : CATCH ( xt -- exception# | 0 )
     SP@ >R  ( xt )  \ save data stack pointer
-    HANDLER A@ >R   \ and previous handler
+    HANDLER a@ >R   \ and previous handler
     RP@ HANDLER !   \ save return point for THROW
     EXECUTE	    \ execute returns if no THROW
     R> HANDLER !    \ restore previous handler
@@ -179,7 +180,7 @@ variable handler
 
 : THROW ( ??? exception# -- ??? exception# )
     ?DUP IF
-      HANDLER A@ RP!   \ restore previous return stack
+      HANDLER a@ RP!   \ restore previous return stack
       R> HANDLER !     \ restore prev handler
       R> SWAP >R
       SP! DROP R>      \ restore stack
@@ -192,10 +193,10 @@ variable handler
 \ ============= Forth 200x Standard Words
 
 : DEFER  ( "name" -- )
-      CREATE 1 CELLS ?ALLOT ['] ABORT SWAP ! 
-      DOES> ( ... -- ... ) A@ EXECUTE ;
+      CREATE 1 CELLS allot? ['] ABORT SWAP ! 
+      DOES> ( ... -- ... ) a@ EXECUTE ;
 
-: DEFER@ ( xt1 -- xt2 )  >BODY A@ ;
+: DEFER@ ( xt1 -- xt2 )  >BODY a@ ;
 : DEFER! ( xt2 xt1 -- )  >BODY ! ;
 
 : IS  ( xt "name" -- )
@@ -213,6 +214,6 @@ variable handler
     THEN ; IMMEDIATE
  
 \ === Non-standard words commonly needed for kForth programs ===
-: PTR ( a "name" -- ) CREATE 1 CELLS ALLOT? ! DOES> A@ ;
+: PTR ( a "name" -- ) CREATE 1 CELLS allot? ! DOES> a@ ;
 
 BASE !

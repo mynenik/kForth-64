@@ -11,7 +11,7 @@ create ver-buf 16 allot
         bl parse 16 min 2dup ver-buf swap move
         nip ver-buf swap ;
 : make-$ ( ca1 u "name" -- )
-        create dup 1+ ?allot 2dup ! 1+ swap move
+        create dup 1+ allot? 2dup ! 1+ swap move
         does> ( a -- ca2 u ) count ;
 
 ver$ 0.5.2
@@ -67,7 +67,7 @@ VARIABLE named-module   0 named-module !
 
 : make-module ( "name" -- )
         CREATE  \ here 0 , 0 , 0 , named-module !
-	0 0 0 3 cells ?allot dup >r 2! r@ 2 cells + ! r> named-module !
+	0 0 0 3 cells allot? dup >r 2! r@ 2 cells + ! r> named-module !
         DOES>  ( o: wid' -- wid )  a@ >r get-order nip r> swap set-order ;
 
 : MODULE:  ( "name" -- )

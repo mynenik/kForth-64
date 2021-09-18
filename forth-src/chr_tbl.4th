@@ -13,7 +13,7 @@
 \ Requires ans-words.4th (for defn of CHARS)
 
 : char_table:   ( #chars "table_name" -- )
-    CREATE   DUP  CHARS  ?ALLOT   SWAP  0 FILL
+    CREATE   DUP  CHARS  allot?   SWAP  0 FILL
     DOES>  ( char -- code[c])
            CHARS +   C@  ;
 

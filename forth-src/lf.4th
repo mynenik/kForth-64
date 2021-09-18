@@ -143,12 +143,7 @@
 include ans-words
 include strings
 include ansi
-include files	\ include filesw under Windows
-
-: ptr   CREATE 1 CELLS ?ALLOT ! DOES> a@ ;
-: BIN ;
-\ ANS compliant defn of >NUMBER is now part of ans-words.4th (km 2003-3-9)
-
+include files
 \ ============== end of kForth requires ============
 
 
@@ -493,7 +488,7 @@ VARIABLE way#
 CREATE POCKET  POCKET-SIZE CHARS ALLOT       \ cut/copy buffer
 CREATE FILENAME$  MAX-INPUT 6 + CHARS ALLOT  \ filename string
 
-CREATE CURSOR>  2 CELLS ?ALLOT 0 0 ROT 2! ( 0 , 0 ,)  \ cursor position
+CREATE CURSOR>  2 CELLS allot? 0 0 ROT 2! ( 0 , 0 ,)  \ cursor position
 
 
 \ document
@@ -1006,7 +1001,7 @@ LINEWIDTH 1+ CONSTANT LINEWIDTH+
 
 
 \ Tab
-CREATE TAB$  TABWIDTH DUP CHARS ?ALLOT SWAP BLANK
+CREATE TAB$  TABWIDTH DUP CHARS allot? SWAP BLANK
 
 \ #cols to next tab mark
 : NEXT-TAB  ( -- n )

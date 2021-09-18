@@ -116,7 +116,7 @@ max_depth 3 * CELLS  CONSTANT  $max  \ max depth (cells)
 
 \ 2. Null string
     \ CREATE bl$ 1 C, BL C,
-    CREATE bl$ ( 1 C, BL C,) 2 ?ALLOT 1 OVER C! BL SWAP 1+ C!
+    CREATE bl$ ( 1 C, BL C,) 2 allot? 1 OVER C! BL SWAP 1+ C!
     bl$   $ends   2CONSTANT  0null
 
 \ 3. re-vectorable dummy names

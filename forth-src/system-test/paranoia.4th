@@ -320,7 +320,7 @@ pad find nip 0=
 [UNDEFINED] S>F [IF] : S>F ( n -- ) ( F: -- r )      	 S>D D>F ;    [THEN]
 
 [UNDEFINED] <=     [IF] : <=  ( n1 n2 -- flag )  2DUP < >R = R> OR ;  [THEN]
-[UNDEFINED] ?allot [IF] : ?allot ( u -- a ) HERE SWAP ALLOT ; [THEN]
+[UNDEFINED] allot? [IF] : allot? ( u -- a ) HERE SWAP ALLOT ; [THEN]
 [UNDEFINED] cell-  [IF] : cell- ( a1 -- a2 ) 1 CELLS - ;      [THEN]
 
 \ --- Arrays (FSL-style) ---
@@ -329,7 +329,7 @@ pad find nip 0=
 
 \ defining word for 1-d array
 : ARRAY ( n cell_size -- | -- addr )
-    create 2dup swap 1+ * ?allot ! drop does> cell+ ;
+    create 2dup swap 1+ * allot? ! drop does> cell+ ;
 
 : }   ( addr n -- addr[n] | fetch 1-D array address)
     over cell- @ * swap + ;
