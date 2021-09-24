@@ -1,9 +1,9 @@
 \ tscp-tgfx.4th
 \
-\ TSCP chess program with Text Graphics
+\ Text graphics interface for chess program
 \
-\ Copyright (c) 2006 Krishna Myneni,
-\ Creative Consulting for Research and Education
+\ Copyright (c) 2006--2021 Krishna Myneni, 
+\ <krishna.myneni@ccreweb.org>
 \
 \ Notes:
 \
@@ -18,6 +18,7 @@
 \   2007-11-14  km; revised handling of move output and status info;
 \                   factored out unfinished code.
 \   2020-11-12  km; include ans-words.4th
+\   2021-09-24  km; fixed for use with tscp v 0.4.5
 
 include ans-words
 include games/tscp
@@ -25,12 +26,12 @@ include games/chessboard
 
 0 value square
 
-pawn   new  pawn-piece     \ 1 
-knight new  knight-piece   \ 2 
-bishop new  bishop-piece   \ 3 
-rook   new  rook-piece     \ 4 
-queen  new  queen-piece    \ 5
-king   new  king-piece     \ 6
+pawn   new  \ pawn-piece     \ 1 
+knight new  \ knight-piece   \ 2 
+bishop new  \ bishop-piece   \ 3 
+rook   new  \ rook-piece     \ 4 
+queen  new  \ queen-piece    \ 5
+king   new  \ king-piece     \ 6
 6 table tscp-pieces
 
 
@@ -47,7 +48,7 @@ king   new  king-piece     \ 6
 
     \ Draw the piece
 
-    2r> frSq blackAtBottom? @ IF rotate THEN TO square
+    2r> fileRank>sq blackAtBottom? @ IF rotate THEN TO square
     square bd@ piece
     ?dup IF 
       1- cells tscp-pieces + a@
@@ -98,8 +99,6 @@ king   new  king-piece     \ 6
    
 \ Redefine tscp user commands to use .TEXTBOARD 
 
-: new init_board page .textboard ;            \ setup a new game
-
 : go                  \ ask the computer to choose move
     s" Thinking ..." .status
     s" >file /dev/null" evaluate  \ redirect output
@@ -120,6 +119,8 @@ king   new  king-piece     \ 6
 	s" Can't move there." .status
     THEN ;
 
+: newGame initBoard .textboard  s" Started New Game" .status ;
+
 : undo retract .textboard ;   \ take back one ply (switches sides)
 
 : undo2 retract retract .textboard ;   \ take back one full move
@@ -136,7 +137,7 @@ king   new  king-piece     \ 6
     CR
     CR ."    go         -- let computer make your next move."
     CR
-    CR ."    new        -- start a new game."
+    CR ."    newGame    -- start a new game."
     CR
     CR ."    undo       -- take back one ply."
     CR
@@ -145,6 +146,8 @@ king   new  king-piece     \ 6
     CR ."    whoseTurn? -- tell whose turn."
     CR
     CR ."    n sd       -- set level of difficulty to n, e.g. '4 sd'"
+    CR
+    CR ."    start      -- start or resume a game."
     CR
     CR ."    bye        -- quit the game and exit Forth"
     CR

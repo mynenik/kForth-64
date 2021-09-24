@@ -16,7 +16,7 @@ include ansi
 include mini-oof
 include textbox
 
-textbox new cb1 drop
+textbox new constant cb1
 9 constant CBWIDTH
 5 constant CBHEIGHT
 3 constant CP_SIZE
@@ -131,83 +131,83 @@ chess-piece class
 end-class pawn
 
 :noname ( col row o -- ) >r pawn-shape r@ cp-picture ! r> 
-	 [ chess-piece :: cp-init ] literal execute ;
+	 [ chess-piece :: cp-init ] ;
 pawn defines cp-init   
 
 chess-piece class
 end-class king
 
 :noname ( col row o -- ) >r king-shape r@ cp-picture ! r>
-	 [ chess-piece :: cp-init ] literal execute ;
+	 [ chess-piece :: cp-init ] ;
 king defines cp-init   
 
 chess-piece class
 end-class queen
 
 :noname ( col row o -- ) >r queen-shape r@ cp-picture ! r>
-	 [ chess-piece :: cp-init ] literal execute ;
+	 [ chess-piece :: cp-init ] ;
 queen defines cp-init   
 
 chess-piece class
 end-class bishop
 
 :noname ( col row o -- ) >r bishop-shape r@ cp-picture ! r>
-	 [ chess-piece :: cp-init ] literal execute ;
+	 [ chess-piece :: cp-init ] ;
 bishop defines cp-init   
 
 chess-piece class
 end-class knight
 
 :noname ( col row o -- ) >r knight-shape r@ cp-picture ! r>
-	 [ chess-piece :: cp-init ] literal execute ;
+	 [ chess-piece :: cp-init ] ;
 knight defines cp-init   
 
 chess-piece class
 end-class rook
 
 :noname ( col row o -- ) >r rook-shape r@ cp-picture ! r>
-	 [ chess-piece :: cp-init ] literal execute ;
+	 [ chess-piece :: cp-init ] ;
 rook defines cp-init   
 
 
 \ Now we make and initialize the pieces
 
-rook   new  b-q-rook
-knight new  b-q-knight
-bishop new  b-q-bishop
-queen  new  b-queen
-king   new  b-king
-bishop new  b-k-bishop
-knight new  b-k-knight
-rook   new  b-k-rook
-pawn   new  b-q-r-pawn
-pawn   new  b-q-k-pawn
-pawn   new  b-q-b-pawn
-pawn   new  b-q-pawn
-pawn   new  b-k-pawn
-pawn   new  b-k-b-pawn
-pawn   new  b-k-k-pawn
-pawn   new  b-k-r-pawn
+rook   new  \ b-q-rook
+knight new  \ b-q-knight
+bishop new  \ b-q-bishop
+queen  new  \ b-queen
+king   new  \ b-king
+bishop new  \ b-k-bishop
+knight new  \ b-k-knight
+rook   new  \ b-k-rook
+pawn   new  \ b-q-r-pawn
+pawn   new  \ b-q-k-pawn
+pawn   new  \ b-q-b-pawn
+pawn   new  \ b-q-pawn
+pawn   new  \ b-k-pawn
+pawn   new  \ b-k-b-pawn
+pawn   new  \ b-k-k-pawn
+pawn   new  \ b-k-r-pawn
 
 16 table black-pieces
 
 
-rook   new  w-q-rook
-knight new  w-q-knight
-bishop new  w-q-bishop
-queen  new  w-queen
-king   new  w-king
-bishop new  w-k-bishop
-knight new  w-k-knight
-rook   new  w-k-rook
-pawn   new  w-q-r-pawn
-pawn   new  w-q-k-pawn
-pawn   new  w-q-b-pawn
-pawn   new  w-q-pawn
-pawn   new  w-k-pawn
-pawn   new  w-k-b-pawn
-pawn   new  w-k-k-pawn
-pawn   new  w-k-r-pawn
+rook   new  \ w-q-rook
+knight new  \ w-q-knight
+bishop new  \ w-q-bishop
+queen  new  \ w-queen
+king   new  \ w-king
+bishop new  \ w-k-bishop
+knight new  \ w-k-knight
+rook   new  \ w-k-rook
+pawn   new  \ w-q-r-pawn
+pawn   new  \ w-q-k-pawn
+pawn   new  \ w-q-b-pawn
+pawn   new  \ w-q-pawn
+pawn   new  \ w-k-pawn
+pawn   new  \ w-k-b-pawn
+pawn   new  \ w-k-k-pawn
+pawn   new  \ w-k-r-pawn
 
 16 table white-pieces
 
