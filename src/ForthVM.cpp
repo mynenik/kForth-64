@@ -2264,7 +2264,7 @@ int CPP_sliteral ()
   char *cp = (char*) TOS;
   char* str = new char[u + 1];
   strncpy(str, cp, u);
-  str[u+1] = '\0';
+  str[u] = '\0';
   StringTable.push_back(str);
   pCurrentOps->push_back(OP_ADDR);
   OpsPushInt((long int) str);
