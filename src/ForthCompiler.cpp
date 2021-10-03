@@ -3,7 +3,7 @@
 // A compiler to generate kForth Byte Code (FBC) from expressions
 //   or programs
 //
-// Copyright (c) 1998--2020 Krishna Myneni, 
+// Copyright (c) 1998--2021 Krishna Myneni, 
 // <krishna.myneni@ccreweb.org>
 //
 // Contributors:
@@ -17,20 +17,13 @@
 //
 #include <iostream>
 #include <fstream>
-using std::cout;
-using std::endl;
-using std::istream;
-using std::ostream;
-using std::ifstream;
-using std::ofstream;
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include "fbc.h"
 #include <vector>
 #include <stack>
-using std::vector;
-using std::stack;
+using namespace std;
+#include "fbc.h"
 #include "ForthCompiler.h"
 #include "VMerrors.h"
 #include "kfmacros.h"

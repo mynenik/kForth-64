@@ -40,13 +40,8 @@ const char* build=BUILD_DATE;
 #include <sstream>
 #include <string>
 #include <vector>
-using std::istream;
-using std::ostream;
-using std::cout;
-using std::endl;
-using std::istringstream;
-using std::ostringstream;
-using std::vector;
+using namespace std;
+
 extern "C" {
 #include <stdio.h>
 #include <stdlib.h>

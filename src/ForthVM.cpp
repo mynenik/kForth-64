@@ -2256,7 +2256,7 @@ int CPP_twoliteral ()
 
 int CPP_sliteral ()
 {
-  // stack: ( c-addr u -- | place string or copy of string in compiled opcodes )
+  // stack: ( c-addr u -- | store copy of string and compile string literal )
   DROP
   unsigned long int u = TOS;
   DROP
