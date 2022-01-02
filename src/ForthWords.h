@@ -2,7 +2,7 @@
 //
 // The intrinsic Forth word list for kForth
 //
-// Copyright (c) 2008--2021 Krishna Myneni,
+// Copyright (c) 2008--2022 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org> 
 //
 // This software is provided under the terms of the GNU
@@ -194,6 +194,7 @@ WordTemplate ForthWords[] =
     { "QUIT",      OP_QUIT,         0 },
     { "ABORT",     OP_ABORT,        0 },
     { "ABORT\x22", OP_ABORTQUOTE,   IMMEDIATE },
+    { "VMTHROW",   OP_VMTHROW,      0 },
     { "USLEEP",    OP_USLEEP,       0 },
     { "EXECUTE-BC", OP_EXECUTE_BC,  0 },
     { "EXECUTE",   OP_EXECUTE,      0 },

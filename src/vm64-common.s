@@ -2,7 +2,7 @@
 //
 // Common declarations and data for kForth 64-bit Virtual Machine
 //
-// Copyright (c) 1998--2021 Krishna Myneni,
+// Copyright (c) 1998--2022 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -124,7 +124,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad CPP_forth, CPP_assembler, CPP_traverse_wordlist, CPP_name_to_string # 344--347
            .quad CPP_name_to_interpret, CPP_name_to_compile, CPP_defined, CPP_undefined  # 348--351
            .quad L_nop, L_nop, L_nop, CPP_myname       # 352--355
-           .quad L_nop, L_nop, C_used, L_nop           # 356--359
+           .quad L_nop, L_nop, C_used, L_vmthrow       # 356--359
            .quad L_precision, L_setprecision, L_nop, CPP_fsdot   # 360--363
            .quad L_nop, L_fpick, C_fexpm1, C_flnp1	    # 364--367
            .quad CPP_uddotr, CPP_ddotr, L_f2drop, L_f2dup   # 368--371
@@ -416,6 +416,14 @@ E_div_overflow:
 
 E_arg_type_mismatch:
         mov $E_ARG_TYPE_MISMATCH, %eax
+        ret
+
+L_vmthrow:      # throw VM error (used as default exception handler)
+        LDSP
+        INC_DSP
+        INC_DTSP
+        movq (%rbx), %rax
+	STSP
         ret
 
 L_cputest:

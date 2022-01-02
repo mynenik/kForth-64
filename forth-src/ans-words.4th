@@ -17,7 +17,7 @@
 \     ansi.4th 
 \     dump.4th
 \
-\ Copyright (c) 2002--2021 Krishna Myneni
+\ Copyright (c) 2002--2022 Krishna Myneni
 \
 \ Provided under the GNU Lesser General Public License (LGPL)
 \
@@ -52,6 +52,7 @@
 \   2021-07-13  km  added alignment words (for structures support).
 \   2021-08-14  km  fix of FP@ required change to F~
 \   2021-09-18  km  replace instances of ?ALLOT with ALLOT?
+\   2022-01-02  km  use VMTHROW as default exception handler.
 BASE @
 DECIMAL
 
@@ -164,29 +165,36 @@ fvariable rhs
 ( see DPANS94, sec. A.9 )
 
 variable handler
-: empty-handler ;
+variable excpt-frames
 
-' empty-handler  handler !
+' vmthrow  handler !  \ default handler triggers VM Error.
 
 : CATCH ( xt -- exception# | 0 )
     SP@ >R  ( xt )  \ save data stack pointer
     HANDLER a@ >R   \ and previous handler
     RP@ HANDLER !   \ save return point for THROW
+    1 excpt-frames +!
     EXECUTE	    \ execute returns if no THROW
     R> HANDLER !    \ restore previous handler
     R> DROP         \ discard saved state
+    -1 excpt-frames +!
     0               \ normal completion
 ;
 
 : THROW ( ??? exception# -- ??? exception# )
     ?DUP IF
-      HANDLER a@ RP!   \ restore previous return stack
-      R> HANDLER !     \ restore prev handler
-      R> SWAP >R
-      SP! DROP R>      \ restore stack
+      excpt-frames @ IF
+        HANDLER a@ RP!   \ restore previous return stack
+        R> HANDLER !     \ restore prev handler
+        R> SWAP >R
+        SP! DROP R>      \ restore stack
+        -1 excpt-frames +!
         \  Return to the caller of CATCH because return
         \  stack is restored to the state that existed
         \  when CATCH began execution
+      ELSE
+        HANDLER a@ EXECUTE
+      THEN
     THEN
 ;
 
