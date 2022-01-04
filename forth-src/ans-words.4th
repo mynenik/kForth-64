@@ -193,6 +193,10 @@ variable excpt-frames
         \  stack is restored to the state that existed
         \  when CATCH began execution
       ELSE
+        >R SP@ DEPTH 1- CELLS + SP! R>
+[DEFINED] FDEPTH [IF]
+        FP@ FDEPTH FLOATS + FP!
+[THEN]        
         HANDLER a@ EXECUTE
       THEN
     THEN
