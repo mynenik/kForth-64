@@ -3,7 +3,7 @@
 // The C++ portion of the kForth Virtual Machine to 
 // execute Forth byte code.
 //
-// Copyright (c) 1996--2021 Krishna Myneni,
+// Copyright (c) 1996--2022 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -619,14 +619,19 @@ int OpsCompileDouble ()
 
 void PrintVM_Error (long int ec)
 {
-    int ei = labs(ec);
-    int imax = (ei >> 8) ? MAX_V_SYS_DEFINED : MAX_V_RESERVED;
-    const char *pMsg = (ei >> 8) ? V_SysDefinedMessages[ei-256] : 
-	V_ThrowMessages[ei];
-    ei = (ei >> 8) ? ei-256: ei;
-
-    if ((ei >= 0) && (ei < imax))
-	*pOutStream << " VM Error(" << ec << "): " << pMsg << endl;
+    if (ec) {
+      const char *pMsg = "?";
+      if (ec < 0) {
+        int ei = labs(ec);
+	bool b = ei > 255;
+        int imax = b ? MAX_V_SYS_DEFINED : MAX_V_RESERVED;
+	int ioffs = b ? ei - 256 : ei;
+        if (ioffs < imax)
+          pMsg = b ? V_SysDefinedMessages[ioffs] : 
+              V_ThrowMessages[ioffs];
+      }
+      *pOutStream << " VM Error(" << ec << "): " << pMsg << endl;
+    }
 }
 //---------------------------------------------------------------
 // The FORTH Virtual Machine
