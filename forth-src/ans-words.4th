@@ -53,6 +53,7 @@
 \   2021-08-14  km  fix of FP@ required change to F~
 \   2021-09-18  km  replace instances of ?ALLOT with ALLOT?
 \   2022-01-02  km  use VMTHROW as default exception handler.
+\   2022-01-12  km  add quotation words, [: and ;]  
 BASE @
 DECIMAL
 
@@ -224,6 +225,10 @@ variable excpt-frames
     ELSE
       ' DEFER@
     THEN ; IMMEDIATE
+
+: [: postpone [ :noname ; immediate
+
+: ;] postpone ; ] postpone literal ; immediate
  
 \ === Non-standard words commonly needed for kForth programs ===
 : PTR ( a "name" -- ) CREATE 1 CELLS allot? ! DOES> a@ ;
