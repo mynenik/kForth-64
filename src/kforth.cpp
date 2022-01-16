@@ -54,6 +54,7 @@ extern "C" {
 #include "VMerrors.h"
 
 extern vector<WordList> Dictionary;
+extern vector<byte>* pCurrentOps;
 
 extern "C" long int* JumpTable;
 extern "C" long int* BottomOfStack;
@@ -133,7 +134,7 @@ int main(int argc, char *argv[])
     char s[256], *input_line;
 
     while (1) {
-        // Obtain commands and execute
+	pCurrentOps = &op;
         do {
 	    if ((input_line = readline(NULL)) == NULL) CPP_bye();
 	    if (strlen(input_line)) add_history(input_line);
@@ -143,7 +144,7 @@ int main(int argc, char *argv[])
             pSS = new istringstream(s);
 	    SetForthInputStream (*pSS);
 	    echo_off();
-            ec = ForthCompiler (&op, &line_num);
+            ec = ForthCompiler (pCurrentOps, &line_num);
 	    echo_on();
 	    delete pSS;
 	    pSS = NULL;

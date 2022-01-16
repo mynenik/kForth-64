@@ -1144,12 +1144,9 @@ int CPP_semicolon()
 
       bp = (byte*) &(*pCurrentOps)[0]; // ->begin();
       while ((vector<byte>::iterator) bp < pCurrentOps->end()) *lambda++ = *bp++;
-//      delete pCurrentOps;
-//      pCurrentOps = PendingOps.top(); PendingOps.pop();
-//      pNewWord = PendingDefStack.top(); PendingDefStack.pop();
       pNewWord = PendingDefStack.top();
       PendingDefStack.pop();
-      if ((pNewWord == NULL) && (PendingDefStack.size())) {
+      if (PendingDefStack.size()) {
          delete pCurrentOps;
          pCurrentOps = PendingOps.top();
          PendingOps.pop();

@@ -1,7 +1,7 @@
 # kForth-64
 64-bit Forth System for x86_64-GNU/Linux
 
-Copyright &copy; 1998--2021 Krishna Myneni, <krishna.myneni@ccreweb.org>
+Copyright &copy; 1998--2022 Krishna Myneni, <krishna.myneni@ccreweb.org>
 
 ### Contributors:
 
