@@ -2816,7 +2816,8 @@ int CPP_evaluate ()
 	  SetForthInputStream(*pSS);
 
 	  vector<byte>* pSaveOps = pCurrentOps;
-	  if (State == 0) pCurrentOps = new vector<byte>;
+          vector<byte> op;
+          if (State == 0) pCurrentOps = &op;
 
 	  --linecount;
 	  ec = ForthCompiler(pCurrentOps, &linecount);
@@ -2824,7 +2825,6 @@ int CPP_evaluate ()
 
 	  // Restore the opcode vector, the input stream, and the input buffer
 
-	  if (State == 0) delete pCurrentOps;
 	  pCurrentOps = pSaveOps;
 	  SetForthInputStream(*pOldStream);  // restore old input stream
 	  strcpy(TIB, s2);  // restore TIB with remaining input line
