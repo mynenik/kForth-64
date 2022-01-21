@@ -106,7 +106,7 @@ ply      nodes  time score  pv
 \ ============= end ANS Forth definitions =========
 
 [UNDEFINED] CELL [IF] 1 CELLS CONSTANT CELL [THEN]
-[UNDEFINED] CELL- [IF] : CELL- POSTPONE CELL POSTPONE - ; IMMEDIATE
+[UNDEFINED] CELL- [IF] : CELL- POSTPONE CELL POSTPONE - ; IMMEDIATE [THEN]
 
 FALSE [IF]
 : :inline : ;    \ don't inline when profiling
