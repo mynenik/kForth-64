@@ -6,7 +6,6 @@
 \
 \   SHELL  ( c-addr u -- n )  execute a shell command
 \   TDSTRING ( -- c-addr u )  return a date and time string
-\   PTR    ( a "name" -- )  create a named address value
 \   TABLE  ( m1 ... mn n "name" -- ) create a named table of singles
 \   CTABLE ( c1 ... cn n "name" -- ) create a named table of pchars/bytes
 \   $TABLE ( a1 u1 ... an un n umax "name" -- ) create a named string table
@@ -20,8 +19,7 @@
 \          split a string containing a file path into the path string
 \          and a file name string
 \
-\ Requires:
-\ 	strings.4th
+\ Requires: ans-words.4th  strings.4th
 \
 
 : shell ( a u -- n | execute a shell command) 
@@ -37,11 +35,6 @@
     rot 0 <# [char] : hold # # #>     strcat
     rot 0 <# # # #>                   strcat
 ;
-
-\ PTR is similar to VALUE except it returns a number with an address
-\ type. The word TO may be used to change the value of a named ptr.
-: ptr ( a <name> -- ) 
-    create 1 cells allot? ! does> a@ ;
 
 : table ( v1 v2 ... vn n <name> -- | create a table of singles ) 
     create dup cells allot? over 1- cells + swap
