@@ -95,6 +95,7 @@ ply      nodes  time score  pv
 \               modifications from versions: v 0.4.4
 \ 2021-06-26  backports from FCP; remove use of PTR;
 \               ver. 0.4.5
+\ 2022-01-20  backports from FCP; use :INLINE ; ver 0.4.6
 
 \ Requires (kForth only): ans-words.4th      
 \ =================================================
@@ -105,7 +106,17 @@ ply      nodes  time score  pv
 \ ============= end ANS Forth definitions =========
 
 [UNDEFINED] CELL [IF] 1 CELLS CONSTANT CELL [THEN]
-[UNDEFINED] CELL- [IF] : CELL- POSTPONE CELL POSTPONE - ; IMMEDIATE
+[UNDEFINED] CELL- [IF] : CELL- POSTPONE CELL POSTPONE - ; IMMEDIATE [THEN]
+
+FALSE [IF]
+: :inline : ;    \ don't inline when profiling
+[ELSE] [UNDEFINED] :inline [IF]
+\ Wil Baden implements :inline for portably inlining code
+: :inline ( "name <char> ccc<char>" -- )
+  : [CHAR] ; PARSE  POSTPONE SLITERAL  POSTPONE EVALUATE
+  POSTPONE ; IMMEDIATE
+;
+[THEN] [THEN]
 
 : table ( v1 ... vn n -- )
 	CREATE DUP CELLS allot? OVER 1- CELLS + SWAP
@@ -143,14 +154,15 @@ F CONSTANT EDGE
 DARK PAWN + CONSTANT DARKPAWN
 LIGHT PAWN + CONSTANT LIGHTPAWN
 
-: otherSide ( side -- ~side ) COLORMASK XOR ;
+
+:inline otherSide ( side -- ~side ) COLORMASK XOR ;
 : color ( [sq] -- color ) COLORMASK AND ;
 : light? ( [sq] -- nz ) LIGHT AND ;
 : dark? ( [sq] -- nz ) DARK AND ;
 : mine? ( [sq] color -- tf ) XOR COLORMASK AND 0= ;
 : enemy? ( [sq] color -- tf ) XOR COLORMASK AND COLORMASK = ;
   \ color can also be a piece+color
-: piece ( [sq] -- piece ) PIECEMASK AND ; 
+:inline piece ( [sq] -- piece ) PIECEMASK AND ; 
 
 \ *** Board ***
 
@@ -183,21 +195,21 @@ CREATE board 80 ALLOT
 07 CONSTANT sqH8
 
 : edge? ( sq+offset -- nz ) 88 AND ;
-: bd! ( piece sq -- ) board + c! ;
-: bd@ ( sq -- piece ) s" board + c@" evaluate ; immediate
+:inline bd! ( piece sq -- ) board + c! ;
+:inline bd@ ( sq -- piece ) board + c@ ;
 : ?bd@ ( sq -- piece ) DUP edge? IF DROP EDGE ELSE bd@ THEN ;
-: piece@ ( sq -- piece ) bd@ piece ;
+:inline piece@ ( sq -- piece ) bd@ piece ;
 
 : bdMove ( sqF sqT -- ) OVER bd@ SWAP bd! 0 SWAP bd! ;
 
-: rank ( sq -- rank ) 4 rshift ; 
+:inline rank ( sq -- rank ) 4 rshift ; 
 : file ( sq -- file ) F AND ;
 : fileRank>sq ( file rank -- sq ) 4 lshift or ;
 
-: rank8? ( sq -- tf ) rank 0= ;
-: rank7? ( sq -- tf ) rank 1 = ; 
-: rank2? ( sq -- tf ) rank 6 = ; 
-: rank1? ( sq -- tf ) rank 7 = ;
+:inline rank8? ( sq -- tf ) rank 0= ;
+:inline rank7? ( sq -- tf ) rank 1 = ; 
+:inline rank2? ( sq -- tf ) rank 6 = ; 
+:inline rank1? ( sq -- tf ) rank 7 = ;
 
 : rotate ( sq -- sq ) NEGATE 77 + ;
 
@@ -474,7 +486,7 @@ CREATE firstMove MAX_PLY CELLS ALLOT  \ stores addresses within gen_dat
 
 : init_first ( -- ) gen_dat firstMove ! ;
 
-: ^firstMovePly ( -- ^first ) firstMove ply @ CELLS + ;
+:inline ^firstMovePly ( -- ^first ) firstMove ply @ CELLS + ;
 : firstMovePly ( -- ^gen ) ^firstMovePly A@ ;
 : lastMovePly ( -- ^gen ) ^firstMovePly CELL+ A@ ;
 
@@ -1715,7 +1727,7 @@ HEX
 
 \ *** EXECUTE WHEN LOADING ***
 
-CR .( TSCP 0.4.5 loaded ) CR
+CR .( TSCP 0.4.6 loaded ) CR
 tscp-help CR
 4 sd
 true showCoords? !
