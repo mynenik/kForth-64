@@ -53,7 +53,8 @@ CREATE digesttext[] SHA512_DIGEST_STRING_LENGTH CHARS ALLOT
     2DUP 2>R DUP C@ + 1+ SWAP MOVE 2R@ C@ + 2R> NIP C! ;
 : ?EXIT POSTPONE IF POSTPONE EXIT POSTPONE THEN ; IMMEDIATE
 : ?ALLOCATE ( addr ior -- addr ) 0< IF -59 THROW THEN ;
-: (H.) ( u -- caddr u) BASE @ >R HEX 0 <# #S #> R> BASE ! ;
+: (H.) ( u -- caddr u) BASE @ >R HEX 0 
+   <# # # # # # # # # # # # # # # # # #> R> BASE ! ;
 : H. ( u -- ) (H.) TYPE SPACE ;
 
 HEX
