@@ -11,6 +11,7 @@
 \  AUTHOR      : Marcel Hendrix
 \  LAST CHANGE : December 1, 2012, Marcel Hendrix
 \                January 31, 2022, Adapted for kforth64 by K. Myneni
+\                Feb 2, 2022, Working version for example; K. Myneni
 \
 \ Requires (for kForth-64):
 \   ans-words.4th
@@ -51,9 +52,9 @@ CREATE digesttext[] SHA512_DIGEST_STRING_LENGTH CHARS ALLOT
 : PLACE+ ( caddr u ^str -- ) 
     2DUP 2>R DUP C@ + 1+ SWAP MOVE 2R@ C@ + 2R> NIP C! ;
 : ?EXIT POSTPONE IF POSTPONE EXIT POSTPONE THEN ; IMMEDIATE
-: ?ALLOCATE ( addr ior -- ) 0< IF -59 THROW THEN ;
+: ?ALLOCATE ( addr ior -- addr ) 0< IF -59 THROW THEN ;
 : (H.) ( u -- caddr u) BASE @ >R HEX 0 <# #S #> R> BASE ! ;
-: H. ( u -- ) (H.) TYPE ;
+: H. ( u -- ) (H.) TYPE SPACE ;
 
 HEX
 
@@ -104,333 +105,95 @@ DECIMAL
 \ SHA-512: *********************************************************
 
 HEX
+6A09E667F3BCC908 CONSTANT H0
+BB67AE8584CAA73B CONSTANT H1
+3C6EF372FE94F82B CONSTANT H2
+A54FF53A5F1D36F1 CONSTANT H3
+510E527FADE682D1 CONSTANT H4
+9B05688C2B3E6C1F CONSTANT H5
+1F83D9ABFB41BD6B CONSTANT H6
+5BE0CD19137E2179 CONSTANT H7
 
-0 VALUE a  0 VALUE b  0 VALUE c  0 VALUE d
-0 VALUE e  0 VALUE f  0 VALUE g  0 VALUE h
+DECIMAL
+
+VARIABLE sa  VARIABLE sb  VARIABLE sc  VARIABLE sd
+VARIABLE se  VARIABLE sf  VARIABLE sg  VARIABLE sh
 0 VALUE jj 
 
 0 ptr data
 
 : SHA512_Init ( -- )
-    6A09E667F3BCC908 TO a  BB67AE8584CAA73B TO b
-    3C6EF372FE94F82B TO c  A54FF53A5F1D36F1 TO d
-    510E527FADE682D1 TO e  9B05688C2B3E6C1F TO f
-    1F83D9ABFB41BD6B TO g  5BE0CD19137E2179 TO h
+    H0 sa !  H1 sb !  H2 sc !  H3 sd !
+    H4 se !  H5 sf !  H6 sg !  H7 sh ! 
     W512[] SHA512_BLOCK_LENGTH ERASE
     0 TO bitcount ;
 
-DECIMAL
-: ROUND512_0_TO_15_a ( u -- ) 
-    >R  data @+ SWAP TO data
-    BSWAP  W512[] R@ CELL[] !
-    h  e sigma1_512u +  
-    e f g Ch  +   
-    K512[] R@ CELL[] @ +  
-    W512[] R> CELL[] @ +  
-    DUP d + TO d ( T1 )
-    a sigma0_512u +
-    a b c Maj + TO h ;
-
-: ROUND512_0_TO_15_b ( u -- )
-    >R  data @+ SWAP TO data
-    BSWAP  W512[] R@ CELL[] !
-    a  f sigma1_512u +
-    f g h Ch  +
-    K512[] R@ CELL[] @ +
-    W512[] R> CELL[] @ +
-    DUP e + TO e ( T1 )
-    b sigma0_512u +
-    b c d Maj + TO a ;
-
-: ROUND512_0_TO_15_c ( u -- )
-    >R  data @+ SWAP TO data
-    BSWAP  W512[] R@ CELL[] !
-    b  g sigma1_512u +  
-    g h a Ch  +   
-    K512[] R@ CELL[] @ +  
-    W512[] R> CELL[] @ +  
-    DUP f + TO f ( T1 )
-    c sigma0_512u + 
-    c d e Maj + TO b ;
-
-: ROUND512_0_TO_15_d ( u -- )
-    >R  data @+ SWAP TO data
-    BSWAP  W512[] R@ CELL[] !
-    c  h sigma1_512u +  
-    h a b Ch  +   
-    K512[] R@ CELL[] @ +  
-    W512[] R> CELL[] @ +  
-    DUP g + TO g ( T1 ) 
-    d sigma0_512u +  
-    d e f Maj + TO c ;
-
-: ROUND512_0_TO_15_e ( u -- ) 
-    >R  data @+ SWAP TO data
-    BSWAP  W512[] R@ CELL[] !
-    d  a sigma1_512u +  
-    a b c Ch  +   
-    K512[] R@ CELL[] @ +  
-    W512[] R> CELL[] @ +  
-    DUP h + TO h ( T1 )
-    e sigma0_512u +
-    e f g Maj + TO d ;
-
-: ROUND512_0_TO_15_f ( u -- )
-    >R  data @+ SWAP TO data 
-    BSWAP  W512[] R@ CELL[] !  	
-    e  b sigma1_512u +
-    b c d Ch  +
-    K512[] R@ CELL[] @ +  
-    W512[] R> CELL[] @ +  
-    DUP a + TO a ( T1 ) 
-    f sigma0_512u +  
-    f g h Maj + TO e ;
-
-: ROUND512_0_TO_15_g ( u -- ) 
-    >R  data @+ SWAP TO data  
-    BSWAP  W512[] R@ CELL[] !
-    f  c sigma1_512u +
-    c d e Ch  +
-    K512[] R@ CELL[] @ +
-    W512[] R> CELL[] @ +
-    DUP b + TO b ( T1 )
-    g sigma0_512u +  
-    g h a Maj + TO f ;
-
-: ROUND512_0_TO_15_h ( u -- ) 
-    >R  data @+ SWAP TO data
-    BSWAP  W512[] R@ CELL[] !
-    g  d sigma1_512u +
-    d e f Ch  +
-    K512[] R@ CELL[] @ +
-    W512[] R> CELL[] @ +
-    DUP c + TO c ( T1 )
-    h sigma0_512u +
-    h a b Maj + TO g ;
-
-: ROUND512_a ( u -- )
-    >R
-    W512[] R@    1+ 15 AND CELL[] @  sigma0_512l ( s0)
-    W512[] R@  14 + 15 AND CELL[] @  sigma0_512l ( s1) +
-    W512[] R@   9 + 15 AND CELL[] @ +  
-    DUP W512[] R@   15 AND CELL[] +! ( -- u )
-    h +  
-    e sigma1_512u +  
-    e f g Ch  +  
-    K512[] R> CELL[] @ +  
-    DUP d + TO d ( T1 )
-    a sigma0_512u +  
-    a b c Maj + TO h ;
-
-: ROUND512_b ( u -- )
-    >R
-    W512[] R@    1+ 15 AND CELL[] @  sigma0_512l ( s0)
-    W512[] R@  14 + 15 AND CELL[] @  sigma0_512l ( s1) +
-    W512[] R@   9 + 15 AND CELL[] @ +  
-    DUP W512[] R@   15 AND CELL[] +! ( -- u )
-    a +  
-    f sigma1_512u +  
-    f g h Ch  +  
-    K512[] R> CELL[] @ +  
-    DUP e + TO e ( T1 )
-    b sigma0_512u +  
-    b c d Maj + TO a ;
-
-: ROUND512_c ( u -- )
-    >R
-    W512[] R@    1+ 15 AND CELL[] @  sigma0_512l ( s0)
-    W512[] R@  14 + 15 AND CELL[] @  sigma0_512l ( s1) +
-    W512[] R@   9 + 15 AND CELL[] @ +  
-    DUP W512[] R@   15 AND CELL[] +! ( -- u )
-    b +  
-    g sigma1_512u +
-    g h a Ch  +
-    K512[] R> CELL[] @ +
-    DUP f + TO f ( T1 )
-    c sigma0_512u +
-    c d e Maj + TO b ;
-
-: ROUND512_d ( u -- )
-    >R
-    W512[] R@    1+ 15 AND CELL[] @  sigma0_512l ( s0)
-    W512[] R@  14 + 15 AND CELL[] @  sigma0_512l ( s1) +
-    W512[] R@   9 + 15 AND CELL[] @ +  
-    DUP W512[] R@   15 AND CELL[] +! ( -- u )
-    c +  
-    h sigma1_512u +
-    h a b Ch  +
-    K512[] R> CELL[] @ +
-    DUP g + TO g ( T1 )
-    d sigma0_512u +
-    d e f Maj + TO c ;
-
-: ROUND512_e ( u -- )
-    >R
-    W512[] R@    1+ 15 AND CELL[] @  sigma0_512l ( s0)
-    W512[] R@  14 + 15 AND CELL[] @  sigma0_512l ( s1) +
-    W512[] R@   9 + 15 AND CELL[] @ +  
-    DUP W512[] R@   15 AND CELL[] +! ( -- u )
-    d +
-    a sigma1_512u +
-    a b c Ch  +
-    K512[] R> CELL[] @ +
-    DUP h + TO h ( T1 )
-    e sigma0_512u +
-    e f g Maj + TO d ;
-
-: ROUND512_f ( u -- )
-    >R
-    W512[] R@    1+ 15 AND CELL[] @  sigma0_512l ( s0)
-    W512[] R@  14 + 15 AND CELL[] @  sigma0_512l ( s1) +
-    W512[] R@   9 + 15 AND CELL[] @ +  
-    DUP W512[] R@   15 AND CELL[] +! ( -- u )
-    e +  
-    b sigma1_512u +
-    b c d Ch  +
-    K512[] R> CELL[] @ +
-    DUP a + TO a ( T1 )
-    f sigma0_512u +
-    f g h Maj + TO e ;
-
-: ROUND512_g ( u -- )
-    >R
-    W512[] R@    1+ 15 AND CELL[] @  sigma0_512l ( s0)
-    W512[] R@  14 + 15 AND CELL[] @  sigma0_512l ( s1) +
-    W512[] R@   9 + 15 AND CELL[] @ +  
-    DUP W512[] R@   15 AND CELL[] +! ( -- u )
-    f +  
-    c sigma1_512u +  
-    c d e Ch  +  
-    K512[] R> CELL[] @ +  
-    DUP b + TO b ( T1 )
-    g sigma0_512u +  
-    g h a Maj + TO f ;
-
-: ROUND512_h ( u -- )
-    >R
-    W512[] R@    1+ 15 AND CELL[] @  sigma0_512l ( s0)
-    W512[] R@  14 + 15 AND CELL[] @  sigma0_512l ( s1) +
-    W512[] R@   9 + 15 AND CELL[] @ +  
-    DUP W512[] R@   15 AND CELL[] +! ( -- u )
-    g +
-    d sigma1_512u +  
-    d e f Ch  +  
-    K512[] R> CELL[] @ +  
-    DUP c + TO c ( T1 )
-    h sigma0_512u +
-    h a b Maj + TO g ;
+0 VALUE a  0 VALUE b  0 VALUE c  0 VALUE d
+0 VALUE e  0 VALUE f  0 VALUE g  0 VALUE h
+0 VALUE T1  0 VALUE T2
 
 Public:
-DECIMAL
 
 0 VALUE r#
-: shows CR r# 2 .R SPACE a H. space  b H. space  c H. space  d H.
-    CR 3 SPACES  e H. space  f H. space  g H. space  h H. 
+: shows CR r# 2 .R SPACE a H.  b H.  c H.  d H.
+    CR 3 SPACES  e H.  f H.  g H.  h H. 
     1 r# + TO r#
     r# ?EXIT  W512[] 16 CELLS DUMP ;
 
 \ Private:
-DECIMAL
 
 : SHA512_Transform ( addr -- )
     TO data
-    ( 16 rounds )	
-    ( a b c d e f g h )   0 ROUND512_0_TO_15_a  
-    ( h a b c d e f g )   1 ROUND512_0_TO_15_h
-    ( g h a b c d e f )   2 ROUND512_0_TO_15_g	
-    ( f g h a b c d e )   3 ROUND512_0_TO_15_f
-    ( e f g h a b c d )   4 ROUND512_0_TO_15_e	
-    ( d e f g h a b c )   5 ROUND512_0_TO_15_d
-    ( c d e f g h a b )   6 ROUND512_0_TO_15_c	
-    ( b c d e f g h a )   7 ROUND512_0_TO_15_b
-    ( a b c d e f g h )   8 ROUND512_0_TO_15_a
-    ( h a b c d e f g )   9 ROUND512_0_TO_15_h
-    ( g h a b c d e f )  10 ROUND512_0_TO_15_g
-    ( f g h a b c d e )  11 ROUND512_0_TO_15_f
-    ( e f g h a b c d )  12 ROUND512_0_TO_15_e	
-    ( d e f g h a b c )  13 ROUND512_0_TO_15_d
-    ( c d e f g h a b )  14 ROUND512_0_TO_15_c	
-    ( b c d e f g h a )  15 ROUND512_0_TO_15_b
+    sa @ TO a  sb @ TO b  sc @ TO c  sd @ TO d
+    se @ TO e  sf @ TO f  sg @ TO g  sh @ TO h
+    ( 16 rounds )
+    16 0 DO
+      data @+ SWAP TO data
+      BSWAP  W512[] I CELL[] !
+      h e sigma1_512u + e f g Ch +
+      K512[] I CELL[] @ +  W512[] I CELL[] @ + TO T1
+      a sigma0_512u a b c Maj + TO T2
+      g TO h
+      f TO g
+      e TO f
+      d T1 + TO e
+      c TO d
+      b TO c
+      a TO b
+      T1 T2 + TO a 
+    LOOP
 
-    ( 64 rounds )
-    ( a b c d e f g h ) 16 ROUND512_a
-    ( h a b c d e f g ) 17 ROUND512_h
-    ( g h a b c d e f ) 18 ROUND512_g
-    ( f g h a b c d e ) 19 ROUND512_f
-    ( e f g h a b c d ) 20 ROUND512_e
-    ( d e f g h a b c ) 21 ROUND512_d
-    ( c d e f g h a b ) 22 ROUND512_c
-    ( b c d e f g h a ) 23 ROUND512_b
+    80 16 DO
+      W512[] I 1+   15 AND CELL[] @ sigma0_512l
+      W512[] I 14 + 15 AND CELL[] @ sigma1_512l +
+      W512[] I 9  + 15 AND CELL[] @ + 
+      W512[] I      15 AND CELL[] DUP >R
+      @ + DUP R> !
+      K512[] I CELL[] @ +
+      e f g Ch +  e sigma1_512u + h + TO T1
+      a sigma0_512u  a b c Maj + TO T2
+      g TO h
+      f TO g
+      e TO f
+      d T1 + TO e
+      c TO d
+      b TO c
+      a TO b
+      T1 T2 + TO a
+    LOOP
 
-    ( a b c d e f g h ) 24 ROUND512_a
-    ( h a b c d e f g ) 25 ROUND512_h
-    ( g h a b c d e f ) 26 ROUND512_g
-    ( f g h a b c d e ) 27 ROUND512_f
-    ( e f g h a b c d ) 28 ROUND512_e
-    ( d e f g h a b c ) 29 ROUND512_d
-    ( c d e f g h a b ) 30 ROUND512_c
-    ( b c d e f g h a ) 31 ROUND512_b
+    a sa +!  b sb +!  c sc +!  d sd +!
+    e se +!  f sf +!  g sg +!  h sh +!
 
-    ( a b c d e f g h ) 32 ROUND512_a
-    ( h a b c d e f g ) 33 ROUND512_h
-    ( g h a b c d e f ) 34 ROUND512_g
-    ( f g h a b c d e ) 35 ROUND512_f
-    ( e f g h a b c d ) 36 ROUND512_e
-    ( d e f g h a b c ) 37 ROUND512_d
-    ( c d e f g h a b ) 38 ROUND512_c
-    ( b c d e f g h a ) 39 ROUND512_b
-
-    ( a b c d e f g h ) 40 ROUND512_a
-    ( h a b c d e f g ) 41 ROUND512_h
-    ( g h a b c d e f ) 42 ROUND512_g
-    ( f g h a b c d e ) 43 ROUND512_f
-    ( e f g h a b c d ) 44 ROUND512_e
-    ( d e f g h a b c ) 45 ROUND512_d
-    ( c d e f g h a b ) 46 ROUND512_c
-    ( b c d e f g h a ) 47 ROUND512_b
-
-    ( a b c d e f g h ) 48 ROUND512_a
-    ( h a b c d e f g ) 49 ROUND512_h
-    ( g h a b c d e f ) 50 ROUND512_g
-    ( f g h a b c d e ) 51 ROUND512_f
-    ( e f g h a b c d ) 52 ROUND512_e
-    ( d e f g h a b c ) 53 ROUND512_d
-    ( c d e f g h a b ) 54 ROUND512_c
-    ( b c d e f g h a ) 55 ROUND512_b
-
-    ( a b c d e f g h ) 56 ROUND512_a
-    ( h a b c d e f g ) 57 ROUND512_h
-    ( g h a b c d e f ) 58 ROUND512_g
-    ( f g h a b c d e ) 59 ROUND512_f
-    ( e f g h a b c d ) 60 ROUND512_e
-    ( d e f g h a b c ) 61 ROUND512_d
-    ( c d e f g h a b ) 62 ROUND512_c
-    ( b c d e f g h a ) 63 ROUND512_b
-
-    ( a b c d e f g h ) 64 ROUND512_a
-    ( h a b c d e f g ) 65 ROUND512_h
-    ( g h a b c d e f ) 66 ROUND512_g
-    ( f g h a b c d e ) 67 ROUND512_f
-    ( e f g h a b c d ) 68 ROUND512_e
-    ( d e f g h a b c ) 69 ROUND512_d
-    ( c d e f g h a b ) 70 ROUND512_c
-    ( b c d e f g h a ) 71 ROUND512_b
-
-    ( a b c d e f g h ) 72 ROUND512_a
-    ( h a b c d e f g ) 73 ROUND512_h
-    ( g h a b c d e f ) 74 ROUND512_g
-    ( f g h a b c d e ) 75 ROUND512_f
-    ( e f g h a b c d ) 76 ROUND512_e
-    ( d e f g h a b c ) 77 ROUND512_d
-    ( c d e f g h a b ) 78 ROUND512_c
-    ( b c d e f g h a ) 79 ROUND512_b ;
+    0 TO a  0 TO b  0 TO c  0 TO d
+    0 TO e  0 TO f  0 TO g  0 TO h
+    0 TO T1  0 TO T2
+;
 
 0 value freespace
 0 value usedspace
 0 value len
 0 ptr addr
-
-HEX
 
 : SHA512_Update ( c-addr u -- )
     0 0 \ LOCALS| freespace usedspace len addr |
@@ -473,7 +236,7 @@ HEX
     bitcount 3 RSHIFT  SHA512_BLOCK_LENGTH MOD  TO usedspace
     bitcount BSWAP TO bitcount
     usedspace IF
-      80 W512[] usedspace + C!  1 usedspace + TO usedspace
+      128 W512[] usedspace + C!  1 usedspace + TO usedspace
       usedspace SHA512_SHORT_BLOCK_LENGTH <= IF	
         W512[] usedspace +  SHA512_SHORT_BLOCK_LENGTH usedspace -  ERASE
       ELSE
@@ -485,7 +248,7 @@ HEX
       THEN
     ELSE
       W512[] SHA512_SHORT_BLOCK_LENGTH ERASE
-      80 W512[] C!
+      128 W512[] C!
     THEN
     0  W512[] SHA512_SHORT_BLOCK_LENGTH       + !
     bitcount W512[] SHA512_SHORT_BLOCK_LENGTH CELL+ + !
@@ -494,10 +257,10 @@ HEX
 
 : SHA512_Final ( -- )
     SHA512_Last
-    digest[] a BSWAP  !+  b BSWAP  !+
-             c BSWAP  !+  d BSWAP  !+
-             e BSWAP  !+  f BSWAP  !+
-             g BSWAP  !+  h BSWAP  SWAP ! ;
+    digest[] sa @ BSWAP  !+  sb @ BSWAP  !+
+             sc @ BSWAP  !+  sd @ BSWAP  !+
+             se @ BSWAP  !+  sf @ BSWAP  !+
+             sg @ BSWAP  !+  sh @ BSWAP  SWAP ! ;
 
 : SHA512_End ( -- c-addr u )
     SHA512_Final
