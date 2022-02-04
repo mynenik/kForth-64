@@ -17,6 +17,7 @@
 \               little-endian systems ( the word BYTES>< needs to
 \               be updated to work on big-endian systems).  
 \               CELLSIZE renamed to VCELLSIZE . km
+\   2022-02-04  Fix STORELEN for 64-bit systems. km
 \
 \ ============== kForth requirements =========================
 \ Requires kForth 1.7.2 or later, and the following libraries:
@@ -60,11 +61,12 @@ cr .( Not ported yet for Big-Endian Systems! ) cr ABORT
 [THEN]
 
 1 CELLS 8 = [IF]
-FFFFFFFF 20 LSHIFT CONSTANT SE64
-MACRO >SL  "   DUP 80000000 AND IF SE64 OR ELSE FFFFFFFF AND THEN "
+00000000FFFFFFFF    CONSTANT LO32_MASK
+LO32_MASK 20 LSHIFT CONSTANT HI32_MASK 
+MACRO >SL  "   DUP 80000000 AND IF HI32_MASK OR ELSE LO32_MASK AND THEN "
 MACRO SEXT " \ >SL " 
 MACRO SL+  " >SL SWAP >SL + "
-MACRO rol\ " FFFFFFFF AND DUP [ VCELLSIZE \ TUCK - ]L RSHIFT SWAP LITERAL LSHIFT OR "
+MACRO rol\ " LO32_MASK AND DUP [ VCELLSIZE \ TUCK - ]L RSHIFT SWAP LITERAL LSHIFT OR "
 MACRO sl+! " tuck sl@ SL+ swap l! "
 [ELSE]
 MACRO >SL  "  "
@@ -375,8 +377,14 @@ a C@ [IF] \ little ENDIAN
 \ Read n bytes from input file, store at addr array
 : bytes@  ( adr n - )  rfileid @  READ-FILE  2DROP ;
 
-: storelen  ( lo hi - )
-  D2*  D2*  D2*  [ buf[] 60 CHARS + ]L endian!  
+: storelen  ( ud - )
+[ 1 CELLS 8 = ] [IF]
+  IF rfileid @ CLOSE-FILE DROP 1 THROW THEN \ file too large
+  2* 2* 2* DUP LO32_MASK AND SWAP 32 RSHIFT
+[ELSE]
+  D2*  D2*  D2*
+[THEN]
+  [ buf[] 60 CHARS + ]L endian!  
   [ buf[] 56 CHARS + ]L endian!
 ;
 
