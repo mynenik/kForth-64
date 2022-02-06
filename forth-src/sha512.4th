@@ -12,6 +12,7 @@
 \  LAST CHANGE : December 1, 2012, Marcel Hendrix
 \                January 31, 2022, Adapted for kforth64 by K. Myneni
 \                Feb 2, 2022, Working version for example; K. Myneni
+\                Feb 5, 2022, Use inline code to improve efficiency by ~20%  km
 \
 \ Requires (for kForth-64):
 \   ans-words.4th
@@ -31,44 +32,53 @@ MODULE: sha512
 BEGIN-MODULE
 
 Public: 
+
 DECIMAL
 128 CONSTANT SHA512_BLOCK_LENGTH
 64  CONSTANT SHA512_DIGEST_LENGTH
 SHA512_DIGEST_LENGTH   2* 1+  CONSTANT SHA512_DIGEST_STRING_LENGTH
 SHA512_BLOCK_LENGTH    16 -   CONSTANT SHA512_SHORT_BLOCK_LENGTH
 
-0 VALUE bitcount
-
 CREATE W512[]       SHA512_BLOCK_LENGTH  CHARS ALLOT
 CREATE digest[]     SHA512_DIGEST_LENGTH CHARS ALLOT
 CREATE digesttext[] SHA512_DIGEST_STRING_LENGTH CHARS ALLOT
 
+Private:
+
+0 VALUE bitcount
 : CELL[] ( a1 u -- a2 ) POSTPONE CELLS POSTPONE + ; IMMEDIATE
+: ]L ] POSTPONE LITERAL ; IMMEDIATE
 
 \ From Wil Baden's Toolbelt
-: @+  ( a1 -- a2 n ) DUP CELL+ SWAP @ ;
-: !+  ( a1 n -- a2 ) OVER ! CELL+ ;
-: BOUNDS OVER + SWAP ;
+: :inline ( "name <char> ccc<char>" -- )
+  : [CHAR] ; PARSE  POSTPONE SLITERAL  POSTPONE EVALUATE
+  POSTPONE ; IMMEDIATE ;
+:inline @+  ( a1 -- a2 n ) DUP CELL+ SWAP @ ;
+:inline !+  ( a1 n -- a2 ) OVER ! CELL+ ;
+:inline BOUNDS OVER + SWAP ;
 : PLACE+ ( caddr u ^str -- ) 
     2DUP 2>R DUP C@ + 1+ SWAP MOVE 2R@ C@ + 2R> NIP C! ;
 : ?EXIT POSTPONE IF POSTPONE EXIT POSTPONE THEN ; IMMEDIATE
-: ?ALLOCATE ( addr ior -- addr ) 0< IF -59 THROW THEN ;
 : (H.) ( u -- caddr u) BASE @ >R HEX 0 
    <# # # # # # # # # # # # # # # # # #> R> BASE ! ;
 : H. ( u -- ) (H.) TYPE SPACE ;
 
 HEX
+40 CONSTANT ROR_OFS
 
 \ Rotate u1 right by u2 bits to give u3
-: ROR ( u1 u2 -- u3 ) 2DUP RSHIFT >R 40 - NEGATE LSHIFT R> OR ;
+:inline ROR ( u1 u2 -- u3 ) 2DUP RSHIFT >R ROR_OFS - NEGATE LSHIFT R> OR ;
+
+10 CONSTANT 16BITS
+20 CONSTANT 32BITS
+FF00FF00FF00FF00 CONSTANT BMASK1
+00FF00FF00FF00FF CONSTANT BMASK2
+FFFF0000FFFF0000 CONSTANT BMASK3
+0000FFFF0000FFFF CONSTANT BMASK4
 
 \ BSWAP is REVERSE64 from original C code (sha2.c)
-: BSWAP ( u1 -- u2 )
-    DUP  20 RSHIFT SWAP 20 LSHIFT OR
-    DUP  FF00FF00FF00FF00 AND  8 RSHIFT 
-    SWAP 00FF00FF00FF00FF AND  8 LSHIFT OR
-    DUP  FFFF0000FFFF0000 AND 10 RSHIFT
-    SWAP 0000FFFF0000FFFF AND 10 LSHIFT OR ;
+:inline BSWAP ( u1 -- u2 ) DUP 32BITS RSHIFT SWAP 32BITS LSHIFT OR DUP BMASK1 AND 8 RSHIFT SWAP BMASK2 AND 8 LSHIFT OR DUP BMASK3 AND 16BITS RSHIFT SWAP BMASK4 AND 16BITS LSHIFT OR ;
+
 
 \ Hash constant words K for SHA-512
 
@@ -96,12 +106,12 @@ HEX
 
 
 DECIMAL
-: Ch  ( x y z -- u ) >R  OVER AND  SWAP INVERT	                R> AND   XOR ;
-: Maj ( x y z -- u ) >R  DUP >R  OVER AND  R> R@  AND XOR SWAP  R> AND   XOR ;
-: sigma0_512u ( x -- u ) DUP >R   28 ROR  R@ 34 ROR XOR  R>  39 ROR   XOR ;
-: sigma1_512u ( x -- u ) DUP >R   14 ROR  R@ 18 ROR XOR  R>  41 ROR   XOR ;
-: sigma0_512l ( x -- u ) DUP >R    1 ROR  R@  8 ROR XOR  R>   7 RSHIFT XOR ;
-: sigma1_512l ( x -- u ) DUP >R   19 ROR  R@ 61 ROR XOR  R>   6 RSHIFT XOR ;
+:inline Ch  ( x y z -- u ) >R  OVER AND  SWAP INVERT	              R> AND   XOR ;
+:inline Maj ( x y z -- u ) >R  DUP >R  OVER AND  R> R@  AND XOR SWAP  R> AND   XOR ;
+:inline sigma0_512u ( x -- u ) DUP >R   28 ROR  R@ 34 ROR XOR  R>  39 ROR   XOR ;
+:inline sigma1_512u ( x -- u ) DUP >R   14 ROR  R@ 18 ROR XOR  R>  41 ROR   XOR ;
+:inline sigma0_512l ( x -- u ) DUP >R    1 ROR  R@  8 ROR XOR  R>   7 RSHIFT XOR ;
+:inline sigma1_512l ( x -- u ) DUP >R   19 ROR  R@ 61 ROR XOR  R>   6 RSHIFT XOR ;
 
 \ SHA-512: *********************************************************
 
@@ -119,15 +129,19 @@ DECIMAL
 
 VARIABLE sa  VARIABLE sb  VARIABLE sc  VARIABLE sd
 VARIABLE se  VARIABLE sf  VARIABLE sg  VARIABLE sh
-0 VALUE jj 
+VARIABLE jj 
 
 0 ptr data
+
+Public:
 
 : SHA512_Init ( -- )
     H0 sa !  H1 sb !  H2 sc !  H3 sd !
     H4 se !  H5 sf !  H6 sg !  H7 sh ! 
     W512[] SHA512_BLOCK_LENGTH ERASE
     0 TO bitcount ;
+
+Private:
 
 0 VALUE a  0 VALUE b  0 VALUE c  0 VALUE d
 0 VALUE e  0 VALUE f  0 VALUE g  0 VALUE h
@@ -141,60 +155,49 @@ Public:
     1 r# + TO r#
     r# ?EXIT  W512[] 16 CELLS DUMP ;
 
-\ Private:
+Private:
+
+:inline compute_T1 K512[] I CELL[] @ + e f g Ch + e sigma1_512u + h + TO T1 ;
+:inline compute_T2 a sigma0_512u a b c Maj + TO T2 ;
+:inline slide_with_add g TO h f TO g e TO f d T1 + TO e c TO d b TO c a TO b T1 T2 + TO a ;
+
+Public:
 
 : SHA512_Transform ( addr -- )
     TO data
     sa @ TO a  sb @ TO b  sc @ TO c  sd @ TO d
     se @ TO e  sf @ TO f  sg @ TO g  sh @ TO h
-    ( 16 rounds )
+
     16 0 DO
       data @+ SWAP TO data
-      BSWAP  W512[] I CELL[] !
-      h e sigma1_512u + e f g Ch +
-      K512[] I CELL[] @ +  W512[] I CELL[] @ + TO T1
-      a sigma0_512u a b c Maj + TO T2
-      g TO h
-      f TO g
-      e TO f
-      d T1 + TO e
-      c TO d
-      b TO c
-      a TO b
-      T1 T2 + TO a 
+      BSWAP  DUP W512[] I CELL[] !
+      compute_T1
+      compute_T2
+      slide_with_add
     LOOP
 
     80 16 DO
       W512[] I 1+   15 AND CELL[] @ sigma0_512l
       W512[] I 14 + 15 AND CELL[] @ sigma1_512l +
       W512[] I 9  + 15 AND CELL[] @ + 
-      W512[] I      15 AND CELL[] DUP >R
-      @ + DUP R> !
-      K512[] I CELL[] @ +
-      e f g Ch +  e sigma1_512u + h + TO T1
-      a sigma0_512u  a b c Maj + TO T2
-      g TO h
-      f TO g
-      e TO f
-      d T1 + TO e
-      c TO d
-      b TO c
-      a TO b
-      T1 T2 + TO a
+      W512[] I      15 AND CELL[] DUP >R @ + DUP R> !
+      compute_T1
+      compute_T2 
+      slide_with_add
     LOOP
 
     a sa +!  b sb +!  c sc +!  d sd +!
     e se +!  f sf +!  g sg +!  h sh +!
-
-    0 TO a  0 TO b  0 TO c  0 TO d
-    0 TO e  0 TO f  0 TO g  0 TO h
-    0 TO T1  0 TO T2
 ;
+
+Private:
 
 0 value freespace
 0 value usedspace
 0 value len
 0 ptr addr
+
+Public:
 
 : SHA512_Update ( c-addr u -- )
     0 0 \ LOCALS| freespace usedspace len addr |
@@ -237,7 +240,7 @@ Public:
     bitcount 3 RSHIFT  SHA512_BLOCK_LENGTH MOD  TO usedspace
     bitcount BSWAP TO bitcount
     usedspace IF
-      128 W512[] usedspace + C!  1 usedspace + TO usedspace
+      128 W512[] usedspace + C!  usedspace 1+ TO usedspace
       usedspace SHA512_SHORT_BLOCK_LENGTH <= IF	
         W512[] usedspace +  SHA512_SHORT_BLOCK_LENGTH usedspace -  ERASE
       ELSE
@@ -263,17 +266,17 @@ Public:
              se @ BSWAP  !+  sf @ BSWAP  !+
              sg @ BSWAP  !+  sh @ BSWAP  SWAP ! ;
 
+Public:
+
 : SHA512_End ( -- c-addr u )
     SHA512_Final
     0 digesttext[] C!
     digest[] SHA512_DIGEST_LENGTH BOUNDS
     DO  
-      I @ BSWAP (H.) ( 1 /STRING) digesttext[] PLACE+  
+      I @ BSWAP (H.) digesttext[] PLACE+  
     8 +LOOP
     digesttext[] COUNT ;
 
-Public:
-DECIMAL
 
 : SHA512_Data ( addr len -- c-addr u ) 
     SHA512_Init  
@@ -290,13 +293,13 @@ DECIMAL
 
 0 ptr buf
 : SHAspeed ( -- )
-    40000000 ALLOCATE ?ALLOCATE TO buf
+    40000000 ALLOCATE 0< IF -59 THROW THEN TO buf
     buf 40000000 [CHAR] a FILL
     CR ." Processing 40 Mbytes ... " 
     ms@
     buf 40000000 SHA512_Data 2DROP
     ms@ swap - 6 .R ."  ms elapsed" CR
-    buf FREE ?ALLOCATE ;
+    buf FREE IF -60 THROW THEN ;
 
 
 BASE !
