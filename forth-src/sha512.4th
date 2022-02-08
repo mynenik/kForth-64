@@ -1,6 +1,6 @@
 \ sha512.4th
 \
-\ SHA-512 64-bit      Version 0.00
+\ SHA-512 64-bit      Version 0.01
 \ Posted to comp.lang.forth on January 29, 2022 by Marcel Hendrix
 \
 \  LANGUAGE    : ANS Forth with extensions
@@ -13,6 +13,7 @@
 \                January 31, 2022, Adapted for kforth64 by K. Myneni
 \                Feb 2, 2022, Working version for example; K. Myneni
 \                Feb 5, 2022, Use inline code to improve efficiency by ~20%  km
+\                Feb 8, 2022, Inline code for fixed RORs for more speed km
 \
 \ Requires (for kForth-64):
 \   ans-words.4th
@@ -64,6 +65,7 @@ Private:
 : H. ( u -- ) (H.) TYPE SPACE ;
 
 HEX
+
 40 CONSTANT ROR_OFS
 
 \ Rotate u1 right by u2 bits to give u3
@@ -104,14 +106,25 @@ FFFF0000FFFF0000 CONSTANT BMASK3
   4CC5D4BECB3E42B6  597F299CFC657E2A 	5FCB6FAB3AD6FAEC  6C44198C4A475817
 50 table K512[]
 
-
 DECIMAL
-:inline Ch  ( x y z -- u ) >R  OVER AND  SWAP INVERT	              R> AND   XOR ;
+:inline ROR1  DUP  1 RSHIFT SWAP 63 LSHIFT OR ;
+:inline ROR7  DUP  7 RSHIFT SWAP 57 LSHIFT OR ;
+:inline ROR8  DUP  8 RSHIFT SWAP 56 LSHIFT OR ;
+:inline ROR14 DUP 14 RSHIFT SWAP 50 LSHIFT OR ;
+:inline ROR18 DUP 18 RSHIFT SWAP 46 LSHIFT OR ;
+:inline ROR19 DUP 19 RSHIFT SWAP 45 LSHIFT OR ;
+:inline ROR28 DUP 28 RSHIFT SWAP 36 LSHIFT OR ;
+:inline ROR34 DUP 34 RSHIFT SWAP 30 LSHIFT OR ;
+:inline ROR39 DUP 39 RSHIFT SWAP 25 LSHIFT OR ;
+:inline ROR41 DUP 41 RSHIFT SWAP 23 LSHIFT OR ;
+:inline ROR61 DUP 61 RSHIFT SWAP  3 LSHIFT OR ;
+
+:inline Ch  ( x y z -- u ) >R  OVER AND SWAP INVERT R> AND XOR ;
 :inline Maj ( x y z -- u ) >R  DUP >R  OVER AND  R> R@  AND XOR SWAP  R> AND   XOR ;
-:inline sigma0_512u ( x -- u ) DUP >R   28 ROR  R@ 34 ROR XOR  R>  39 ROR   XOR ;
-:inline sigma1_512u ( x -- u ) DUP >R   14 ROR  R@ 18 ROR XOR  R>  41 ROR   XOR ;
-:inline sigma0_512l ( x -- u ) DUP >R    1 ROR  R@  8 ROR XOR  R>   7 RSHIFT XOR ;
-:inline sigma1_512l ( x -- u ) DUP >R   19 ROR  R@ 61 ROR XOR  R>   6 RSHIFT XOR ;
+:inline sigma0_512u ( x -- u ) DUP >R  ROR28  R@ ROR34 XOR  R>  ROR39 XOR ;
+:inline sigma1_512u ( x -- u ) DUP >R  ROR14  R@ ROR18 XOR  R>  ROR41 XOR ;
+:inline sigma0_512l ( x -- u ) DUP >R  ROR1   R@ ROR8  XOR  R>  7 RSHIFT XOR ;
+:inline sigma1_512l ( x -- u ) DUP >R  ROR19  R@ ROR61 XOR  R>  6 RSHIFT XOR ;
 
 \ SHA-512: *********************************************************
 
