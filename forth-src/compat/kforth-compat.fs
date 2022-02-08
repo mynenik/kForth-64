@@ -2,9 +2,20 @@
 \
 \ kForth compatibility defns. for gforth
 \
-\ Revised: 2022-02-05
+\ Revised: 2022-02-08
 
-utime 2constant start_time
+[defined] utime [if]
+    utime 2constant start_time
+[else]
+    [undefined] ticks [if]
+        0 constant ticks \ just a useless dummy
+    [then]
+    ticks constant start_time
+[then]
+
+[undefined] pi [if]
+    3.14159265358979e fconstant pi
+[then]
 
 base @
 DECIMAL
@@ -15,11 +26,25 @@ DECIMAL
 : allot?  ( u -- a ) here swap allot ;
 : 2+  2 + ;
 : 2-  2 - ;
-: ms@ ( -- u )  utime start_time d- 1000 um/mod nip ;
-: us2@ ( -- ud ) utime start_time d- ;
+[defined] utime [if]
+    : ms@ ( -- u )  utime start_time d- 1000 um/mod nip ;
+    : us2@ ( -- ud ) utime start_time d- ;
+[else]
+    : ms@ ( -- u ) ticks start_time - ;
+    : us2@ ( -- ud ) ms@ 1000 um* ;
+[then]
 : usleep ( u -- ) 1000 / 1 max ms ;
 : nondeferred ( -- ) ;
-synonym a@ @
-synonym ptr value
+[defined] synonym [if]
+    synonym a@ @
+    synonym ptr value
+[else]
+    : a@ @ ;
+    : ptr value ;
+[then]
 base !
+
+[undefined] ud. [if]
+    : ud. 0 ud.r  space ;
+[then]
 
