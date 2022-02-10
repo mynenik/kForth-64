@@ -1,6 +1,6 @@
 \ sha512.4th
 \
-\ SHA-512 64-bit      Version 0.01
+\ SHA-512 64-bit      Version 0.02
 \ Posted to comp.lang.forth on January 29, 2022 by Marcel Hendrix
 \
 \  LANGUAGE    : ANS Forth with extensions
@@ -14,6 +14,7 @@
 \                Feb 2, 2022, Working version for example; K. Myneni
 \                Feb 5, 2022, Use inline code to improve efficiency by ~20%  km
 \                Feb 8, 2022, Inline code for fixed RORs for more speed km
+\                Feb 9, 2022, Use of "shift register" for a--h; km
 \
 \ Requires (for kForth-64):
 \   ans-words.4th
@@ -121,10 +122,10 @@ DECIMAL
 
 :inline Ch  ( x y z -- u ) >R  OVER AND SWAP INVERT R> AND XOR ;
 :inline Maj ( x y z -- u ) >R  DUP >R  OVER AND  R> R@  AND XOR SWAP  R> AND   XOR ;
-:inline sigma0_512u ( x -- u ) DUP >R  ROR28  R@ ROR34 XOR  R>  ROR39 XOR ;
-:inline sigma1_512u ( x -- u ) DUP >R  ROR14  R@ ROR18 XOR  R>  ROR41 XOR ;
-:inline sigma0_512l ( x -- u ) DUP >R  ROR1   R@ ROR8  XOR  R>  7 RSHIFT XOR ;
-:inline sigma1_512l ( x -- u ) DUP >R  ROR19  R@ ROR61 XOR  R>  6 RSHIFT XOR ;
+:inline sigma0_512u ( x -- u ) DUP ROR28 OVER ROR34 XOR SWAP ROR39    XOR ;
+:inline sigma1_512u ( x -- u ) DUP ROR14 OVER ROR18 XOR SWAP ROR41    XOR ;
+:inline sigma0_512l ( x -- u ) DUP ROR1  OVER ROR8  XOR SWAP 7 RSHIFT XOR ;
+:inline sigma1_512l ( x -- u ) DUP ROR19 OVER ROR61 XOR SWAP 6 RSHIFT XOR ;
 
 \ SHA-512: *********************************************************
 
@@ -142,7 +143,6 @@ DECIMAL
 
 VARIABLE sa  VARIABLE sb  VARIABLE sc  VARIABLE sd
 VARIABLE se  VARIABLE sf  VARIABLE sg  VARIABLE sh
-VARIABLE jj 
 
 0 ptr data
 
@@ -156,8 +156,26 @@ Public:
 
 Private:
 
-0 VALUE a  0 VALUE b  0 VALUE c  0 VALUE d
-0 VALUE e  0 VALUE f  0 VALUE g  0 VALUE h
+\ Define a shift register of 8 cells to hold a...h
+CREATE shiftreg 8 CELLS ALLOT
+
+:inline &a shiftreg ;
+:inline &b [ shiftreg CELL+ ]L ;
+:inline &c [ shiftreg 2 CELLS + ]L ;
+:inline &d [ shiftreg 3 CELLS + ]L ;
+:inline &e [ shiftreg 4 CELLS + ]L ;
+:inline &f [ shiftreg 5 CELLS + ]L ;
+:inline &g [ shiftreg 6 CELLS + ]L ;
+:inline &h [ shiftreg 7 CELLS + ]L ;
+:inline a &a @ ;
+:inline b &b @ ;
+:inline c &c @ ;
+:inline d &d @ ;
+:inline e &e @ ;
+:inline f &f @ ;
+:inline g &g @ ;
+:inline h &h @ ;
+
 0 VALUE T1  0 VALUE T2
 
 Public:
@@ -172,21 +190,21 @@ Private:
 
 :inline compute_T1 K512[] I CELL[] @ + e f g Ch + e sigma1_512u + h + TO T1 ;
 :inline compute_T2 a sigma0_512u a b c Maj + TO T2 ;
-:inline slide_with_add g TO h f TO g e TO f d T1 + TO e c TO d b TO c a TO b T1 T2 + TO a ;
+:inline shift_with_add  ( -- ) shiftreg &b [ 7 CELLS ]L MOVE T1 DUP T2 + &a ! &e +! ;
 
 Public:
 
 : SHA512_Transform ( addr -- )
     TO data
-    sa @ TO a  sb @ TO b  sc @ TO c  sd @ TO d
-    se @ TO e  sf @ TO f  sg @ TO g  sh @ TO h
+    sa @ &a !  sb @ &b !  sc @ &c !  sd @ &d !
+    se @ &e !  sf @ &f !  sg @ &g !  sh @ &h !
 
     16 0 DO
       data @+ SWAP TO data
       BSWAP  DUP W512[] I CELL[] !
       compute_T1
       compute_T2
-      slide_with_add
+      shift_with_add
     LOOP
 
     80 16 DO
@@ -196,7 +214,7 @@ Public:
       W512[] I      15 AND CELL[] DUP >R @ + DUP R> !
       compute_T1
       compute_T2 
-      slide_with_add
+      shift_with_add
     LOOP
 
     a sa +!  b sb +!  c sc +!  d sd +!
