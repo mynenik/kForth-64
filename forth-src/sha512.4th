@@ -176,8 +176,6 @@ CREATE shiftreg 8 CELLS ALLOT
 :inline g &g @ ;
 :inline h &h @ ;
 
-0 VALUE T1  0 VALUE T2
-
 Public:
 
 0 VALUE r#
@@ -188,9 +186,9 @@ Public:
 
 Private:
 
-:inline compute_T1 K512[] I CELL[] @ + e f g Ch + e sigma1_512u + h + TO T1 ;
-:inline compute_T2 a sigma0_512u a b c Maj + TO T2 ;
-:inline shift_with_add  ( -- ) shiftreg &b [ 7 CELLS ]L MOVE T1 DUP T2 + &a ! &e +! ;
+:inline compute_T1 ( -- T1) K512[] I CELL[] @ + e f g Ch + e sigma1_512u + h + ;
+:inline compute_T2 ( -- T2) a sigma0_512u a b c Maj + ;
+:inline shift_with_add  ( T1 T2 -- ) shiftreg &b [ 7 CELLS ]L MOVE OVER + &a ! &e +! ;
 
 Public:
 
