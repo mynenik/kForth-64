@@ -2066,21 +2066,11 @@ L_plusstore:
 	cmpb $OP_ADDR, %al
 	jnz  E_not_addr
 	LDSP
-	push %rbx
-	push %rbx
-	push %rbx
-	movq WSIZE(%rbx), %rbx
-	mov (%rbx), %rax
-	pop %rbx
-	movq 2*WSIZE(%rbx), %rbx
-	add %rbx, %rax
-	pop %rbx
-	movq WSIZE(%rbx), %rbx
-	mov %rax, (%rbx)
-	pop %rbx
-	movq $WSIZE, %rax
-	salq $1, %rax
-	add %rax, %rbx
+	INC_DSP
+	movq (%rbx), %rdx   # rdx = addr
+        INC_DSP
+        movq (%rbx), %rax 
+	addq %rax, (%rdx)
 	STSP
 	INC2_DTSP
 	xor %rax, %rax
