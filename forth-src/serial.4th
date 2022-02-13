@@ -29,6 +29,7 @@
 \     2011-11-05 km revised to use v 0.3.4; revised module ref operator.
 \     2012-03-24 km added modem line constants and additional ioctl constants;
 \                     added LOWER-DTR and RAISE-DTR.
+\     2022-02-13 km added LOWER-RTS and RAISE-RTS.
 
 module: serial
 begin-module
@@ -292,6 +293,18 @@ Public:
 : raise-dtr ( handle -- )
     dup TIOCMGET status ioctl drop
     status @ TIOCM_DTR or status !
+    TIOCMSET status ioctl drop
+;
+
+: lower-rts ( handle -- )
+    dup TIOCMGET status ioctl drop 
+    status @ TIOCM_RTS invert and status !
+    TIOCMSET status ioctl drop
+;
+
+: raise-rts ( handle -- )
+    dup TIOCMGET status ioctl drop
+    status @ TIOCM_RTS or status !
     TIOCMSET status ioctl drop
 ;
 
