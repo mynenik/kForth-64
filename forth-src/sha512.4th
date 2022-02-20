@@ -1,6 +1,6 @@
 \ sha512.4th
 \
-\ SHA-512 64-bit      Version 0.02
+\ SHA-512 64-bit      Version 0.03
 \ Posted to comp.lang.forth on January 29, 2022 by Marcel Hendrix
 \
 \  LANGUAGE    : ANS Forth with extensions
