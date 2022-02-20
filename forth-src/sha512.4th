@@ -15,10 +15,13 @@
 \                Feb 5, 2022, Use inline code to improve efficiency by ~20%  km
 \                Feb 8, 2022, Inline code for fixed RORs for more speed km
 \                Feb 9, 2022, Use of "shift register" for a--h; km
+\                Feb 19, 2022, Machine code implementation of SHA2 functions  km
 \
 \ Requires (for kForth-64):
 \   ans-words.4th
 \   modules.4th
+\   syscalls.4th
+\   mc.4th
 \   strings.4th
 \   utils.4th
 \   dump.4th
@@ -72,6 +75,8 @@ HEX
 \ Rotate u1 right by u2 bits to give u3
 :inline ROR ( u1 u2 -- u3 ) 2DUP RSHIFT >R ROR_OFS - NEGATE LSHIFT R> OR ;
 
+[UNDEFINED] MC-Table [IF]
+
 10 CONSTANT 16BITS
 20 CONSTANT 32BITS
 FF00FF00FF00FF00 CONSTANT BMASK1
@@ -82,6 +87,20 @@ FFFF0000FFFF0000 CONSTANT BMASK3
 \ BSWAP is REVERSE64 from original C code (sha2.c)
 :inline BSWAP ( u1 -- u2 ) DUP 32BITS RSHIFT SWAP 32BITS LSHIFT OR DUP BMASK1 AND 8 RSHIFT SWAP BMASK2 AND 8 LSHIFT OR DUP BMASK3 AND 16BITS RSHIFT SWAP BMASK4 AND 16BITS LSHIFT OR ;
 
+[ELSE]
+
+\ machine code for BSWAP
+\ bswap-code ( u1 -- u2 )
+   48 8b 43 08    \ 8 [rbx] rax  mov,
+   48 0f c8       \         rax  bswap,
+   48 89 43 08    \ rax 8 [rbx]  mov,
+   48 31 c0       \ rax     rax  xor,
+   c3             \              ret,
+0f dup MC-Table bswap-code  MC-Put
+
+:inline BSWAP [ bswap-code ]L call ;
+
+[THEN]
 
 \ Hash constant words K for SHA-512
 
@@ -107,6 +126,8 @@ FFFF0000FFFF0000 CONSTANT BMASK3
   4CC5D4BECB3E42B6  597F299CFC657E2A 	5FCB6FAB3AD6FAEC  6C44198C4A475817
 50 table K512[]
 
+[UNDEFINED] MC-Table [IF]
+
 DECIMAL
 :inline ROR1  DUP  1 RSHIFT SWAP 63 LSHIFT OR ;
 :inline ROR7  DUP  7 RSHIFT SWAP 57 LSHIFT OR ;
@@ -127,6 +148,10 @@ DECIMAL
 :inline sigma0_512l ( x -- u ) DUP ROR1  OVER ROR8  XOR SWAP 7 RSHIFT XOR ;
 :inline sigma1_512l ( x -- u ) DUP ROR19 OVER ROR61 XOR SWAP 6 RSHIFT XOR ;
 
+[THEN]
+
+HEX
+
 \ SHA-512: *********************************************************
 
 HEX
@@ -141,16 +166,24 @@ A54FF53A5F1D36F1 CONSTANT H3
 
 DECIMAL
 
-VARIABLE sa  VARIABLE sb  VARIABLE sc  VARIABLE sd
-VARIABLE se  VARIABLE sf  VARIABLE sg  VARIABLE sh
+CREATE sreg_acc 8 CELLS ALLOT
+:inline &sa sreg_acc ;
+:inline &sb [ sreg_acc CELL+ ]L ;
+:inline &sc [ sreg_acc 2 CELLS + ]L ;
+:inline &sd [ sreg_acc 3 CELLS + ]L ;
+:inline &se [ sreg_acc 4 CELLS + ]L ;
+:inline &sf [ sreg_acc 5 CELLS + ]L ;
+:inline &sg [ sreg_acc 6 CELLS + ]L ;
+:inline &sh [ sreg_acc 7 CELLS + ]L ;
 
 0 ptr data
 
 Public:
 
 : SHA512_Init ( -- )
-    H0 sa !  H1 sb !  H2 sc !  H3 sd !
-    H4 se !  H5 sf !  H6 sg !  H7 sh ! 
+    sreg_acc 
+    H0 !+  H1 !+  H2 !+  H3 !+
+    H4 !+  H5 !+  H6 !+  H7 !+ drop 
     W512[] SHA512_BLOCK_LENGTH ERASE
     0 TO bitcount ;
 
@@ -186,37 +219,184 @@ Public:
 
 Private:
 
-:inline compute_T1 ( -- T1) K512[] I CELL[] @ + e f g Ch + e sigma1_512u + h + ;
+
+[UNDEFINED] MC-Table [IF]
+
+:inline compute_T1 ( u -- T1) K512[] I CELL[] @ + e f g Ch + e sigma1_512u + h + ;
 :inline compute_T2 ( -- T2) a sigma0_512u a b c Maj + ;
+
+:inline start_round ( -- u ) W512[] I 1+ 15 AND CELL[] @ sigma0_512l W512[] I 14 + 15 AND CELL[] @ sigma1_512l + W512[] I 9 + 15 AND CELL[] @ + W512[] I 15 AND CELL[] DUP >R @ + DUP R> ! ;
+
+[ELSE]
+
+HEX
+
+\ start_round-code ( aW512 idx -- u idx )
+   48 83 c3 08  \ 8 #     rbx  add,
+   48 8b 3b     \ 0 [rbx] rdi  mov,  rdi = idx
+   48 83 c3 08  \ 8 #     rbx  add,
+   48 8b 03     \ 0 [rbx] rax  mov,  rax = aW512
+   48 89 f9     \ rdi     rcx  mov,
+   48 ff c1     \         rcx  inc,
+   48 83 e1 0f  \ 15 #    rcx  and,
+   48 c1 e1 03  \ 3 #     rcx  shl,
+   48 01 c1     \ rax     rcx  add,
+   49 89 c0     \ rax     r8   mov,
+   48 8b 01     \ [rcx]   rax  mov,
+   48 89 c1     \ rax     rcx  mov,
+   48 89 c2     \ rax     rdx  mov,
+   48 d1 c8     \ 1 #     rax  ror,
+   48 c1 ca 08  \ 8 #     rdx  ror,
+   48 31 d0     \ rdx     rax  xor,
+   48 c1 e9 07  \ 7 #     rcx  shr,
+   48 31 c8     \ rcx     rax  xor,
+   48 89 03     \ rax 0 [rbx]  mov,
+   4c 89 c0     \ r8      rax  mov,
+   48 89 f9     \ rdi     rcx  mov,
+   48 83 c1 0e  \ 14 #    rcx  add,
+   48 83 e1 0f  \ 15 #    rcx  and,
+   48 c1 e1 03  \ 3 #     rcx  shl,
+   48 01 c1     \ rax     rcx  add,
+   48 8b 01     \ [rcx]   rax  mov,
+   48 89 c1     \ rax     rcx  mov,
+   48 89 c2     \ rax     rdx  mov,
+   48 c1 c8 13  \ 19 #    rax  ror,
+   48 c1 ca 3d  \ 61 #    rdx  ror,
+   48 31 d0     \ rdx     rax  xor,
+   48 c1 e9 06  \ 6 #     rcx  shr,
+   48 31 c8     \ rcx     rax  xor,
+   48 01 03     \ rax 0 [rbx]  add,
+   4c 89 c0     \ r8      rax  mov,
+   48 89 f9     \ rdi     rcx  mov,
+   48 83 c1 09  \ 9 #     rcx  add,
+   48 83 e1 0f  \ 15 #    rcx  and,
+   48 c1 e1 03  \ 3 #     rcx  shl,
+   48 01 c1     \ rax     rcx  add,
+   48 8b 09     \ [rcx]   rcx  mov,
+   48 01 0b     \ rcx 0 [rbx]  add,
+   48 89 f9     \ rdi     rcx  mov,
+   48 83 e1 0f  \ 15 #    rcx  and,
+   48 c1 e1 03  \ 3 #     rcx  shl,
+   48 01 c1     \ rax     rcx  add,
+   48 8b 01     \ [rcx]   rax  mov,
+   48 01 03     \ rax 0 [rbx]  add,
+   48 8b 03     \ 0 [rbx] rax  mov,
+   48 89 01     \ rax   [rcx]  mov,
+   48 31 c0     \ rax     rax  xor,
+   48 83 eb 10  \ 16 #    rbx  sub,
+   c3           \              ret,
+af dup MC-Table start_round-code  MC-Put
+
+:inline start_round W512[] I [ start_round-code ]L call drop ;
+
+\ compute_T1-code ( u ashiftreg aK512 idx -- T1 ashiftreg aK512 idx )
+   48 83 c3 08  \ 8 #     rbx  add,
+   48 8b 3b     \ 0 [rbx] rdi  mov,  \ rdi = idx 
+   48 83 c3 08  \ 8 #     rbx  add,
+   48 8b 03     \ 0 [rbx] rax  mov,  \ rax = aK512
+   48 83 c3 08  \ 8 #     rbx  add,
+   48 8b 0b     \ 0 [rbx] rcx  mov,  \ rcx = ashiftreg
+   48 83 c3 08  \ 8 #     rbx  add,
+   48 c1 e7 03  \ 3 #     rdi  shl,
+   48 01 f8     \ rdi     rax  add,
+   48 8b 00     \ [rax]   rax  mov,
+   48 01 03     \ rax 0 [rbx]  add,
+   48 89 c8     \ rcx     rax  mov,  \ rax = ashiftreg
+   48 83 c0 38  \ 56 #    rax  add,  \ h
+   48 8b 10     \ [rax]   rdx  mov,
+   48 01 13     \ rdx 0 [rbx]  add,
+   48 83 e8 18  \ 24 #    rax  sub,  \ e
+   49 89 c0     \ rax     r8   mov,
+   48 8b 00     \ [rax]   rax  mov,
+   48 89 c1     \ rax     rcx  mov,
+   48 89 c2     \ rax     rdx  mov,
+   48 c1 c8 0e  \ 14 #    rax  ror,
+   48 c1 ca 12  \ 18 #    rdx  ror,
+   48 31 d0     \ rdx     rax  xor,
+   48 c1 c9 29  \ 41 #    rcx  ror,
+   48 31 c8     \ rcx     rax  xor,
+   48 01 03     \ rax 0 [rbx]  add,
+   4c 89 c0     \ r8      rax  mov, 
+   48 8b 38     \ [rax]   rdi  mov,
+   48 83 c0 08  \ 8 #     rax  add,  \ f
+   48 8b 08     \ [rax]   rcx  mov,
+   48 83 c0 08  \ 8 #     rax  add,  \ g
+   48 8b 10     \ [rax]   rdx  mov,
+   48 89 f8     \ rdi     rax  mov,
+   48 21 c1     \ rax     rcx  and,
+   48 f7 d0     \         rax  not,
+   48 21 d0     \ rdx     rax  and,
+   48 31 c8     \ rcx     rax  xor,
+   48 01 03     \ rax 0 [rbx]  add,
+   48 83 eb 20  \ 32 #    rbx  sub,
+   48 31 c0     \ rax     rax  xor,
+   c3           \              ret,
+86 dup MC-Table compute_T1-code  MC-Put
+         
+:inline compute_T1 shiftreg K512[] I [ compute_T1-code ]L call 2drop drop ;
+
+
+\ compute_T2-code ( ashiftreg -- T2 )
+   48 8b 43 08  \ 8 [rbx] rax  mov,
+   49 89 c0     \ rax     r8   mov,
+   48 8b 00     \ [rax]   rax  mov,
+   48 89 c1     \ rax     rcx  mov,
+   48 89 c2     \ rax     rdx  mov,
+   48 c1 c8 1c  \ 28 #    rax  ror,
+   48 c1 ca 22  \ 34 #    rdx  ror,
+   48 31 d0     \ rdx     rax  xor,
+   48 c1 c9 27  \ 39 #    rcx  ror,
+   48 31 c8     \ rcx     rax  xor,
+   48 89 43 08  \ rax 8 [rbx]  mov,
+   4c 89 c0     \ r8      rax  mov,
+   48 8b 38     \ [rax]   rdi  mov,
+   48 83 c0 08  \ 8 #     rax  add,
+   48 8b 08     \ [rax]   rcx  mov,
+   48 83 c0 08  \ 8 #     rax  mov,
+   48 8b 10     \ [rax]   rdx  mov,
+   48 89 f8     \ rdi     rax  mov,
+   48 89 cf     \ rcx     rdi  mov,
+   48 21 c7     \ rax     rdi  and,
+   48 21 d0     \ rdx     rax  and,
+   48 31 f8     \ rdi     rax  xor,
+   48 21 d1     \ rdx     rcx  and,
+   48 31 c8     \ rcx     rax  xor,
+   48 01 43 08  \ rax 8 [rbx]  add,
+   48 31 c0     \ rax     rax  xor,
+   c3           \              ret,
+57 dup MC-Table compute_T2-code  MC-Put
+                
+:inline compute_T2 shiftreg [ compute_T2-code ]L call ;
+
+[THEN]
+
 :inline shift_with_add  ( T1 T2 -- ) shiftreg &b [ 7 CELLS ]L MOVE OVER + &a ! &e +! ;
+
+DECIMAL
 
 Public:
 
 : SHA512_Transform ( addr -- )
     TO data
-    sa @ &a !  sb @ &b !  sc @ &c !  sd @ &d !
-    se @ &e !  sf @ &f !  sg @ &g !  sh @ &h !
+    sreg_acc shiftreg 8 CELLS MOVE
 
     16 0 DO
       data @+ SWAP TO data
-      BSWAP  DUP W512[] I CELL[] !
+      BSWAP DUP W512[] I CELL[] !
       compute_T1
       compute_T2
       shift_with_add
     LOOP
 
     80 16 DO
-      W512[] I 1+   15 AND CELL[] @ sigma0_512l
-      W512[] I 14 + 15 AND CELL[] @ sigma1_512l +
-      W512[] I 9  + 15 AND CELL[] @ + 
-      W512[] I      15 AND CELL[] DUP >R @ + DUP R> !
+      start_round
       compute_T1
       compute_T2 
       shift_with_add
     LOOP
 
-    a sa +!  b sb +!  c sc +!  d sd +!
-    e se +!  f sf +!  g sg +!  h sh +!
+    a &sa +!  b &sb +!  c &sc +!  d &sd +!
+    e &se +!  f &sf +!  g &sg +!  h &sh +!
 ;
 
 Private:
@@ -290,10 +470,10 @@ Public:
 
 : SHA512_Final ( -- )
     SHA512_Last
-    digest[] sa @ BSWAP  !+  sb @ BSWAP  !+
-             sc @ BSWAP  !+  sd @ BSWAP  !+
-             se @ BSWAP  !+  sf @ BSWAP  !+
-             sg @ BSWAP  !+  sh @ BSWAP  SWAP ! ;
+    digest[] &sa @ BSWAP  !+  &sb @ BSWAP  !+
+             &sc @ BSWAP  !+  &sd @ BSWAP  !+
+             &se @ BSWAP  !+  &sf @ BSWAP  !+
+             &sg @ BSWAP  !+  &sh @ BSWAP  SWAP ! ;
 
 Public:
 
