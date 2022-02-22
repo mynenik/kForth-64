@@ -204,6 +204,8 @@ HEX
 \ out: rax = sigma0_512u(x)
 \ uses: rcx, rdx
 : sigma0_512u ( -- i*x )
+   48 89 c1     \ rax     rcx  mov,
+   48 89 c2     \ rax     rdx  mov,
    48 c1 c8 1c  \ 28 #    rax  ror,
    48 c1 ca 22  \ 34 #    rdx  ror,
    48 31 d0     \ rdx     rax  xor,
@@ -216,6 +218,8 @@ HEX
 \ out: rax = sigma1_512u(x)
 \ uses: rcx, rdx
 : sigma1_512u ( -- i*x )
+   48 89 c1     \ rax     rcx  mov,
+   48 89 c2     \ rax     rdx  mov,
    48 c1 c8 0e  \ 14 #    rax  ror,
    48 c1 ca 12  \ 18 #    rdx  ror,
    48 31 d0     \ rdx     rax  xor,
@@ -228,6 +232,8 @@ HEX
 \ out: rax = sigma0_512l(x)
 \ uses: rcx, rdx
 : sigma0_512l ( -- i*x )
+   48 89 c1     \ rax     rcx  mov,
+   48 89 c2     \ rax     rdx  mov,
    48 d1 c8     \ 1 #     rax  ror,
    48 c1 ca 08  \ 8 #     rdx  ror,
    48 31 d0     \ rdx     rax  xor,
@@ -240,6 +246,8 @@ HEX
 \ out: rax = sigma1_512l(x)
 \ uses: rcx, rdx
 : sigma1_512l ( -- i*x )
+   48 89 c1     \ rax     rcx  mov,
+   48 89 c2     \ rax     rdx  mov,
    48 c1 c8 13  \ 19 #    rax  ror,
    48 c1 ca 3d  \ 61 #    rdx  ror,
    48 31 d0     \ rdx     rax  xor,
@@ -258,8 +266,6 @@ HEX
    48 01 03     \ rax 0 [rbx]  add,
    49 8b 43 20  \ 32 [r11] rax  mov, \ rax = e
    49 89 c1     \ rax     r9   mov,
-   48 89 c1     \ rax     rcx  mov,
-   48 89 c2     \ rax     rdx  mov,
    sigma1_512u
    48 01 03     \ rax 0 [rbx]  add,
    4c 89 c8     \ r9      rax  mov,  \ rax = e
@@ -275,8 +281,6 @@ HEX
 : compute_T2
    49 8b 03     \ [r11]   rax  mov, \ rax = a
    49 89 c1     \ rax     r9   mov, 
-   48 89 c1     \ rax     rcx  mov,
-   48 89 c2     \ rax     rdx  mov,
    sigma0_512u
    48 89 03     \ rax   [rbx]  mov,
    4c 89 c8     \ r9      rax  mov,  \ rax = a
@@ -332,16 +336,12 @@ d7 dup MC-Table roundA-code  MC-Put
    48 ff c0     \         rax  inc,
    48 83 e0 0f  \ 15 #    rax  and,
    49 8b 04 c0  \ [r8,rax,8] rax  mov,
-   48 89 c1     \ rax     rcx  mov,
-   48 89 c2     \ rax     rdx  mov,
    sigma0_512l
    49 89 c2     \ rax     r10  mov,
    48 89 f8     \ rdi     rax  mov,
    48 83 c0 0e  \ 14 #    rax  add,
    48 83 e0 0f  \ 15 #    rax  and,
    49 8b 04 c0  \ [r8,rax,8] rax  mov,
-   48 89 c1     \ rax     rcx  mov,
-   48 89 c2     \ rax     rdx  mov,
    sigma1_512l
    49 01 c2     \ rax     r10  add,
    48 89 f8     \ rdi     rax  mov,
