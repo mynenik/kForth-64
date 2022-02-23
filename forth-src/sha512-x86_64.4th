@@ -1,6 +1,6 @@
 \ sha512-x86_64.4th
 \
-\ SHA-512 64-bit      Version 0.04  Hybrid Forth/machine code
+\ SHA-512 64-bit      Version 0.05  Hybrid Forth/machine code
 \ Forth version posted to comp.lang.forth on Jan 29, 2022 by Marcel Hendrix
 \
 \  LANGUAGE    : ANS Forth with extensions
@@ -17,6 +17,8 @@
 \                Feb 9, 2022, Use of "shift register" for a--h; km
 \                Feb 19, 2022, Machine code implementation of SHA2 functions km
 \                Feb 21, 2022, Optimized machine code  km
+\                Feb 22, 2022, Use Peter Fälth's assembly code equivalent for
+\                              SHIFT_WITH_ADD for further optimization  km
 \
 \ Requires (for kForth-64):
 \   ans-words.4th
@@ -290,6 +292,30 @@ HEX
    48 01 03     \ rax   [rbx]  add,
 ;
 
+\ in:  r11 = ashiftreg, rbx points to T2, Forth stack ( T1 T2 ... )
+\ out: shift register is modified per algorithm, no change to Forth stack
+\ uses: rax, rcx, rdx, rdi, r8  
+: shift_with_add
+   49 8b 03     \  0 [r11]   rax  mov,  \ rax = a
+   49 8b 4b 08  \  8 [r11]   rcx  mov,  \ rcx = b
+   49 8b 53 10  \ 16 [r11]   rdx  mov,  \ rdx = c
+   49 8b 7b 18  \ 24 [r11]   rdi  mov,  \ rdi = d
+   4c 8b 43 08  \  8 [rbx]   r8   mov,
+   4c 03 03     \    [rbx]   r8   add,  \ r8 = T1 + T2
+   4d 89 03     \ r8     0 [r11]  mov,  \ new a = T1 + T2
+   49 89 43 08  \ rax    8 [r11]  mov,  \ new b = old a
+   49 89 4b 10  \ rcx   16 [r11]  mov,  \ new c = old b
+   49 89 53 18  \ rdx   24 [r11]  mov,  \ new d = old c
+   49 8b 43 20  \ 32 [r11]   rax  mov,  \ rax = e
+   49 8b 4b 28  \ 40 [r11]   rcx  mov,  \ rcx = f
+   49 8b 53 30  \ 48 [r11]   rdx  mov,  \ rdx = g
+   48 03 7b 08  \  8 [rbx]   rdi  add,  \ rdi = old d + T1
+   49 89 7b 20  \ rdi   32 [r11]  mov,  \ new e = old d + T1
+   49 89 43 28  \ rax   40 [r11]  mov,  \ new f = old e
+   49 89 4b 30  \ rcx   48 [r11]  mov,  \ new g = old f
+   49 89 53 38  \ rdx   56 [r11]  mov,  \ new h = old g
+;
+
 \ roundA-code ( ashiftreg aK512 aW512 idx aData -- T1 T2 aW512 idx aData )
 \ in: (takes parameters from the Forth stack)
 \ uses: rax, rcx, rdx, rdi, r8, r9, r11
@@ -314,14 +340,15 @@ HEX
    compute_T1
    48 83 eb 08  \ 8 #     rbx  sub,
    compute_T2
+   shift_with_add
    48 31 c0     \ rax     rax  xor,
    48 83 eb 20  \ 32 #    rbx  sub,
    c3           \              ret,
-d7 dup MC-Table roundA-code  MC-Put
+11c dup MC-Table roundA-code  MC-Put
 
-:inline roundA [ roundA-code ]L call 2drop drop ;
+:inline roundA [ roundA-code ]L call 2drop 2drop drop ;
 
-\ roundB-code ( shiftreg aK512 aW512 idx  -- T1 T2 aK512 aW512 )
+\ roundB-code ( shiftreg aK512 aW512 idx  -- T1 T2 aW512 idx )
 \ in: (takes parameters from the Forth stack)
 \ uses: rax, rcx, rdx, rdi, r8, r9, r10, r11
    48 83 c3 08  \ 8 #     rbx  add,
@@ -359,14 +386,13 @@ d7 dup MC-Table roundA-code  MC-Put
    compute_T1 
    48 83 eb 08  \ 8 #     rbx  sub,
    compute_T2
+   shift_with_add
    48 31 c0     \ rax     rax  xor,
    48 83 eb 18  \ 24 #    rbx  sub,
    c3           \              ret,
-132 dup MC-Table roundB-code  MC-Put
+177 dup MC-Table roundB-code  MC-Put
 
-:inline roundB [ roundB-code ]L call 2drop ;
-
-:inline shift_with_add  ( T1 T2 -- ) shiftreg &b [ 7 CELLS ]L MOVE OVER + &a ! &e +! ;
+:inline roundB [ roundB-code ]L call 2drop 2drop ;
 
 DECIMAL
 
@@ -379,12 +405,10 @@ variable data
 
     16 0 DO
       shiftreg K512[] W512[] I data roundA 
-      shift_with_add
     LOOP
 
     80 16 DO
       shiftreg K512[] W512[] I roundB 
-      shift_with_add
     LOOP
 
     a &sa +!  b &sb +!  c &sc +!  d &sd +!
