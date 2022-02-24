@@ -326,7 +326,7 @@ HEX
    48 83 c3 08  \ 8 #     rbx add,
    4c 8b 03     \ 0 [rbx] r8  mov,  \ r8 = aW512
    48 83 c3 08  \ 8 #     rbx add,
-   4c 8b 0b     \ 0 [rbx] r9  add,  \ r9 = aK512
+   4c 8b 0b     \ 0 [rbx] r9  mov,  \ r9 = aK512
    48 83 c3 08  \ 8 #     rbx add,
    4c 8b 1b     \ 0 [rbx] r11 mov,  \ r11 = ashiftreg 
    48 8b 10     \ [rax]   rdx mov,  \ rdx = aData a@
