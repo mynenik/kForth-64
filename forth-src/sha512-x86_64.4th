@@ -19,6 +19,7 @@
 \                Feb 21, 2022, Optimized machine code  km
 \                Feb 22, 2022, Use Peter Fälth's assembly code equivalent for
 \                              SHIFT_WITH_ADD for further optimization  km
+\                Feb 26, 2022, perform rounds looping in machine code  km
 \
 \ Requires (for kForth-64):
 \   ans-words.4th
@@ -180,7 +181,7 @@ Private:
 HEX
 \ Ch(x, y, z) = (x ∧ y) ⊕ (¬x ∧ z)  
 \ in:  rax = x, rcx = y, rdx = z
-\ out: rax = Ch(x,y,z)
+\ out: rax = Ch(x,y,z) 
 : Ch
    48 21 c1     \ rax     rcx  and,
    48 f7 d0     \         rax  not,
@@ -191,12 +192,12 @@ HEX
 \ Maj(x, y, z) = (x ∧ y) ⊕ (x ∧ z) ⊕ (y ∧ z)
 \ in:  rax = x, rcx = y, rdx = z
 \ out: rax = Maj(x,y,z)
-\ uses: rdi
+\ uses: r10
 : Maj ( -- i*x )
-   48 89 cf     \ rcx     rdi  mov,
-   48 21 c7     \ rax     rdi  and,
+   49 89 ca     \ rcx     r10  mov,
+   49 21 c2     \ rax     r10  and,
    48 21 d0     \ rdx     rax  and,
-   48 31 f8     \ rdi     rax  xor,
+   4c 31 d0     \ r10     rax  xor,
    48 21 d1     \ rdx     rcx  and,
    48 31 c8     \ rcx     rax  xor,
 ;
@@ -205,7 +206,7 @@ HEX
 \ in:  rax = x
 \ out: rax = sigma0_512u(x)
 \ uses: rcx, rdx
-: sigma0_512u ( -- i*x )
+: sigma0_512u ( i*x -- i*x )
    48 89 c1     \ rax     rcx  mov,
    48 89 c2     \ rax     rdx  mov,
    48 c1 c8 1c  \ 28 #    rax  ror,
@@ -219,7 +220,7 @@ HEX
 \ in:  rax = x
 \ out: rax = sigma1_512u(x)
 \ uses: rcx, rdx
-: sigma1_512u ( -- i*x )
+: sigma1_512u ( i*x -- i*x )
    48 89 c1     \ rax     rcx  mov,
    48 89 c2     \ rax     rdx  mov,
    48 c1 c8 0e  \ 14 #    rax  ror,
@@ -233,7 +234,7 @@ HEX
 \ in:  rax = x
 \ out: rax = sigma0_512l(x)
 \ uses: rcx, rdx
-: sigma0_512l ( -- i*x )
+: sigma0_512l ( i*x -- i*x )
    48 89 c1     \ rax     rcx  mov,
    48 89 c2     \ rax     rdx  mov,
    48 d1 c8     \ 1 #     rax  ror,
@@ -247,7 +248,7 @@ HEX
 \ in:  rax = x
 \ out: rax = sigma1_512l(x)
 \ uses: rcx, rdx
-: sigma1_512l ( -- i*x )
+: sigma1_512l ( i*x -- i*x )
    48 89 c1     \ rax     rcx  mov,
    48 89 c2     \ rax     rdx  mov,
    48 c1 c8 13  \ 19 #    rax  ror,
@@ -257,35 +258,34 @@ HEX
    48 31 c8     \ rcx     rax  xor,
 ;
 
-\ in: rdi = idx, r9 = aK512, r11 = ashiftreg
+\ in: rax = u, rdi = idx, r9 = aK512, r11 = ashiftreg
 \ out: (places T1 on Forth stack )
-\ uses: rax, rcx, rdx, r8 
+\ uses: rax, rcx, rdx, r10, r13
 : compute_T1 ( -- i*x )
-   4d 89 c8     \ r9      r8   mov,  \ r8 = aK512
-   49 8b 04 f8  \ [r8,rdi,8]  rax  mov,
-   48 01 03     \ rax 0 [rbx]  add,
-   49 8b 43 38  \ 56 [r11] rax mov,  \ rax = h
-   48 01 03     \ rax 0 [rbx]  add,
-   49 8b 43 20  \ 32 [r11] rax  mov, \ rax = e
-   49 89 c1     \ rax     r9   mov,
+   49 03 04 f9  \ [r9,rdi,8] rax add, \ u + K512[rdi]
+   49 03 43 38  \ 56 [r11]  rax  add, \ + h
+   49 89 c2     \ rax       r10  mov, \ r10 = sum
+   49 8b 43 20  \ 32 [r11]  rax  mov, \ rax = e
+   49 89 c5     \ rax       r13  mov, \ r13 = e
    sigma1_512u
-   48 01 03     \ rax 0 [rbx]  add,
-   4c 89 c8     \ r9      rax  mov,  \ rax = e
-   49 8b 4b 28  \ 40 [r11] rcx mov,  \ rcx = f
-   49 8b 53 30  \ 48 [r11] rdx mov,  \ rdx = g
+   49 01 c2     \ rax       r10  add,
+   4c 89 e8     \ r13       rax  mov,  \ rax = e
+   49 8b 4b 28  \ 40 [r11]  rcx  mov,  \ rcx = f
+   49 8b 53 30  \ 48 [r11]  rdx  mov,  \ rdx = g
    Ch
-   48 01 03     \ rax 0 [rbx]  add,
+   4c 01 d0     \ r10       rax  add,
+   48 89 03     \ rax 0   [rbx]  mov,
 ;
 
 \ in: r11 = ashiftreg
 \ out: (places T2 on Forth stack)
-\ uses: rax, rcx, rdx, rdi
+\ uses: rax, rcx, rdx, r10
 : compute_T2
    49 8b 03     \ [r11]   rax  mov, \ rax = a
-   49 89 c1     \ rax     r9   mov, 
+   49 89 c2     \ rax     r10  mov, 
    sigma0_512u
    48 89 03     \ rax   [rbx]  mov,
-   4c 89 c8     \ r9      rax  mov,  \ rax = a
+   4c 89 d0     \ r10     rax  mov,  \ rax = a
    49 8b 4b 08  \ 8 [r11] rcx  mov,  \ rcx = b
    49 8b 53 10  \ 16 [r11] rdx mov,  \ rdx = c
    Maj
@@ -294,126 +294,145 @@ HEX
 
 \ in:  r11 = ashiftreg, rbx points to T2, Forth stack ( T1 T2 ... )
 \ out: shift register is modified per algorithm, no change to Forth stack
-\ uses: rax, rcx, rdx, rdi, r8  
+\ uses: rax, rcx, rdx, r10, r13  
 : shift_with_add
    49 8b 03     \  0 [r11]   rax  mov,  \ rax = a
    49 8b 4b 08  \  8 [r11]   rcx  mov,  \ rcx = b
    49 8b 53 10  \ 16 [r11]   rdx  mov,  \ rdx = c
-   49 8b 7b 18  \ 24 [r11]   rdi  mov,  \ rdi = d
-   4c 8b 43 08  \  8 [rbx]   r8   mov,
-   4c 03 03     \    [rbx]   r8   add,  \ r8 = T1 + T2
-   4d 89 03     \ r8     0 [r11]  mov,  \ new a = T1 + T2
+   4d 8b 6b 18  \ 24 [r11]   r13  mov,  \ r13 = d
+   4c 8b 53 08  \  8 [rbx]   r10  mov,  \ r10 = T1
+   4c 03 13     \    [rbx]   r10  add,  \ r10 = T1 + T2
+   4d 89 13     \ r10    0 [r11]  mov,  \ new a = T1 + T2
    49 89 43 08  \ rax    8 [r11]  mov,  \ new b = old a
    49 89 4b 10  \ rcx   16 [r11]  mov,  \ new c = old b
    49 89 53 18  \ rdx   24 [r11]  mov,  \ new d = old c
    49 8b 43 20  \ 32 [r11]   rax  mov,  \ rax = e
    49 8b 4b 28  \ 40 [r11]   rcx  mov,  \ rcx = f
    49 8b 53 30  \ 48 [r11]   rdx  mov,  \ rdx = g
-   48 03 7b 08  \  8 [rbx]   rdi  add,  \ rdi = old d + T1
-   49 89 7b 20  \ rdi   32 [r11]  mov,  \ new e = old d + T1
+   4c 03 6b 08  \  8 [rbx]   r13  add,  \ r13 = old d + T1
+   4d 89 6b 20  \ r13   32 [r11]  mov,  \ new e = old d + T1
    49 89 43 28  \ rax   40 [r11]  mov,  \ new f = old e
    49 89 4b 30  \ rcx   48 [r11]  mov,  \ new g = old f
    49 89 53 38  \ rdx   56 [r11]  mov,  \ new h = old g
 ;
 
-\ roundA-code ( ashiftreg aK512 aW512 idx aData -- T1 T2 aW512 idx aData )
+\ roundsA-code ( ashiftreg aK512 aW512 aData -- T1 T2 aW512 aData )
 \ in: (takes parameters from the Forth stack)
-\ uses: rax, rcx, rdx, rdi, r8, r9, r11
-   48 83 c3 08  \ 8 # rbx add,
-   48 8b 03     \ 0 [rbx] rax mov,  \ rax = aData
+\ uses: rax, rcx, rdx, rdi, r8, r9, r10, r11, r12, r13
+   41 52        \         r10 push,
+   41 54        \         r12 push,
+   41 55	\         r13 push, \ r13 is a temp register
    48 83 c3 08  \ 8 #     rbx add,
-   48 8b 3b     \ 0 [rbx] rdi mov,  \ rdi = idx
+   4c 8b 23     \ 0 [rbx] r12 mov,  \ r12 = aData
    48 83 c3 08  \ 8 #     rbx add,
    4c 8b 03     \ 0 [rbx] r8  mov,  \ r8 = aW512
    48 83 c3 08  \ 8 #     rbx add,
    4c 8b 0b     \ 0 [rbx] r9  mov,  \ r9 = aK512
    48 83 c3 08  \ 8 #     rbx add,
-   4c 8b 1b     \ 0 [rbx] r11 mov,  \ r11 = ashiftreg 
-   48 8b 10     \ [rax]   rdx mov,  \ rdx = aData a@
-   48 8b 0a     \ [rdx]   rcx mov,  \ rcx = value
-   48 83 c2 08  \ 8 #     rdx add,
-   48 89 10     \ rdx   [rax] mov,
-   48 89 c8     \ rcx     rax mov,
+   4c 8b 1b     \ 0 [rbx] r11 mov,  \ r11 = ashiftreg
+   48 c7 c7 00 00 00 00  \ 0 #     rdi mov,  \ rdi = loop counter
+\ startloop:
+   49 8b 04 fc  \ [r12,rdi,8] rax mov,  \ rax = value
    48 0f c8     \         rax bswap,
-   49 89 04 f8  \ rax   [r8,rdi,8] mov,
-   48 89 03     \ rax 0 [rbx] mov,
+   49 89 04 f8  \ rax   [r8,rdi,8] mov, 
    compute_T1
    48 83 eb 08  \ 8 #     rbx  sub,
    compute_T2
    shift_with_add
+   48 83 c3 08  \ 8 #     rbx  add,
+   48 ff c7     \         rdi  inc,
+   48 83 ff 10  \ 16 #    rdi  cmp,
+   0f 85 10 ff ff ff   \  jne  startloop
    48 31 c0     \ rax     rax  xor,
    48 83 eb 20  \ 32 #    rbx  sub,
+   41 5d        \         r13  pop,
+   41 5c        \         r12  pop,
+   41 5a        \         r10  pop,
    c3           \              ret,
-11c dup MC-Table roundA-code  MC-Put
+127 dup MC-Table roundsA-code  MC-Put
 
-:inline roundA [ roundA-code ]L call 2drop 2drop drop ;
+:inline roundsA [ roundsA-code ]L call 2drop 2drop ;
 
-\ roundB-code ( shiftreg aK512 aW512 idx  -- T1 T2 aW512 idx )
+\ roundsB-code ( shiftreg aK512 aW512  -- T1 T2 aW512 )
 \ in: (takes parameters from the Forth stack)
-\ uses: rax, rcx, rdx, rdi, r8, r9, r10, r11
-   48 83 c3 08  \ 8 #     rbx  add,
-   48 8b 3b     \ 0 [rbx] rdi  mov,  \ rdi = idx
+\ uses: rax, rcx, rdx, rdi, r8, r9, r10, r11, r12
+   41 54        \         r12  push,
    48 83 c3 08  \ 8 #     rbx  add,
    4c 8b 03     \ 0 [rbx] r8   mov,  \ r8 = aW512
    48 83 c3 08  \ 8 #     rbx  add,
    4c 8b 0b     \ 0 [rbx] r9   mov,  \ r9 = aK512
    48 83 c3 08  \ 8 #     rbx  add,
    4c 8b 1b     \ 0 [rbx] r11  mov,  \ r11 = shiftreg
+   48 c7 c7 10 00 00 00  \ 16 #  rdi mov,  \ rdi = loop counter
+\ startloop:
    48 89 f8     \ rdi     rax  mov,
    48 ff c0     \         rax  inc,
    48 83 e0 0f  \ 15 #    rax  and,
    49 8b 04 c0  \ [r8,rax,8] rax  mov,
    sigma0_512l
-   49 89 c2     \ rax     r10  mov,
+   49 89 c4     \ rax     r12  mov,
    48 89 f8     \ rdi     rax  mov,
    48 83 c0 0e  \ 14 #    rax  add,
    48 83 e0 0f  \ 15 #    rax  and,
    49 8b 04 c0  \ [r8,rax,8] rax  mov,
    sigma1_512l
-   49 01 c2     \ rax     r10  add,
+   49 01 c4     \ rax     r12  add,
    48 89 f8     \ rdi     rax  mov,
    48 83 c0 09  \ 9 #     rax  add,
    48 83 e0 0f  \ 15 #    rax  and,
    49 8b 04 c0  \ [r8,rax,8] rax  mov,
-   49 01 c2     \ rax     r10  add,
+   49 01 c4     \ rax     r12  add,
    48 89 f8     \ rdi     rax  mov,
    48 83 e0 0f  \ 15 #    rax  and,
    48 89 c1     \ rax     rcx  mov,
    49 8b 04 c0  \ [r8,rax,8] rax  mov,
-   49 01 c2     \ rax     r10  add,
-   4c 89 13     \ r10 0 [rbx]  mov,
-   4d 89 14 c8  \ r10 [r8,rcx,8]  mov,
+   49 01 c4     \ rax     r12  add,
+   4c 89 e0     \ r12     rax  mov,
+   4d 89 24 c8  \ r12 [r8,rcx,8]  mov,
    compute_T1 
    48 83 eb 08  \ 8 #     rbx  sub,
    compute_T2
    shift_with_add
+   48 83 c3 08  \ 8 #     rbx  add,
+   48 ff c7     \         rdi  inc,
+   48 83 ff 50  \ 80 #    rdi  cmp,
+   0f 85 9f fe ff ff   \  jne  startloop
    48 31 c0     \ rax     rax  xor,
    48 83 eb 18  \ 24 #    rbx  sub,
+   41 5c        \ r12          pop,
    c3           \              ret,
-177 dup MC-Table roundB-code  MC-Put
+189 dup MC-Table roundsB-code  MC-Put
 
-:inline roundB [ roundB-code ]L call 2drop 2drop ;
+:inline roundsB [ roundsB-code ]L call 2drop drop ;
+
+\ acc-code ( shiftreg sreg_acc  -- shiftreg sreg_acc )
+\ in: (takes parameters from the Forth stack)
+\ uses: rax, rdi, r11
+   4c 8b 43 08  \  8 [rbx]     r8  mov,  \ r8 = sreg_acc
+   4c 8b 5b 10  \ 16 [rbx]    r11  mov,  \ r11 = shiftreg
+   48 c7 c7 00 00 00 00 \ 0 # rdi  mov,
+\ startloop:  
+   49 8b 04 fb  \ [r11,rdi,8] rax  mov,
+   49 01 04 f8  \ rax  [r8,rdi,8]  add,
+   48 ff c7     \             rdi  inc,
+   48 83 ff 08  \ 8 #         rdi  cmp,
+   75 ef        \                  jne  startloop
+   48 31 c0     \  rax        rax  xor,
+   c3           \                  ret,
+24 dup MC-Table acc-code  MC-Put
+
+: accumulate [ acc-code ]L call 2drop ;
 
 DECIMAL
 
 Public:
 
-variable data
-
 : SHA512_Transform ( addr -- )
-    data ! sreg_acc shiftreg 8 CELLS MOVE
-
-    16 0 DO
-      shiftreg K512[] W512[] I data roundA 
-    LOOP
-
-    80 16 DO
-      shiftreg K512[] W512[] I roundB 
-    LOOP
-
-    a &sa +!  b &sb +!  c &sc +!  d &sd +!
-    e &se +!  f &sf +!  g &sg +!  h &sh +!
-;
+    >r 
+    sreg_acc shiftreg 8 CELLS MOVE
+    shiftreg K512[] W512[] r> roundsA 
+    shiftreg K512[] W512[] roundsB 
+    shiftreg sreg_acc accumulate ;
 
 Private:
 
@@ -483,15 +502,12 @@ Public:
     bitcount W512[] SHA512_SHORT_BLOCK_LENGTH CELL+ + !
     W512[] SHA512_Transform ;
 
-
 : SHA512_Final ( -- )
     SHA512_Last
     digest[] &sa @ BSWAP  !+  &sb @ BSWAP  !+
              &sc @ BSWAP  !+  &sd @ BSWAP  !+
              &se @ BSWAP  !+  &sf @ BSWAP  !+
              &sg @ BSWAP  !+  &sh @ BSWAP  SWAP ! ;
-
-Public:
 
 : SHA512_End ( -- c-addr u )
     SHA512_Final
@@ -501,7 +517,6 @@ Public:
       I @ BSWAP (H.) digesttext[] PLACE+  
     8 +LOOP
     digesttext[] COUNT ;
-
 
 : SHA512_Data ( addr len -- c-addr u ) 
     SHA512_Init  
