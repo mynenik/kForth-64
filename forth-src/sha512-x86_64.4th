@@ -1,6 +1,6 @@
 \ sha512-x86_64.4th
 \
-\ SHA-512 64-bit      Version 0.05  Hybrid Forth/machine code
+\ SHA-512 64-bit      Version 0.06  Hybrid Forth/machine code
 \ Forth version posted to comp.lang.forth on Jan 29, 2022 by Marcel Hendrix
 \
 \  LANGUAGE    : ANS Forth with extensions
