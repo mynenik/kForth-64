@@ -3,8 +3,7 @@
 \ Module for reading/computing potential energy curve
 \ for use by Schroedinger radial equation solver.
 \
-\ Copyright (c) 2012--2015, Krishna Myneni
-\ Creative Consulting for Research and Education
+\ Copyright (c) 2012--2022, Krishna Myneni
 \
 \ This code may be used for any purpose, as long as the copyright
 \ notice above is preserved.
@@ -20,6 +19,7 @@
 \   2014-12-12  km  first working version.
 \   2015-02-07  km  READ-POTNL returns number of points read from file.
 \   2015-02-11  km  implemented GET-NPOTNL, }COPY-R, }COPY-V.
+\   2022-03-01  km  added SCALE-V and SCALE-R
 
 Module: qm.potential
 
@@ -65,6 +65,20 @@ Public:
     r> 2 DO  r{ I } F@  r{ I 1- } F@ F- fabs fmin  LOOP
     Rdel_min F!
     Npotnl @
+;
+
+: scale-V ( F: vscale -- )
+    Npotnl @ V{ }fscale
+    Npotnl @
+    dup V{ }fmin Vmin F!
+        V{ }fmax Vmax F!
+;
+
+: scale-R ( F: rscale -- )
+    fdup Npotnl @ r{ }fscale Rdel_min F@ F* Rdel_min F!
+    Npotnl @
+    dup r{ }fmin Rmin F!
+        r{ }fmax Rmax F!
 ;
 
 : get-Npotnl ( -- n ) Npotnl @ ;  \ < 0 indicates no potential data available.

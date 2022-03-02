@@ -193,7 +193,7 @@ Public:
 
 Private:
 
-:inline compute_T1 ( -- T1) K512[] I CELL[] @ + e f g Ch + e sigma1_512u + h + ;
+:inline compute_T1 ( u -- T1) K512[] I CELL[] @ + e f g Ch + e sigma1_512u + h + ;
 :inline compute_T2 ( -- T2) a sigma0_512u a b c Maj + ;
 :inline shift_with_add  ( T1 T2 -- ) shiftreg &b [ 7 CELLS ]L MOVE OVER + &a ! &e +! ;
 
