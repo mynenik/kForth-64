@@ -2,7 +2,7 @@
 //
 // The assembler portion of kForth 64-bit Virtual Machine
 //
-// Copyright (c) 1998--2021 Krishna Myneni,
+// Copyright (c) 1998--2022 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU 
@@ -367,6 +367,7 @@
         cmpq $TRUE, (%rbx)
         jnz E_arg_type_mismatch
 .endm
+
 
 // VIRTUAL MACHINE 
 						
@@ -2009,40 +2010,50 @@ L_add:
 	NEXT
 
 L_div:
-	movq $WSIZE, %rax
-	addq %rax, GlobalSp(%rip)
-	INC_DTSP
-	LDSP
-	mov (%rbx), %rax
-	cmpq $0, %rax
-	jz  E_div_zero
-	INC_DSP
-	mov (%rbx), %rax
-	cqo
-	idivq -WSIZE(%rbx)
+        LDSP
+        INC_DSP
+        DIV
 	mov %rax, (%rbx)
-	xor %rax, %rax
-divexit:
-	ret
+        DEC_DSP
+        STSP
+        INC_DTSP
+        xor %rax, %rax
+	NEXT
 
 L_mod:
-	call L_div
-	cmpq $0, %rax
-	jnz  divexit
+        LDSP
+        INC_DSP
+	DIV
 	mov %rdx, (%rbx)
+        DEC_DSP
+        STSP
+        INC_DTSP
+        xor %rax, %rax
 	NEXT
 
 L_slashmod:
-	call L_div
-	cmpq $0, %rax
-	jnz  divexit
-	DEC_DSP
-	mov %rdx, (%rbx)
+        LDSP
+        INC_DSP
+        DIV
+        mov %rdx, (%rbx)
+        DEC_DSP
+        mov %rax, (%rbx)
 	DEC_DSP
 	STSP
-	DEC_DTSP
-	SWAP
+        xor %rax, %rax
 	NEXT
+
+L_udivmod:
+        LDSP
+        INC_DSP
+        UDIV
+        mov %rdx, (%rbx)
+        DEC_DSP
+        mov %rax, (%rbx)
+        DEC_DSP
+        STSP
+        xor %rax, %rax
+        NEXT
 
 L_starslash:
         LDSP
@@ -2190,6 +2201,32 @@ L_umslashmod:
 	INC_DTSP
 	xor %rax, %rax		
 	NEXT
+
+L_uddivmod:
+# Divide unsigned double length by unsigned single length to
+# give unsigned double quotient and single remainder.
+        LDSP
+        movq $WSIZE, %rax
+        add %rax, %rbx
+        mov (%rbx), %rcx
+        cmpq $0, %rcx
+        jz E_div_zero
+        add %rax, %rbx
+        movq $0, %rdx
+        mov (%rbx), %rax
+        divq %rcx
+        mov %rax, %r8  # %r8 = hi quot
+        INC_DSP
+        mov (%rbx), %rax
+        divq %rcx
+        mov %rdx, (%rbx)
+        DEC_DSP
+        mov %rax, (%rbx)
+        DEC_DSP
+        mov %r8, (%rbx)
+        DEC_DSP
+        xor %rax, %rax
+        ret
 
 L_mstar:
 	LDSP
@@ -2555,7 +2592,7 @@ L_smslashrem:
 
 L_stof:
 	LDSP
-        add $WSIZE, %rbx
+        INC_DSP
 	fildq (%rbx)
 	STSP
         INC_DTSP

@@ -139,14 +139,14 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad L_boolean_query, L_uwfetch, L_ulfetch, L_slfetch  # 404--407
            .quad L_lstore, L_nop, L_nop, L_nop              # 408--411
            .quad L_nop, L_nop, L_nop, L_nop                 # 412--415
-           .quad L_nop, L_nop, L_nop, L_nop                 # 416--419
+           .quad L_nop, L_udivmod, L_uddivmod, L_nop        # 416--419
            .quad L_sfloats, L_sfloatplus, L_floats, L_floatplus # 420--423
 .text
 	.align WSIZE
 .global JumpTable
 .global L_initfpu, L_depth, L_fdepth, L_quit, L_abort
 .global L_ret, L_dabs, L_dplus, L_dminus, L_dnegate
-.global L_mstarslash, L_udmstar, L_utmslash
+.global L_mstarslash, L_udmstar, L_uddivmod, L_utmslash
 
 .global __floattidf, __fixdfti
 
@@ -332,6 +332,34 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 	xor %rax, %rax
 .endm
 
+// signed single division
+// Regs: rax, rbx, rcx, rdx
+// In: rbx = TOS
+// Out: rax = quot, rdx = rem, rbx = TOS
+.macro DIV
+       mov (%rbx), %rcx
+       cmpq $0, %rcx
+       jz E_div_zero
+       INC_DSP
+       mov (%rbx), %rax
+       cqo
+       idivq %rcx
+.endm
+
+// unsigned single division
+// Regs: rax, rbx, rcx, rdx
+// In: rbx = TOS
+// Out: rax = quot, rdx = rem, rbx = TOS
+.macro UDIV
+       mov (%rbx), %rcx
+       cmpq $0, %rcx
+       jz E_div_zero
+       INC_DSP
+       mov (%rbx), %rax
+       movq $0, %rdx
+       divq %rcx
+.endm
+       
 // Regs: rax, rbx, rcx
 // In: rbx = DSP
 // Out: rax = 0, rbx = DSP                      

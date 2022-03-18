@@ -426,6 +426,8 @@
 #define OP_STARSLASHMOD_FLOORED 414
 #define OP_MSLASH_FLOORED       415
 #define OP_MSTARSLASH_FLOORED   416
+#define OP_UDIVMOD              417
+#define OP_UDDIVMOD             418
 
 #define OP_SFLOATS              420
 #define OP_SFLOATPLUS           421
