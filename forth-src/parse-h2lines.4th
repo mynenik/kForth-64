@@ -3,7 +3,7 @@
 \ Read and parse the file h2lines.dat to test string
 \ parsing words. 
 \
-\ K. Myneni, 2022-03-19
+\ K. Myneni, 2022-03-20
 \
 \ The file h2lines.dat is created by the program
 \ h2spec.f, included in the H2SPEC repository at
@@ -14,10 +14,6 @@ include struct-200x
 include strings
 include files
 
-[UNDEFINED] +FFIELD [IF]
-: +FFIELD    1 FLOATS +FIELD ;
-[THEN]
-
 BEGIN-STRUCTURE EnergyLevel%
   cfield: eState
    field: vQN
@@ -27,9 +23,9 @@ END-STRUCTURE
     
 BEGIN-STRUCTURE SpectralLine%
    field: LineIndex
-  +ffield Wavelength  \ Angstroms
-  +ffield Wavenumber  \ frequency in cm^-1
-  +ffield Aul         \ line transition rate in s^-1
+  ffield: Wavelength  \ Angstroms
+  ffield: Wavenumber  \ frequency in cm^-1
+  ffield: Aul         \ line transition rate in s^-1
   EnergyLevel% +field LowerLevel
   EnergyLevel% +field UpperLevel
 END-STRUCTURE
@@ -42,7 +38,7 @@ Create LineList SpectralLine% MAX_LINES * allot
 : &SpectralLine ( uidx -- addr )  SpectralLine% * LineList + ;
 
 \ Fields conversion
-: >uint ( caddr u -- n ) 0 s>d 2swap >number 2drop drop ;
+: >uint ( caddr u -- u ) 0 s>d 2swap >number 2drop drop ;
 : >char ( caddr u -- c ) bl skip drop c@ ;
 \ >float is a standard word
 
