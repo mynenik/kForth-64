@@ -12,7 +12,7 @@
 include ans-words
 include modules
 include fsl/fsl-util
-include gauleg_r
+include fsl/gauleg
 
 [undefined] fsquare [IF] : fsquare fdup f* ; [THEN]
 
@@ -85,8 +85,8 @@ fvariable xx
     LOOP ;
 
 
-cr
-.( Type 'integral_xy f.' to compute the 2D integral of )cr
+cr cr
+.( Type 'integral_xy fs.' to compute the 2D integral of )cr
 .( the function, f[x, y] = x^2 + y^2, over the rectangular ) cr
 .( region: x: 0 -> 2, y: 0 -> 1 ) cr cr
 

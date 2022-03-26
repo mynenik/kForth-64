@@ -142,8 +142,8 @@ VARIABLE gleg-n
 : )gl-integrate ( func &x &w n -- z )
          \ validate the parameter N
          DUP 1 < ABORT" bad value of N (must be > 0) for )gl-integrate "
-         >R 0.0E0
-         R> 0 DO   \ func &x &w ; F: rsum
+         0.0E0
+         0 DO   \ func &x &w ; F: rsum
             over I } F@ 2 pick execute
             dup  I } F@ F*
             F+             \ func &x &w ;  F: rsum2
