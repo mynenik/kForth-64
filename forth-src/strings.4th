@@ -2,7 +2,7 @@
 \
 \ String utility words for kForth
 \
-\ Copyright (c) 1999--2021 Krishna Myneni
+\ Copyright (c) 1999--2022 Krishna Myneni
 \
 \ This software is provided under the terms of the
 \ GNU General Public License.
@@ -49,26 +49,20 @@ DECIMAL
 \ Search for first occurrence of character c in a string:
 \   a1 u1 is the string to be searched
 \   a2 u2 is the substring starting with character c
-: scan ( a1 u1 c -- a2 u2 )
-	over 0> IF
-	  over 0 DO   \ -- a1 u1 c
-	    >r over c@ r@ = 
-	    IF  r> leave  ELSE  1 /string  r>  THEN
-	  LOOP
-	THEN
-	drop ;
+: scan ( caddr1 u1 c -- caddr2 u2 )
+    >r rp@ 1 search invert if + 0 then r> drop ;
 
 \ Search for first occurrence of character not equal to c in a string
 \   a1 u1 is the string to be searched,
 \   a2 u2 is the substring starting with char <> c
-: skip ( a1 u1 c -- a2 u2 )
-	over 0> IF
-	  over 0 DO  \ -- a1 u1 c
-	    >r over c@ r@ <> 
-	    IF  r> leave  ELSE  1 /string r>  THEN
-	  LOOP
-	THEN
-	drop ; 
+: skip ( caddr1 u1 c -- caddr2 u2 )
+    over 0> IF
+      over 0 DO
+        2 pick c@ over <> IF leave
+        ELSE >r 1 /string r> THEN
+      LOOP
+    THEN
+    drop ;
 
 \ Replace char c1 with char c2 in string
 : replace-char ( c-addr u c1 c2 -- c-addr u )
