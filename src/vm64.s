@@ -2510,7 +2510,6 @@ L_mstarslash:
         subq $2*WSIZE, %rbx
         INC_DTSP
 	_ABS            # abs(n1)
-        STSP
 	INC_DSP
 	STSP
 	INC_DTSP
