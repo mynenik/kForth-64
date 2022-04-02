@@ -41,13 +41,14 @@
 \    2011-09-16  km; use Neal Bridges' anonymous modules
 \    2012-02-19  km; use KM/DNW's modules library
 \    2022-03-25  km; make )GL-INTEGRATE re-entrant
+\    2022-04-02  km; make re-entrant for unified fp stack as well
 \
 \  (c) Copyright 1995 Everett F. Carter.  Permission is granted by the
 \  author to use this software for any application provided this
 \  copyright notice is preserved.
 
 
-CR .( GAULEG            V1.1e          25 March     2022   EFC,KM )
+CR .( GAULEG            V1.1f          02 April     2022   EFC,KM )
 
 BEGIN-MODULE
 
@@ -65,8 +66,6 @@ FVARIABLE pp
 
 FLOAT DARRAY x{    \ aliases to user arrays
 FLOAT DARRAY w{
-
-\ Defer f(x)            \ pointer to user function with diagram ( x -- f[x] )
 
 : calc-pp ( n -- n f )           \ NOTE: changes Z
 
@@ -137,18 +136,31 @@ VARIABLE gleg-n
          \ DROP
 ;
 
-
 \ do the integration
-: )gl-integrate ( func &x &w n -- z )
+fp-stack? [IF]
+: )gl-integrate ( xtfunc &x &w n -- ) ( F: -- r )
          \ validate the parameter N
          DUP 1 < ABORT" bad value of N (must be > 0) for )gl-integrate "
          0.0E0
-         0 DO   \ func &x &w ; F: rsum
+         0 DO   \ xtfunc &x &w ; F: rsum
             over I } F@ 2 pick execute
             dup  I } F@ F*
-            F+             \ func &x &w ;  F: rsum2
+            F+             \ xtfunc &x &w ;  F: rsum2
          LOOP
          2drop drop ;
+[ELSE]
+: )gl-integrate ( xtfunc &x &w n -- r )
+        \ validate the parameter N
+         DUP 1 < ABORT" bad value of N (must be > 0) for )gl-integrate "
+         >R 0.0E0   \ xtfunc &x &w rsum
+         R> 0 DO
+               3 pick I } f@  \ xtfunc &x &w rsum rx
+               6 pick execute \ xtfunc &x &w rsum rf
+               4 pick I } f@  f*
+               F+
+         LOOP
+         2>r 2drop drop 2r> ;
+[THEN]
 
 BASE !
 END-MODULE
