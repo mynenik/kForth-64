@@ -81,15 +81,18 @@
 \    online at   http://hdl.handle.net/2027.42/8438
 \
 \ 
-\ Copyright (c) 2009 Krishna Myneni, krishna.myneni@ccreweb.org
+\ Copyright (c) 2009--2022 Krishna Myneni, krishna.myneni@ccreweb.org
 \ Provided under the LGPL
 \
 \ Revisions:
 \   2009-08-21  km  v1.0
+\   2022-05-10  km  v1.1; fixed bug in SET-FWHM-WIDTHS with
+\                   computing V_Y (imaginary part of z);
+\                   modified test code accordingly.
 \
 \ Requires fsl-util.4th zwofz.4th
 [UNDEFINED] zwofz [IF] include zwofz [THEN]
-CR .( VOIGT             V1.0      21 August  2009 )
+CR .( VOIGT             V1.1      10 May  2022 )
 BASE @
 DECIMAL
 
@@ -123,7 +126,7 @@ fvariable v_im_z
 ;
 
 : set-fwhm-widths ( F: Gamma_G  Gamma_L -- )
-     f2dup f/ SQRT_LN2 f*   v_y      f!  \ value of y for K(x,y)
+     f2dup fswap f/ SQRT_LN2 f* v_y  f!  \ value of y for K(x,y)
      2e f/                  v_gamma  f!  \ Lorentzian HWHM
      fwhm>sigma             v_sigma  f!  \ Gaussian s.d.
      set-voigt-params
@@ -206,7 +209,7 @@ t{ use( L(x) -1000e 1000e 1e-6 )integral ->  1e r}t
 set-near
 
 CR TESTING K(x,y)
-t{ 1e SQRT_LN2 set-fwhm-widths  v_y f@  ->  1e  r}t  \ y = 1
+t{ SQRT_LN2 1e set-fwhm-widths  v_y f@  ->  1e  r}t  \ y = 1
 t{   0.0e  K(x,y)  ->  0.427583e    r}t
 t{   0.1e  K(x,y)  ->  0.426043e    r}t
 t{   0.5e  K(x,y)  ->  0.391233e    r}t
@@ -223,7 +226,7 @@ t{ 100.0e  K(x,y)  ->  0.564218e-4  r}t
 t{ 200.0e  K(x,y)  ->  0.141049e-4  r}t
 
 \ Check normalization of the Voigt probability density function
-1e SQRT_LN2 set-fwhm-widths
+SQRT_LN2 1e set-fwhm-widths
 v_sigma f@ v_gamma f@ f+ 5000e f* 
 fdup    fconstant +xlim
 fnegate fconstant -xlim
