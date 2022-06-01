@@ -167,6 +167,7 @@
 \    2011-09-16  km; use Neal Bridges' anonymous modules.
 \    2012-02-19  km; use KM/DNW's modules library.
 \    2020-02-15  km; set arr_op in private base words.
+\    2022-06-01  km; fix }}FCOPY defn for separate fp stack.
 
 BEGIN-MODULE
 
@@ -313,7 +314,18 @@ Public:
 : }}frow-copy ( 'a n1 'b n2 u -- ) ;
 : }}fprint ( n m 'a -- )            ['] F?  }}print ;
 
+[UNDEFINED] }}FCOPY [IF]
 \ Copy n×m elements of 2-D array src to dest
+fp-stack? [IF]
+: }}fcopy ( 'src 'dest n m -- )
+    SWAP 0 DO
+      DUP 0 DO
+        2 PICK J I }} F@
+        OVER   J I }} F!
+      LOOP
+    LOOP
+    DROP 2DROP ;
+[ELSE]
 : }}fcopy ( 'src 'dest n m  -- ) 
      SWAP 0 DO
        DUP 0 DO
@@ -322,15 +334,19 @@ Public:
        LOOP
      LOOP
      DROP 2DROP ;
+[THEN]
+[THEN]
 
 : }}frow-put  ( r1 ... ru  u n 'A -- )
    swap 0 }} over 1- FLOATS + swap 
    0 DO dup >r F! r> [ 1 FLOATS ] literal - LOOP drop ;
 
+[UNDEFINED] }}FPUT [IF]
 \ Store elements r11 ... r_nm from stack into nxm matrix A 
 : }}fput ( r11 r12 ... r_nm  n m 'A -- | )
       -ROT 2DUP * >R 1- SWAP 1- SWAP }} R> 
       0 ?DO  DUP >R F! R> float -  LOOP  drop ;
+[THEN]
 
 BASE !
 END-MODULE
