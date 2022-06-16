@@ -7,8 +7,8 @@
 include ans-words
 include modules
 include fsl/fsl-util
-include fsl/extras/tred2
-include fsl/extras/imtql2
+include eispack/tred2
+include eispack/imtql2
 
 \ 4 x 4 real symmetric matrix example
 
