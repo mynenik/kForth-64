@@ -1,15 +1,29 @@
-\ hermitian-ex01.4th
+\ cherm-01.4th
 \
-\ Use EISPACK to find the eigenvalues and eigenvectors of
+\ Use EISPACK to find all of the eigenvalues and eigenvectors of
 \ some test complex Hermitian matrices. Display the eigenvalues
 \ and corresponding eigenvectors.
 \
-\ For the EISPACK routines used here (htridi, imtql2, htribk),
+\ For the EISPACK "path" [1] used here (htridi, imtql2, htribk),
 \ the complex matrix is stored in two double precision floating
 \ point matrices.
 \
 \ K. Myneni, 2022-06-17
 \
+\ Revisions:
+\   2022-06-18  renamed hermitian-ex01.4th to cherm-01.4th.
+\
+\ Notes:
+\
+\  1. Uses the FSL complex arithmetic library word "Z." to print
+\     numbers. For increased output precision, use "ZS.".
+\
+\ References
+\
+\  1. Matrix Eigensystem Routines -- EISPACK Guide, 2nd ed.,
+\     B.T. Smith, J.M. Boyle, B.S. Garbow, Y. Ikebe, V.C. Klema,
+\     and C.B. Moler, ISBN 0-387-07546-1, Springer-Verlag, 1976;
+\     see sections 2.1.4 and 2.2.3.
 
 include ans-words
 include modules
@@ -40,7 +54,7 @@ include eispack/htribk
    LOOP ;
 
 cr
-.( a.  2 x 2 Hermitian matrix, ) cr
+.( a. All eigenvalues and eigenvectors of 2 x 2 Hermitian matrix.) cr
 cr
 .(       3   2-i ) cr
 .(      2+i   4  ) cr
@@ -82,11 +96,11 @@ dup [IF]
 2 z2r{{ z2i{{ .evecs
 
 cr
-.( b.  3 x 3 Hermitian matrix, ) cr
+.( b. All eigenvalues and eigenvectors of 3 x 3 Hermitian matrix.) cr
 cr
-.(   1   i  2+i  ) cr
-.(  -i   2  1-i  ) cr
-.( 2-i  1+i  2   ) cr
+.(      1   i  2+i  ) cr
+.(     -i   2  1-i  ) cr
+.(    2-i  1+i  2   ) cr
 cr
 
 3 3 float matrix h3r{{
