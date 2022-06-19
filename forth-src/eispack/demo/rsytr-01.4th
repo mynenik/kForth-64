@@ -1,7 +1,7 @@
 \ rsytr-01.4th
 \
 \ Find all eigenvalues and eigenvectors of a real symmetric
-\ tridiagonal matrix and using the implict QL reduction method,
+\ tridiagonal matrix using the implict QL reduction method,
 \ per recommended EISPACK path [1].
 \
 \ K. Myneni, 2022-06-18
@@ -29,13 +29,16 @@ cr .(   0  sqrt2   0  ) cr
 
 2.0e0 fsqrt fconstant sqrt2
 
+\ Diagonal elements are zero for this example,
+\ but, in general, non-zero for tridiagonal matrices.
+\ First element of subdiagonal array is always set to zero.
 0.0e0 0.0e0 0.0e0 3 d{ }fput
 0.0e0 1.0e0 sqrt2 3 s{ }fput
 
 1.0e0 0.0e0 0.0e0
 0.0e0 1.0e0 0.0e0
 0.0e0 0.0e0 1.0e0
-3 3 z{{ }}fput
+3 3 z{{ }}fput     \ identity matrix on input
 
 3 3 d{ s{ z{{ imtql2 dup
 [IF]
@@ -43,7 +46,6 @@ cr .( IMTQL2 Error ) . cr
 [ELSE]
 drop
 cr .( Eigenvalues: ) 3 d{ }fprint cr
-
 cr .( Eigenvectors: ) cr
 3 3 z{{ }}fprint cr
 [THEN]
