@@ -12,6 +12,7 @@
 \
 \ Revisions:
 \   2022-06-18  renamed hermitian-ex01.4th to cherm-01.4th.
+\   2022-06-19  fix error handling.
 \
 \ Notes:
 \
@@ -88,12 +89,12 @@ dup [IF]
   .( imtql2 error code ) . cr
 [ELSE]
   drop
+  .( Eigenvalues: ) 2 diag2{ }fprint cr
+  \ Find the eigenvectors
+  2 2 h2r{{ h2i{{ t2{{ 2 z2r{{ z2i{{ htribk
+  .( Eigenvectors: ) cr
+  2 z2r{{ z2i{{ .evecs
 [THEN]
-.( Eigenvalues: ) 2 diag2{ }fprint cr
-\ Find the eigenvectors
-2 2 h2r{{ h2i{{ t2{{ 2 z2r{{ z2i{{ htribk
-.( Eigenvectors: ) cr
-2 z2r{{ z2i{{ .evecs
 
 cr
 .( b. All eigenvalues and eigenvectors of 3 x 3 Hermitian matrix.) cr
@@ -130,10 +131,10 @@ dup [IF]
   .( imtql2 error code ) . cr
 [ELSE]
   drop
+  .( Eigenvalues: ) 3 diag3{ }fprint cr
+  3 3 h3r{{ h3i{{ t3{{ 3 z3r{{ z3i{{ htribk
+  .( Eigenvectors: ) cr
+  3 z3r{{ z3i{{ .evecs
 [THEN]
-.( Eigenvalues: ) 3 diag3{ }fprint cr
-3 3 h3r{{ h3i{{ t3{{ 3 z3r{{ z3i{{ htribk
-.( Eigenvectors: ) cr
-3 z3r{{ z3i{{ .evecs
 
 
