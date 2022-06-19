@@ -46,15 +46,25 @@
 \     argonne national laboratory
 \
 \     Fortran version dated august 1983.
-\     Forth version dated june 8, 2022.
+\     Forth version dated june 19, 2022.
 \     Translated to Forth by Krishna Myneni.
 \     ------------------------------------------------------------------
 \
 
+[UNDEFINED] F+! [IF] 
+fp-stack? [IF]
+: f+! ( a -- ) ( F: r -- ) dup f@ f+ f! ;
+[ELSE]
+: f+! ( r a -- ) dup >r f@ f+ r> f! ; 
+[THEN]
+[THEN]
+
+[UNDEFINED] FSQUARE [IF] : fsquare fdup f* ; [THEN]
+
+
 BEGIN-MODULE
 
-BASE @
-DECIMAL
+BASE @ DECIMAL
 
 0 ptr e2{
 0 ptr e{
@@ -68,16 +78,6 @@ fvariable f
 fvariable g
 fvariable h
 fvariable scale
-
-[UNDEFINED] F+! [IF] 
-fp-stack? [IF]
-: f+! ( a -- ) ( F: r -- ) dup f@ f+ f! ;
-[ELSE]
-: f+! ( r a -- ) dup >r f@ f+ r> f! ; 
-[THEN]
-[THEN]
-
-[UNDEFINED] FSQUARE [IF] : fsquare fdup f* ; [THEN]
 
 \ Obsolete Fortran function dsign()
 : dsign ( F: r1 r2 )
@@ -175,10 +175,12 @@ Public:
        LOOP ;
 
 BASE !
-
 END-MODULE
 
-\ Test code
+TEST-CODE? [IF]
+BASE @ DECIMAL
+[UNDEFINED] T{ [IF] include ttester [THEN]
+
 \ Test case: 4 x 4 real, symmetric matrix.
 4 4 FLOAT MATRIX A{{
  4e  1e -2e  2e
@@ -191,5 +193,25 @@ END-MODULE
 4 FLOAT ARRAY SUBDIAG{
 4 FLOAT ARRAY SUBDIAG2{
 
-\ nm n a d e e2
-\ 4 4 A{{ DIAG{ SUBDIAG{ SUBDIAG2{ tred1
+1e-15 rel-near f!
+1e-15 abs-near f!
+set-near
+
+TESTING TRED1
+t{ 4 4 A{{ DIAG{ SUBDIAG{ SUBDIAG2{ tred1 -> }t
+t{ diag{ 0 }     f@ ->  147e  65e f/  r}t
+t{ diag{ 1 }     f@ ->  692e 585e f/  r}t
+t{ diag{ 2 }     f@ ->   50e   9e f/  r}t
+t{ diag{ 3 }     f@ ->   -1e          r}t
+t{ subdiag{ 0 }  f@ ->    0e          r}t
+t{ subdiag{ 1 }  f@ ->    6e  65e f/  r}t
+t{ subdiag{ 2 }  f@ ->   65e  81e f/ fsqrt r}t
+t{ subdiag{ 3 }  f@ ->    3e          r}t
+t{ subdiag2{ 0 } f@ ->    0e          r}t
+t{ subdiag2{ 1 } f@ ->  subdiag{ 1 } f@ fsquare r}t
+t{ subdiag2{ 2 } f@ ->  subdiag{ 2 } f@ fsquare r}t
+t{ subdiag2{ 3 } f@ ->  subdiag{ 3 } f@ fsquare r}t
+
+BASE !
+[THEN]
+ 

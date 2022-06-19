@@ -253,30 +253,31 @@ set-near
 
 TESTING TRED2
 t{  4 4 a{{ diag{ subdiag{ ot{{ tred2 ->  }t
-t{  diag{ 0 }    f@ ->  2.2615384615384624e0  r}t
-t{  diag{ 1 }    f@ ->  1.1829059829059840e0  r}t
-t{  diag{ 2 }    f@ ->  5.5555555555555555e0  r}t
-t{  diag{ 3 }    f@ -> -1.0e0                 r}t
-t{  subdiag{ 0 } f@ ->  0.0e0                 r}t
-t{  subdiag{ 1 } f@ -> -9.2307692307692979e-2 r}t
-t{  subdiag{ 2 } f@ ->  0.89580641647761583e0 r}t
-t{  subdiag{ 3 } f@ ->  3.0e0                 r}t
-t{  ot{{ 0 0 }}  f@ ->  0.24806946917841718e0 r}t
-t{  ot{{ 0 1 }}  f@ ->  0.70286349600551468e0 r}t
-t{  ot{{ 0 2 }}  f@ ->  2e 3e f/              r}t
-t{  ot{{ 0 3 }}  f@ ->  0.0e0                 r}t
-t{  ot{{ 1 0 }}  f@ ->  0.74420840753525053e0 r}t
-t{  ot{{ 1 1 }}  f@ -> -0.57882876141630690e0 r}t
-t{  ot{{ 1 2 }}  f@ ->  1e 3e f/              r}t
-t{  ot{{ 1 3 }}  f@ ->  0.0e0                 r}t 
-t{  ot{{ 2 0 }}  f@ ->  0.62017367294604253e0 r}t
-t{  ot{{ 2 1 }}  f@ ->  0.41344911529736117e0 r}t
-t{  ot{{ 2 2 }}  f@ ->  2e 3e f/ fnegate      r}t
-t{  ot{{ 2 3 }}  f@ ->  0.0e0                 r}t
-t{  ot{{ 3 0 }}  f@ ->  0.0e0                 r}t
-t{  ot{{ 3 1 }}  f@ ->  0.0e0                 r}t
-t{  ot{{ 3 2 }}  f@ ->  0.0e0                 r}t
-t{  ot{{ 3 3 }}  f@ ->  1.0e0                 r}t
+t{  diag{ 0 }    f@ ->  147e  65e f/  r}t
+t{  diag{ 1 }    f@ ->  692e 585e f/  r}t
+t{  diag{ 2 }    f@ ->   50e   9e f/  r}t
+t{  diag{ 3 }    f@ ->   -1e          r}t
+t{  subdiag{ 0 } f@ ->    0e          r}t
+t{  subdiag{ 1 } f@ ->   -6e  65e f/  r}t
+t{  subdiag{ 2 } f@ ->   65e  81e f/ fsqrt r}t
+t{  subdiag{ 3 } f@ ->    3e          r}t
+t{  ot{{ 0 0 }}  f@ ->    4e  65e f/ fsqrt r}t
+t{  ot{{ 0 1 }}  f@ ->  289e 585e f/ fsqrt r}t
+t{  ot{{ 0 2 }}  f@ ->    2e   3e f/       r}t
+t{  ot{{ 0 3 }}  f@ ->    0e               r}t
+t{  ot{{ 1 0 }}  f@ ->   36e  65e f/ fsqrt r}t
+t{  ot{{ 1 1 }}  f@ ->  196e 585e f/ fsqrt fnegate r}t
+t{  ot{{ 1 2 }}  f@ ->    1e   3e f/        r}t
+t{  ot{{ 1 3 }}  f@ ->    0e                r}t 
+t{  ot{{ 2 0 }}  f@ ->    5e  13e f/ fsqrt  r}t
+t{  ot{{ 2 1 }}  f@ ->   20e 117e f/ fsqrt  r}t
+t{  ot{{ 2 2 }}  f@ ->   -2e   3e f/        r}t
+t{  ot{{ 2 3 }}  f@ ->    0e                r}t
+t{  ot{{ 3 0 }}  f@ ->    0e                r}t
+t{  ot{{ 3 1 }}  f@ ->    0e                r}t
+t{  ot{{ 3 2 }}  f@ ->    0e                r}t
+t{  ot{{ 3 3 }}  f@ ->    1e                r}t
 
 BASE !
 [THEN]
+
