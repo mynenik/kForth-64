@@ -85,10 +85,9 @@ cr
 2 z2r{{ }}ident
 \ Find the eigenvalues
 2 2 diag2{ subd2{ z2r{{ imtql2
-dup [IF]
+?dup [IF]
   .( imtql2 error code ) . cr
 [ELSE]
-  drop
   .( Eigenvalues: ) 2 diag2{ }fprint cr
   \ Find the eigenvectors
   2 2 h2r{{ h2i{{ t2{{ 2 z2r{{ z2i{{ htribk
@@ -127,10 +126,9 @@ cr
 3 3 h3r{{ h3i{{ diag3{ subd3{ subd3s{ t3{{ htridi
 3 z3r{{ }}ident
 3 3 diag3{ subd3{ z3r{{ imtql2
-dup [IF]
+?dup [IF]
   .( imtql2 error code ) . cr
 [ELSE]
-  drop
   .( Eigenvalues: ) 3 diag3{ }fprint cr
   3 3 h3r{{ h3i{{ t3{{ 3 z3r{{ z3i{{ htribk
   .( Eigenvectors: ) cr

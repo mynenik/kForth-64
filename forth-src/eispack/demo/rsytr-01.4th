@@ -29,8 +29,7 @@ cr .(   0  sqrt2   0  ) cr
 
 2.0e0 fsqrt fconstant sqrt2
 
-\ Diagonal elements are zero for this example,
-\ but, in general, non-zero for tridiagonal matrices.
+\ Diagonal elements are zero for this example.
 \ First element of subdiagonal array is always set to zero.
 0.0e0 0.0e0 0.0e0 3 d{ }fput
 0.0e0 1.0e0 sqrt2 3 s{ }fput
@@ -40,11 +39,10 @@ cr .(   0  sqrt2   0  ) cr
 0.0e0 0.0e0 1.0e0
 3 3 z{{ }}fput     \ identity matrix on input
 
-3 3 d{ s{ z{{ imtql2 dup
-[IF]
+3 3 d{ s{ z{{ imtql2
+?dup [IF]
 cr .( IMTQL2 Error ) . cr
 [ELSE]
-drop
 cr .( Eigenvalues: ) 3 d{ }fprint cr
 cr .( Eigenvectors: ) cr
 3 3 z{{ }}fprint cr

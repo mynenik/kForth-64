@@ -39,14 +39,14 @@ cr
 4 FLOAT ARRAY subdiag{
 4 FLOAT ARRAY subdiag2{
 
-\ Tridiagonalize the matrix using TRED1
+\ Tridiagonalize the matrix using TRED1,
+\ then find its eigenvalues using IMTQL1
 
 4 4 A{{ diag{ subdiag{ subdiag2{ tred1
-4 diag{ subdiag{ imtql1 dup
-[IF]
+4 diag{ subdiag{ imtql1
+?dup [IF]
 cr .( IMTQL1 Error ) . cr
 [ELSE]
-drop
 cr .( Eigenvalues: ) 4 diag{ }fprint cr
 [THEN]
 

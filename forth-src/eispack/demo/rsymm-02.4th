@@ -41,13 +41,11 @@ cr cr
 4 4 FLOAT MATRIX ot{{
 
 4 4 a{{ diag{ subdiag{ ot{{ tred2
-4 4 diag{ subdiag{ ot{{ imtql2 dup
-[IF]
+4 4 diag{ subdiag{ ot{{ imtql2
+?dup [IF]
 cr .( IMTQL2 Error ) . cr
 [ELSE]
-drop
 cr .( Eigenvalues: ) 4 diag{ }fprint cr
-
 cr .( Eigenvectors: ) cr
 4 4 ot{{ }}fprint cr
 [THEN]
