@@ -2510,7 +2510,15 @@ int CPP_while()
   // stack: ( -- | build the begin ... while ... repeat structure )	      
 
   if (beginstack.empty()) return E_V_NO_BEGIN;
+
   pCurrentOps->push_back(OP_JZ);
+  if (!whilestack.empty()) {
+    int i = whilestack.top();
+    if (i > beginstack.top()) {   // convert last while to if
+      ifstack.push( i );
+      whilestack.pop();
+    }
+  }
   whilestack.push(pCurrentOps->size());
   OpsPushInt(0);
   return 0;
@@ -2555,6 +2563,13 @@ int CPP_until()
 
   int i = beginstack.top();
   beginstack.pop();
+  if (!whilestack.empty()) {
+    int j = whilestack.top();
+    if (j > i) {   // convert last while to if
+      ifstack.push( j );
+      whilestack.pop();
+    }
+  }
   long int ival = i - pCurrentOps->size();
   pCurrentOps->push_back(OP_JZ);
   OpsPushInt(ival);   // write the relative jump count
@@ -2571,6 +2586,13 @@ int CPP_again()
 
   int i = beginstack.top();
   beginstack.pop();
+  if (!whilestack.empty()) {
+    int j = whilestack.top();
+    if (j > i) {   // convert last while to if
+      ifstack.push( j );
+      whilestack.pop();
+    }
+  }
   long int ival = i - pCurrentOps->size();
   pCurrentOps->push_back(OP_JMP);
   OpsPushInt(ival);   // write the relative jump count
