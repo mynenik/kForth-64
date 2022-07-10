@@ -17,8 +17,9 @@
 \
 \ Notes:
 \
-\   1. This version is for an integrated data/fp stack. 
-
+\   1. This version may be used on both separate and
+\      unified data/fp stack systems. 
+\
 \   2. Some word names have been changed from JVN's original[1]:
 \
 \     REAL*16 --> DDVARIABLE

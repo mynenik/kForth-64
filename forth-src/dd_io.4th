@@ -179,10 +179,6 @@ fp-stack? [IF]
 
 32 SET-PRECISION
 
-0 [IF]    \ the code below appears to have some issues in kForth
-
-15 SET-PRECISION
-
 : test
     SWAP  DO  1e0 0e0 3e0 0e0  dd/  dd10 I dd^n  dd*
               CR I .  TAB TAB  ddfs. LOOP
@@ -415,4 +411,3 @@ cr .( +1.1111222223330000000000000000000 dd 6  ok )
 
 [THEN]
 
-[THEN]
