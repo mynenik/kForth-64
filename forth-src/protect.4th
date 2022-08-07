@@ -1,6 +1,6 @@
 \ protect.4th
 \
-\ Memory protection of executable byte code for 
+\ Memory protection of data buffers and executable byte code for 
 \ colon definitions.
 \
 \ Copyright (c) 2022 Krishna Myneni
@@ -34,64 +34,74 @@ PAGESIZE 1- invert constant PAGEMASK
 \ Return the start of the next page after a1 
 : NextPage ( a1 -- a2 )  PAGEMASK and PAGESIZE + ;
 
-\ Virtual code buffer will be a multiple of PAGESIZE bytes
-20 constant BC_NPAGES
-PAGESIZE BC_NPAGES * constant BC_BUFSIZE
-0 ptr BC-Here0
+\ Protected read-only memory buffer will be a multiple of PAGESIZE bytes
+60 constant RO_NPAGES
+PAGESIZE RO_NPAGES * constant RO_BUFSIZE
+0 ptr RO-Here0
 
 \ Allocate buffer 
 [DEFINED] _WIN32_ [IF]  \ Win32
-0 BC_BUFSIZE MEM_RESERVE MEM_COMMIT or PAGE_READWRITE valloc
+0 RO_BUFSIZE MEM_RESERVE MEM_COMMIT or PAGE_READWRITE valloc
 [ELSE]  \ Linux 
-0 BC_BUFSIZE PROT_READ PROT_WRITE or MAP_ANONYMOUS MAP_PRIVATE or
+0 RO_BUFSIZE PROT_READ PROT_WRITE or MAP_ANONYMOUS MAP_PRIVATE or
 -1 0 mmap 
 [THEN]
-to BC-Here0
+to RO-Here0
 
-BC-Here0 -1 = [IF]
+RO-Here0 -1 = [IF]
   cr .( Failed to allocate protected byte code buffer! ) cr
   ABORT
 [THEN]
 
-BC-Here0 ptr BC-Here
+RO-Here0 ptr RO-Here
 
-\ Allocate space for relocating byte code to protected memory
-: BC-Allocate ( u -- addr )
-    BC-Here over ?PageCross IF BC-Here NextPage to BC-Here THEN
-    BC-Here tuck + to BC-Here ;
+\ Allocate space in read only buffer
+: RO-Allocate ( u -- addr )
+    RO-Here over ?PageCross IF RO-Here NextPage to RO-Here THEN
+    RO-Here tuck + to RO-Here ;
 
 \ flag_p = TRUE,  the page is allowed read only
 \ flag_p = FALSE, the page is read-writable
 \ return true if successful
 [DEFINED] _WIN32_ [IF]  \ Win32
 variable OldProt
-: BC-Protect ( a_bc flag_p -- flag )
+: RO-Protect ( a_bc flag_p -- flag )
     >r PAGEMASK and PAGESIZE
     r> IF  PAGE_READONLY  ELSE  PAGE_READWRITE  THEN
     OldProt vprotect 0= ;
 [ELSE]  \ Linux
-: BC-Protect ( a_bc flag_p -- flag )
+: RO-Protect ( a_bc flag_p -- flag )
     >r PAGEMASK and PAGESIZE 
     r> IF  PROT_READ  ELSE  PROT_READ PROT_WRITE or  THEN
     mprotect 0= ;
 [THEN]
 
-: BC-Relocate ( asrc adest u -- )
-    over false BC-Protect 
+: RO-Relocate ( asrc adest u -- )
+    over false RO-Protect 
     0= Abort" Unable to obtain write access to destination!"
-    cmove ;
+    move ;
 
+\ Copy contents of an read-writable memory region to
+\ a buffer which will be protected against over-writing.
+\ Return the new write-protected buffer.
+: Protect-Data ( asrc u -- adest u )
+    dup RO-Allocate swap     \ -- asrc adest u
+    2dup 2>r RO-Relocate     \ --     R: -- adest u
+    2r@ drop true RO-Protect \ --     R: -- adest u
+    0= Abort" Unable to write protect new buffer!"
+    2r> ;
+ 
 : Protect-Def ( xt u -- )
-    dup BC-Allocate swap >r   \ -- xt adest  R: -- u
+    dup RO-Allocate swap >r   \ -- xt adest  R: -- u
     over a@ swap 2dup r>      \ -- xt asrc adest asrc adest u
-    BC-Relocate               \ -- xt asrc adest
-    dup true BC-Protect
+    RO-Relocate               \ -- xt asrc adest
+    dup true RO-Protect
     0= Abort" Unable to make destination read-only!"
     swap free Abort" Unable to free original byte code!"
     swap ! ;
 
 : Unprotect-Def ( xt -- )
-    a@ false BC-Protect 
+    a@ false RO-Protect 
     0= Abort" Unable to change protection!" ;
 
 BASE !
