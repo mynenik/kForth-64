@@ -5,11 +5,12 @@
 \
 \  K. Myneni, 2021-07-19
 \
-\ Requires: ans-words.4th
+\ Requires: ans-words.4th, modules.4th
 \ Revisions:
 \   2021-07-19  km  first release; SEE works;
 \                   single step debug is limited.
 \   2021-07-21  km  code cleanup and one fix to OP.
+\   2022-08-13  km  add opcodes and info for U/MOD and UD/MOD.
 
 [UNDEFINED] BEGIN-STRUCTURE [IF] include struct-200x [THEN]
 [UNDEFINED] BEGIN-MODULE [IF] include modules [THEN]
@@ -494,6 +495,9 @@ Private:
 407  constant  OP_SL@
 408  constant  OP_L!
 
+417  constant  OP_UDIVMOD
+418  constant  OP_UDDIVMOD
+
 420  constant  OP_SFLOATS
 421  constant  OP_SFLOAT+
 422  constant  OP_FLOATS
@@ -831,6 +835,8 @@ S" BYE"     0  OP_BYE      ti!
 
 \ Extended byte-code primitives in kForth 2.x
 
+S" U/MOD"   0  nc' U/MOD     OP_UDIVMOD  ti!
+S" UD/MOD"  0  nc' UD/MOD    OP_UDDIVMOD ti!
 S" UTM/"    0  nc' UTM/      OP_UTM/     ti!
 S" UTS/MOD" 0  nc' UTS/MOD   OP_UTS/MOD  ti!
 S" STS/REM" 0  nc' STS/REM   OP_STS/REM  ti!
@@ -945,6 +951,7 @@ S" SFLOATS"        0 nc' SFLOATS        OP_SFLOATS        ti!
 S" SFLOAT+"        0 nc' SFLOAT+        OP_SFLOAT+        ti!
 S" FLOATS"         0 nc' FLOATS         OP_FLOATS         ti!
 S" FLOAT+"         0 nc' FLOAT+         OP_FLOAT+         ti!
+
 END-MODULE
 
 Also ssd
