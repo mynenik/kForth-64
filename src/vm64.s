@@ -2746,3 +2746,25 @@ L_fsincos:
 	STFSP
 	NEXT
 
+L_fplusstore:
+        movq GlobalTp(%rip), %rbx
+        inc %rbx
+        movb (%rbx), %al
+        cmpb $OP_ADDR, %al
+        jnz E_not_addr
+        movb $OP_IVAL, (%rbx)
+        movq %rbx, GlobalTp(%rip)
+        LDFSP
+        add %rax, %rbx
+        fldl (%rbx)
+        STFSP
+        LDSP
+        INC_DSP
+        mov (%rbx), %rcx
+        fldl (%rcx)
+        faddp
+        fstpl (%rcx)
+        STSP
+        xor %rax, %rax
+        NEXT
+

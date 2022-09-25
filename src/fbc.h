@@ -408,6 +408,8 @@
 #define OP_XCFETCHPLUS          393  
 #define OP_XCSTOREPLUS          394
 #define OP_XCSTOREPLUSQUERY     395
+#define OP_FIND_NAME_IN         396
+#define OP_FIND_NAME            397
 
 #define OP_BOOL_NOT             400
 #define OP_BOOL_AND             401
@@ -433,5 +435,8 @@
 #define OP_SFLOATPLUS           421
 #define OP_FLOATS               422
 #define OP_FLOATPLUS            423
+#define OP_FPLUSSTORE           424
+#define OP_PI                   425
+#define OP_FSQUARE              426
 
 #endif

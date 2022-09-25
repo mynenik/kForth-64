@@ -2,7 +2,7 @@
 \
 \ Some ANS Forth words which are not a part of the intrinsic
 \ dictionary of kForth are implemented here in source code.
-\ Use with kForth version 1.4.x or higher.
+\ Use with kForth version 2.4.x or higher.
 \
 \ Some other words, which are not part of the ANS specification,
 \ but which are so commonly used that they are effectively
@@ -53,7 +53,8 @@
 \   2021-08-14  km  fix of FP@ required change to F~
 \   2021-09-18  km  replace instances of ?ALLOT with ALLOT?
 \   2022-01-02  km  use VMTHROW as default exception handler.
-\   2022-01-12  km  add quotation words, [: and ;]  
+\   2022-01-12  km  add quotation words, [: and ;]
+\   2022-09-25  km  updated TO and VALUE ; added FVALUE and 2VALUE  
 BASE @
 DECIMAL
 
@@ -66,8 +67,35 @@ DECIMAL
 
 CREATE PAD 512 ALLOT
 
-: TO ' >BODY STATE @ IF POSTPONE LITERAL POSTPONE ! ELSE ! THEN ; IMMEDIATE
-: VALUE CREATE 1 CELLS allot? ! IMMEDIATE DOES> POSTPONE LITERAL POSTPONE @ ;
+\ Implementation of TO and VALUE defining words
+\ are kForth-specific.
+
+: TO ( i*x "name" -- ) \ or ( F: i*r -- ) ( "name" -- )
+    ' >body
+    dup a@ swap cell+
+    state @ IF
+      postpone literal
+      compile-name
+    ELSE
+      swap name>interpret execute
+    THEN ; immediate
+
+: xVALUE ( i*x nt-put usize -- ) ( F: j*r -- )
+    create 1 cells + allot?  \ -- i*x nt-put a
+    2dup ! cell+ swap name>interpret execute immediate
+;
+
+: VALUE ( n "name" -- )
+    s" !" find-name 1 cells xVALUE
+    does> cell+ postpone literal postpone @ ;
+
+: 2VALUE ( x1 x2 "name" -- )
+    s" 2!" find-name 2 cells xVALUE
+    does> cell+ postpone literal postpone 2@ ;
+
+: FVALUE ( F: r -- ) ( "name" -- )
+    s" F!" find-name 1 floats xVALUE
+    does> cell+ postpone literal postpone f@ ;
 
 \ ============== Alignment words: from CORE and Extended Wordsets
 : UNITS-ALIGNED ( a xt -- a' )

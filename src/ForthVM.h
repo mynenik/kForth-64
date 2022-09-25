@@ -67,6 +67,8 @@ int CPP_tobody();
 int CPP_defined();
 int CPP_undefined();
 int CPP_find();
+int CPP_find_name_in();
+int CPP_find_name();
 int CPP_dot();
 int CPP_dotr();
 int CPP_udot0();

@@ -1799,6 +1799,65 @@ int CPP_find ()
   return 0;
 }
 
+// FIND-NAME-IN  ( caddr u wid -- nt | 0 )
+// Find word in wordlist wid, represented by string. 
+// If word is found return valid name token nt, or 0 if
+// word cannot be found in the specified wordlist.
+// Forth 2012 (standardized on September 2018).
+int CPP_find_name_in ()
+{
+  DROP
+  CHK_ADDR
+  WordList* WList = *((WordList**) GlobalSp);
+  DROP
+  unsigned long int len = TOS;
+  if (len > 128) len = 128;
+  DROP
+  CHK_ADDR
+  char name [128];
+  char* s = *((char**) GlobalSp);
+  strncpy (name, (char*) s, len);
+  name[len] = 0;
+  strupr(name);
+  WordListEntry* pWord = WList->GetFromName( name );
+  if (pWord) {
+      PUSH_ADDR( (long int) pWord )
+    }
+  else
+    {
+      PUSH_IVAL(0)
+    }
+  return 0;
+}
+
+// FIND-NAME  ( caddr u -- nt | 0 )
+// Find dictionary word represented by string. 
+// If found return valid name token nt, or 0 if
+// word cannot be found in the current search order.
+// Forth 2012 (standardized on September 2018).
+int CPP_find_name ()
+{
+  DROP
+  unsigned long int len = TOS;
+  if (len > 128) len = 128;
+  DROP
+  CHK_ADDR
+  char name [128];
+  char* s = *((char**) GlobalSp);
+  strncpy (name, (char*) s, len);
+  name[len] = 0;
+  strupr(name);
+  WordListEntry* pWord = SearchOrder.LocateWord( name );
+  if (pWord) {
+      PUSH_ADDR( (long int) pWord ) 
+    }
+  else
+    {
+      PUSH_IVAL(0)
+    }
+  return 0;
+}
+
 // EMIT  ( n -- )
 // Display character with ASCII code n
 // Forth 2012 Core Wordset 6.1.1320

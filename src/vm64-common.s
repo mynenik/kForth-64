@@ -134,13 +134,14 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad CPP_fdots, L_fdup, L_fdrop, L_fswap        # 384--387
            .quad L_frot, L_fover, L_nop, L_nop              # 388--391
            .quad L_nop, L_nop, L_nop, L_nop                 # 392--395
-           .quad L_nop, L_nop, L_nop, L_nop                 # 396--399
+           .quad CPP_find_name_in, CPP_find_name, L_nop, L_nop  # 396--399
            .quad L_bool_not, L_bool_and, L_bool_or, L_bool_xor  # 400--403 
            .quad L_boolean_query, L_uwfetch, L_ulfetch, L_slfetch  # 404--407
            .quad L_lstore, L_nop, L_nop, L_nop              # 408--411
            .quad L_nop, L_nop, L_nop, L_nop                 # 412--415
            .quad L_nop, L_udivmod, L_uddivmod, L_nop        # 416--419
            .quad L_sfloats, L_sfloatplus, L_floats, L_floatplus # 420--423
+           .quad L_fplusstore, L_pi, L_fsquare, L_nop       # 424--427
 .text
 	.align WSIZE
 .global JumpTable
@@ -763,6 +764,25 @@ L_fsqrt:
         sub %rax, %rbx
         xor %rax, %rax
 	NEXT
+
+L_fsquare:
+        LDFSP
+        add %rax, %rbx
+        fldl (%rbx)
+        fmul %st
+	fstpl (%rbx)
+	sub %rax, %rbx
+	xor %rax, %rax
+	NEXT
+
+L_pi:
+	LDFSP
+        fldpi
+        fstpl (%rbx)
+        sub %rax, %rbx
+        STFSP
+        xor %rax, %rax
+        NEXT
 
 L_degtorad:
 	LDFSP
