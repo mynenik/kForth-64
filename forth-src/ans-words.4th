@@ -97,6 +97,12 @@ CREATE PAD 512 ALLOT
     s" F!" find-name 1 floats xVALUE
     does> cell+ postpone literal postpone f@ ;
 
+\ PTR is a nonstandard word commonly used by kForth programs.
+: PTR ( a "name" -- )
+    s" !" find-name 1 cells xVALUE
+    does> cell+ postpone literal postpone a@ ;
+
+
 \ ============== Alignment words: from CORE and Extended Wordsets
 : UNITS-ALIGNED ( a xt -- a' )
    >R ?DUP IF 
@@ -258,7 +264,4 @@ variable excpt-frames
 
 : ;] postpone ; ] postpone literal ; immediate
  
-\ === Non-standard words commonly needed for kForth programs ===
-: PTR ( a "name" -- ) CREATE 1 CELLS allot? ! DOES> a@ ;
-
 BASE !
