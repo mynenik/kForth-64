@@ -54,7 +54,7 @@
 \   2021-09-18  km  replace instances of ?ALLOT with ALLOT?
 \   2022-01-02  km  use VMTHROW as default exception handler.
 \   2022-01-12  km  add quotation words, [: and ;]
-\   2022-09-25  km  updated TO and VALUE ; added FVALUE and 2VALUE  
+\   2022-09-26  km  updated TO and VALUE ; added FVALUE and 2VALUE  
 BASE @
 DECIMAL
 
@@ -87,20 +87,24 @@ CREATE PAD 512 ALLOT
 
 : VALUE ( n "name" -- )
     s" !" find-name 1 cells xVALUE
-    does> cell+ postpone literal postpone @ ;
+    does> cell+ state @ if postpone literal postpone @ 
+      else @ then ;
 
 : 2VALUE ( x1 x2 "name" -- )
     s" 2!" find-name 2 cells xVALUE
-    does> cell+ postpone literal postpone 2@ ;
+    does> cell+ state @ if postpone literal postpone 2@ 
+      else 2@ then ;
 
 : FVALUE ( F: r -- ) ( "name" -- )
     s" F!" find-name 1 floats xVALUE
-    does> cell+ postpone literal postpone f@ ;
+    does> cell+ state @ if postpone literal postpone f@ 
+      else f@ then ;
 
 \ PTR is a nonstandard word commonly used by kForth programs.
 : PTR ( a "name" -- )
     s" !" find-name 1 cells xVALUE
-    does> cell+ postpone literal postpone a@ ;
+    does> cell+ state @ if postpone literal postpone a@ 
+      else a@ then ;
 
 
 \ ============== Alignment words: from CORE and Extended Wordsets
