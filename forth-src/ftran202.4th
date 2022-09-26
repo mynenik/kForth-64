@@ -20,7 +20,6 @@
 \ ans-words  must be included
 
 [undefined] f>string [IF] s" strings" included [THEN]  \ strings pkg
-[undefined] ptr [IF] : ptr create 1 cells allot? ! does> a@ ; [THEN]              
 [undefined] fsm: [IF] s" fsm2" included [THEN]         \ finite state machine
 [undefined] char_table: [IF] s" chr_tbl" included [THEN]  \ character encoding pkg
 [undefined] z@ [IF] s" fsl/complex" included [THEN]  \ FSL complex arithmetic pkg

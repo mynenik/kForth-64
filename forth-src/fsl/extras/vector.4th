@@ -31,8 +31,6 @@
 
 CR .( VECTOR            V1.0           13 Jan  2019 )
 
-[UNDEFINED] ptr [IF] : ptr  CREATE 1 CELLS ?allot ! DOES> a@ ; [THEN]
-
 Begin-Module
 
 BASE @

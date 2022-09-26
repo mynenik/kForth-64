@@ -81,14 +81,12 @@
 \   2021-09-11  km;  replace instances of ?ALLOT with ALLOT?
 \ ================= kForth specific defs/notes ==============================
 \ Requires ans-words.4th
-
-[undefined] ptr [IF] : ptr create 1 cells allot? ! does> a@ ; [THEN]
-\ ================= end of kForth specific defs ==============================
+\ ================= end of kForth specific defs =============================
 
 CR .( FSL-UTIL          V1.3c          11 Sep 2021   EFC, KM )
 BASE @ DECIMAL
 
-\ ================= compilation control ======================================
+\ ================= compilation control =====================================
 
 \ for control of conditional compilation of test code
 FALSE VALUE TEST-CODE?
@@ -103,7 +101,7 @@ TRUE CONSTANT HAS-MEMORY-WORDS?
 : fp-stack? [DEFINED] fdepth literal ;
 [THEN]
 
-\ =============================================================================
+\ ===========================================================================
 
 \ FSL NonANS words
 

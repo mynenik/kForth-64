@@ -14,8 +14,6 @@
 \   fsl-util.4th
 \
 
-[undefined]  ptr  [IF] : ptr create 1 cells ?allot ! does> a@ ; [THEN]
-
 0  ptr  x1{
 0  ptr  y1{
 0  ptr  x2{
