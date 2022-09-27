@@ -82,7 +82,7 @@ CREATE PAD 512 ALLOT
 
 : xVALUE ( i*x nt-put usize -- ) ( F: j*r -- )
     create 1 cells + allot?  \ -- i*x nt-put a
-    2dup ! cell+ swap name>interpret execute immediate
+    2dup ! cell+ swap name>interpret execute immediate nondeferred
 ;
 
 : VALUE ( n "name" -- )

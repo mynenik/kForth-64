@@ -14,6 +14,8 @@
  *             : Jun 20, 2010, km; removed dependence on strings module;
  *             :   should work without change under ANS Forths which provides 
  *             :   VOCABULARY and sufficient dictionary space.
+ *             : Sep 26, 2022, km; remove dependency on specific implementation
+ *             :   of PTR; use POSTPONE instead of EVALUATE.
  * )
 
 \ version 1.1a, 2003-04-15
@@ -55,8 +57,6 @@ DECIMAL
   [THEN]
 : allot? here swap allot ;
 : nondeferred ;
-[ELSE]
-: ptr create 1 cells allot? ! does> a@ ;
 [THEN]
 
 variable dsign
@@ -120,7 +120,7 @@ heap ptr hptr
     DUP CELL+ CELL+ OVER ! DUP CELL+ R> SWAP ! ;
 
 : size? ( hndl -- u | return size of region)
-    S" CELL+ @" EVALUATE ; IMMEDIATE
+    postpone cell+ postpone @ ; immediate nondeferred
 
 \ allocate a section of the heap for the linked lists
 
@@ -251,19 +251,22 @@ a list member.
 ;
 
 : car ( list -- ^value )                        \ LISP  "car"
-        S" CELL+ a@" EVALUATE ; IMMEDIATE nondeferred
+    state @ if postpone cell+ postpone a@ 
+    else cell+ a@ then ; IMMEDIATE nondeferred
 
 : first ( list -- ^value )                      \ LISP  "first"
-        S" CELL+ a@" EVALUATE ; IMMEDIATE nondeferred
+    state @ if postpone cell+ postpone a@
+    else cell+ a@ then ; IMMEDIATE nondeferred
 
 : cdr ( list -- list )                          \ LISP  "c-d-r"
-        S" a@" EVALUATE ; IMMEDIATE nondeferred
+    state @ if postpone a@ else a@ then ; IMMEDIATE nondeferred
 
 : rest ( list -- list )                         \ Common LISP  "rest"
-        S" a@" EVALUATE ; IMMEDIATE nondeferred
+    state @ if postpone a@ else a@ then ; IMMEDIATE nondeferred
 
 : second ( list -- ^value )			\ LISP  "second"
-	S" a@ CELL+ a@" EVALUATE ; IMMEDIATE nondeferred 
+    state @ if postpone a@ postpone cell+ postpone a@
+    else a@ cell+ a@ then ; IMMEDIATE nondeferred 
 
 : reverse  ( list -- reversed-list )    \ LISP  "reverse"
         nil swap
@@ -590,7 +593,7 @@ nil ptr temp-list
 	      [char] ]  of  2drop true dup to ]?           endof
               [char] .  of  2drop (quote-dot) over ! true  endof
               [char] @  of  1 /string pad pack pad find
-                            IF >body a@ ELSE drop nil THEN
+                            IF ( >body a@) execute ELSE drop nil THEN
                             swap cons false               endof
 	      [char] "  of  2drop postpone s" $>hndl
 	                    swap cons false	          endof
