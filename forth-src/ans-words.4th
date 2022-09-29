@@ -75,7 +75,7 @@ CREATE PAD 512 ALLOT
     dup a@ swap cell+
     state @ IF
       postpone literal
-      compile-name
+      name>compile execute
     ELSE
       swap name>interpret execute
     THEN ; immediate
@@ -86,23 +86,23 @@ CREATE PAD 512 ALLOT
 ;
 
 : VALUE ( n "name" -- )
-    s" !" find-name 1 cells xVALUE
+    [ s" !" find-name ] literal 1 cells xVALUE
     does> cell+ state @ if postpone literal postpone @ 
       else @ then ;
 
 : 2VALUE ( x1 x2 "name" -- )
-    s" 2!" find-name 2 cells xVALUE
+    [ s" 2!" find-name ] literal 2 cells xVALUE
     does> cell+ state @ if postpone literal postpone 2@ 
       else 2@ then ;
 
 : FVALUE ( F: r -- ) ( "name" -- )
-    s" F!" find-name 1 floats xVALUE
+    [ s" F!" find-name ] literal 1 floats xVALUE
     does> cell+ state @ if postpone literal postpone f@ 
       else f@ then ;
 
 \ PTR is a nonstandard word commonly used by kForth programs.
 : PTR ( a "name" -- )
-    s" !" find-name 1 cells xVALUE
+    [ s" !" find-name ] literal 1 cells xVALUE
     does> cell+ state @ if postpone literal postpone a@ 
       else a@ then ;
 
