@@ -439,4 +439,9 @@
 #define OP_PI                   425
 #define OP_FSQUARE              426
 
+// Windows specific opcodes
+#define OP_VALLOC               450
+#define OP_VFREE                451
+#define OP_VPROTECT             452
+
 #endif
