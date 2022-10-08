@@ -1179,7 +1179,7 @@ int CPP_compilecomma ()
 }
 
 // COMPILE-NAME ( nt -- )
-// Append the compilation semantics of nt to the current definition.
+// Perform the compilation semantics of the word referenced by nt.
 // Non-standard word used by the Forth Compiler.
 int CPP_compilename ()
 {
