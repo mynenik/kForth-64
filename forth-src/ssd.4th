@@ -11,6 +11,7 @@
 \                   single step debug is limited.
 \   2021-07-21  km  code cleanup and one fix to OP.
 \   2022-08-13  km  add opcodes and info for U/MOD and UD/MOD.
+\   2022-10-15  km  added XT-SEE (similar to Gforth's XT-SEE).
 
 [UNDEFINED] BEGIN-STRUCTURE [IF] include struct-200x [THEN]
 [UNDEFINED] BEGIN-MODULE [IF] include modules [THEN]
@@ -554,15 +555,17 @@ create SingleITCBuf 3 cells allot
     swap 0 ?DO dup @ space addr. cell+ LOOP
     drop ;
 
-: see ( "name" -- )
-    ' xt>itc
+: xt-see ( xt -- )
+    xt>itc
     BEGIN
-      dup .address 
+      dup .address
       ITC-packet@ >r
-      r@ SingleITCBuf c@ swap 
+      r@ SingleITCBuf c@ swap
       over 3 spaces op. cr
       r> swap OP_RET =
     UNTIL drop ;
+
+: see ( "name" -- ) ' xt-see ;
 
 : step ( i*x aITC -- j*x aITC' )
     ITC-packet@ dup >r
