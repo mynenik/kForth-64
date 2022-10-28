@@ -61,7 +61,7 @@ extern "C" {
   int CPP_nondeferred();
   int CPP_source();
   int CPP_refill();
-  int CPP_compilename();
+  int CPP_compile_to_current();
 
   // Provided by vmc.c
   void strupr (char*);
@@ -253,7 +253,7 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 	      if (pWord)
 		{
                   PUSH_ADDR((long int) pWord)
-		  CPP_compilename();		  
+		  CPP_compile_to_current();		  
 
 		  int ex_meth = ExecutionMethod((int) pWord->Precedence);
 		  vector<byte> SingleOp;
