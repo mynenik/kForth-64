@@ -25,7 +25,7 @@ include fcalls-x86_64
 0 value llabs 
     
 : dltest ( -- )
-    c" libc-2.30.so" 1+ RTLD_LAZY dlopen to hndLib
+    c" libc.so.6" 1+ RTLD_LAZY dlopen to hndLib
     hndLib 0= IF check-dlerror THEN
     cr ." Opened the C library."
 

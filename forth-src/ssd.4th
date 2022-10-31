@@ -12,7 +12,8 @@
 \   2021-07-21  km  code cleanup and one fix to OP.
 \   2022-08-13  km  add opcodes and info for U/MOD and UD/MOD.
 \   2022-10-15  km  added XT-SEE (similar to Gforth's XT-SEE).
-
+\   2022-10-19  km  added opcodes and info for: FIND-NAME-IN
+\                     FIND-NAME  F+!  PI  FSQUARE
 [UNDEFINED] BEGIN-STRUCTURE [IF] include struct-200x [THEN]
 [UNDEFINED] BEGIN-MODULE [IF] include modules [THEN]
 [UNDEFINED] DUMP [IF] include dump [THEN]
@@ -486,6 +487,9 @@ Private:
 388  constant  OP_FROT
 389  constant  OP_FOVER
 
+396  constant  OP_FIND-NAME-IN
+397  constant  OP_FIND-NAME
+
 400  constant  OP_.NOT.
 401  constant  OP_.AND.
 402  constant  OP_.OR.
@@ -503,6 +507,9 @@ Private:
 421  constant  OP_SFLOAT+
 422  constant  OP_FLOATS
 423  constant  OP_FLOAT+
+424  constant  OP_F+!
+425  constant  OP_PI
+426  constant  OP_FSQUARE
 
 Public:
 
@@ -555,7 +562,13 @@ create SingleITCBuf 3 cells allot
     swap 0 ?DO dup @ space addr. cell+ LOOP
     drop ;
 
-: xt-see ( xt -- )
+Private:
+variable addrconv
+
+Public:
+
+: xt-see ( xt|u -- )
+    addrconv ! addrconv a@  \ allows using ival (u) as address
     xt>itc
     BEGIN
       dup .address
@@ -927,6 +940,11 @@ S" FEXPM1"         0 nc' FEXPM1         OP_FEXPM1         ti!
 S" FLNP1"          0 nc' FLNP1          OP_FLNP1          ti!
 S" UD.R"           0 nc' UD.R           OP_UD.R           ti!
 S" D.R"            0 nc' D.R            OP_D.R            ti!
+S" FIND-NAME-IN"   0 nc' FIND-NAME-IN   OP_FIND-NAME-IN   ti!
+S" FIND-NAME"      0 nc' FIND-NAME      OP_FIND-NAME      ti!
+S" F+!"            0 nc' F+!            OP_F+!            ti!
+S" PI"             0 nc' PI             OP_PI             ti!
+S" FSQUARE"        0 nc' FSQUARE        OP_FSQUARE        ti!
 S" F2DROP"         0 nc' F2DROP         OP_F2DROP         ti!
 S" F2DUP"          0 nc' F2DUP          OP_F2DUP          ti!
 
