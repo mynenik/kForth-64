@@ -1,7 +1,7 @@
 \ ssd.4th
 \ 
 \ SEE facility and Single-Step Debugger for kForth
-\ (Preliminary, for kForth-32 v2.x and kForth-64 v0.2.x)
+\ For kForth-32 and kForth-Win32 v2.x and kForth-64 v0.2.x
 \
 \  K. Myneni, 2021-07-19
 \
@@ -14,6 +14,8 @@
 \   2022-10-15  km  added XT-SEE (similar to Gforth's XT-SEE).
 \   2022-10-19  km  added opcodes and info for: FIND-NAME-IN
 \                     FIND-NAME  F+!  PI  FSQUARE
+\   2023-01-22  km  conditional inclusion for non-Win32 words.
+
 [UNDEFINED] BEGIN-STRUCTURE [IF] include struct-200x [THEN]
 [UNDEFINED] BEGIN-MODULE [IF] include modules [THEN]
 [UNDEFINED] DUMP [IF] include dump [THEN]
@@ -871,11 +873,13 @@ S" COMPILE-NAME" 0 nc' COMPILE-NAME OP_COMPILE-NAME ti!
 S" POSTPONE" 0 nc' POSTPONE  OP_POSTPONE ti!
 S" NONDEFERRED" 0 nc' NONDEFERRED OP_NONDEFERRED ti!
 S" FORGET"   0 nc' FORGET    OP_FORGET   ti!
+[UNDEFINED] _WIN32_ [IF]
 S" FORTH-SIGNAL" 0 nc' FORTH-SIGNAL OP_FORTH-SIGNAL ti!
 S" RAISE"    0 nc' RAISE     OP_RAISE    ti!
 S" SET-ITIMER" 0 nc' SET-ITIMER OP_SET-ITIMER ti!
 S" GET-ITIMER" 0 nc' GET-ITIMER OP_GET-ITIMER ti!
 S" US2@"     0 nc' US2@      OP_US2@     ti!
+[THEN]
 S" >FLOAT"   0 nc' >FLOAT    OP_>FLOAT   ti!
 S" FSINCOS"  0 nc' FSINCOS   OP_FSINCOS  ti!
 S" FACOSH"   0 nc' FACOSH    OP_FACOSH   ti!
@@ -912,7 +916,9 @@ S" DLOPEN"   0 nc' DLOPEN    OP_DLOPEN    ti!
 S" DLERROR"  0 nc' DLERROR   OP_DLERROR   ti!
 S" DLSYM"    0 nc' DLSYM     OP_DLSYM     ti!
 S" DLCLOSE"  0 nc' DLCLOSE   OP_DLCLOSE   ti!
+[UNDEFINED] _WIN32_ [IF]
 S" US"       0 nc' US        OP_US        ti!
+[THEN]
 S" ALIAS"    0 nc' ALIAS     OP_ALIAS     ti!
 S" SYSTEM"   0 nc' SYSTEM    OP_SYSTEM    ti!
 S" CHDIR"    0 nc' CHDIR     OP_CHDIR     ti!
