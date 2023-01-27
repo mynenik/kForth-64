@@ -155,10 +155,10 @@
 ;
 
 : gcd ( n1 n2 -- gcd | find greatest common divisor)
-    ?DUP IF SWAP OVER MOD RECURSE THEN ABS ;
+    ?DUP IF TUCK MOD RECURSE THEN ABS ;
 
 : simplify-fraction ( num denom -- num' denom' | simplify)
-    2DUP gcd DUP >R / SWAP R> / SWAP ;    
+    2DUP gcd TUCK / >R / R> ;    
 
 : /sqrt ( isign inum idenom -- f | f = isign*sqrt[inum/idenom])
     ROT >R >R s>f r> s>f f/ fsqrt R> 0< IF FNEGATE THEN ;
