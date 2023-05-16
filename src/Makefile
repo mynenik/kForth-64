@@ -1,7 +1,7 @@
 #
 # Makefile for kForth-64
 #
-# Copyright (c) 1998--2022 Krishna Myneni, 
+# Copyright (c) 1998--2023 Krishna Myneni, 
 #   <krishna.myneni@ccreweb.org>
 #
 # This software is provided under the terms of the GNU 
@@ -25,7 +25,7 @@
 # Invoke "make debug" if you want to create an executable
 # that contains debugging information for the GNU debugger (gdb).
 
-VERSION = 0.4.2
+VERSION = 0.4.3
 DEF_DIR_VAR=KFORTH_DIR
 BUILD_DATE=`date +%F`
 DEBUG = 
