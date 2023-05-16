@@ -12,6 +12,9 @@
 \                   >FLOAT, but also the floating point value.
 \   2010-04-25  km; additional tests to cover some cases not
 \                   checked earlier.
+\   2023-05-14  km; additional tests to catch improper
+\                   conversions (fp number recognition in
+\                   kForth has been tightened).
 
 s" ans-words" included
 
@@ -60,26 +63,34 @@ true verbose !
 TESTING >FLOAT
 DECIMAL
 SET-EXACT
-t{  S" ."    >FLOAT  ->   FALSE     }t
-t{  S" E"    >FLOAT  ->   FALSE     }t
-t{  S" .E"   >FLOAT  ->   FALSE     }t
-t{  S" .E-"  >FLOAT  ->   FALSE     }t
-t{  S" +"    >FLOAT  ->   FALSE     }t
-t{  S" -"    >FLOAT  ->   FALSE     }t
-t{  S"  9"   >FLOAT  ->   FALSE     }t
-t{  S" 9 "   >FLOAT  ->   FALSE     }t
-t{  S" "     >FLOAT  ->   0E TRUE   rx}t 
-t{  S"    "  >FLOAT  ->   0E TRUE   rx}t
-t{  S" 1+1"  >FLOAT  ->   10E TRUE  rx}t
-t{  S" 1-1"  >FLOAT  ->   0.1E TRUE rx}t
-t{  S" 9"    >FLOAT  ->   9E TRUE   rx}t
-t{  S" 9."   >FLOAT  ->   9E TRUE   rx}t
-t{  S" .9"   >FLOAT  ->   0.9E TRUE rx}t
-t{  S" 9E"   >FLOAT  ->   9E TRUE   rx}t
-t{  S" 9e+"  >FLOAT  ->   9E TRUE   rx}t
-t{  S" 9d-"  >FLOAT  ->   9E TRUE   rx}t
+t{  S" ."     >FLOAT  ->  FALSE     }t
+t{  S" E"     >FLOAT  ->  FALSE     }t
+t{  S" E0"    >FLOAT  ->  FALSE     }t
+t{  S" .E"    >FLOAT  ->  FALSE     }t
+t{  S" .E-"   >FLOAT  ->  FALSE     }t
+t{  S" +"     >FLOAT  ->  FALSE     }t
+t{  S" -"     >FLOAT  ->  FALSE     }t
+t{  S"  9"    >FLOAT  ->  FALSE     }t
+t{  S" 9 "    >FLOAT  ->  FALSE     }t
+t{  S" 9E."   >FLOAT  ->  FALSE     }t
+t{  S" 0.4."  >FLOAT  ->  FALSE     }t
+t{  S" 0.4.2" >FLOAT  ->  FALSE     }t
+t{  S" 1E0.2" >FLOAT  ->  FALSE     }t
+t{  S" 1E2."  >FLOAT  ->  FALSE     }t
+
+t{  S" "      >FLOAT  ->  0E TRUE   rx}t 
+t{  S"    "   >FLOAT  ->  0E TRUE   rx}t
+t{  S" 1+1"   >FLOAT  ->  10E TRUE  rx}t
+t{  S" 1-1"   >FLOAT  ->  0.1E TRUE rx}t
+t{  S" 9"     >FLOAT  ->  9E TRUE   rx}t
+t{  S" 9."    >FLOAT  ->  9E TRUE   rx}t
+t{  S" .9"    >FLOAT  ->  0.9E TRUE rx}t
+t{  S" 9E"    >FLOAT  ->  9E TRUE   rx}t
+t{  S" 9e+"   >FLOAT  ->  9E TRUE   rx}t
+t{  S" 9d-"   >FLOAT  ->  9E TRUE   rx}t
 
 \ Additional tests
+t{  S" 0E0"       >FLOAT  ->  0E     TRUE  rx}t
 t{  S" -35E2"     >FLOAT  ->  -3500E TRUE  rx}t
 t{  S" -35.E2"    >FLOAT  ->  -3500E TRUE  rx}t
 t{  S" -35.0E2"   >FLOAT  ->  -3500E TRUE  rx}t

@@ -80,7 +80,7 @@ int vm(byte*);
 
 struct timeval ForthStartTime;
 struct termios tios0;
-struct mallinfo ForthStartMem;
+struct mallinfo2 ForthStartMem;
 double* pf;
 double f;
 char temp_str[256];
@@ -569,7 +569,12 @@ Check the string token to see if it is an LMI style floating point
 number; if so set the value of *p and return True, otherwise
 return False.
 */
-    char *pStr = token;
+    char s[256];
+    char *pStr = &s[0];
+    char *pEnd;
+    int f = FALSE;
+
+    strcpy(s, token);
 
     if (strchr(pStr, 'E'))
     {
@@ -583,13 +588,19 @@ return False.
             /* LMI Forth style */
 
             --pStr;
-            if (*pStr == 'E') *pStr = '\0';
-            *p = atof(token);
-            return TRUE;
+            if ((*pStr == '+') || (*pStr == '-')) {
+	      *pStr = '\0';
+              --pStr;
+	    }
+	    if (pStr > &s[0]) {
+              if (*pStr == 'E') *pStr = '\0';
+	    }
+            *p = strtod(s, &pEnd);
+             if (*pEnd == 0) f = TRUE;
         }
     }
 
-    return FALSE;
+    return f;
 }
 /*----------------------------------------------------------*/
 
@@ -1179,14 +1190,14 @@ int C_us2fetch ()
 void set_start_mem ()
 {
   /* initialize starting memory usage */
-  ForthStartMem = mallinfo();
+  ForthStartMem = mallinfo2();
 }
 
 int C_used ()
 {
   /* stack: ( -- u | return bytes used since start of Forth ) */
   unsigned long u0, u1;
-  struct mallinfo mi = mallinfo();
+  struct mallinfo2 mi = mallinfo2();
   u0 = ForthStartMem.arena + ForthStartMem.hblkhd;
   u1 = mi.arena + mi.hblkhd;
   TOS = (u1 - u0);
