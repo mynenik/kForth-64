@@ -80,7 +80,7 @@ int vm(byte*);
 
 struct timeval ForthStartTime;
 struct termios tios0;
-struct mallinfo2 ForthStartMem;
+struct mallinfo ForthStartMem;
 double* pf;
 double f;
 char temp_str[256];
@@ -1190,14 +1190,14 @@ int C_us2fetch ()
 void set_start_mem ()
 {
   /* initialize starting memory usage */
-  ForthStartMem = mallinfo2();
+  ForthStartMem = mallinfo();
 }
 
 int C_used ()
 {
   /* stack: ( -- u | return bytes used since start of Forth ) */
   unsigned long u0, u1;
-  struct mallinfo2 mi = mallinfo2();
+  struct mallinfo mi = mallinfo();
   u0 = ForthStartMem.arena + ForthStartMem.hblkhd;
   u1 = mi.arena + mi.hblkhd;
   TOS = (u1 - u0);
