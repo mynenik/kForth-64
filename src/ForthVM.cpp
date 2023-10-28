@@ -3,7 +3,7 @@
 // The C++ portion of the kForth Virtual Machine to 
 // execute Forth byte code.
 //
-// Copyright (c) 1996--2022 Krishna Myneni,
+// Copyright (c) 1996--2023 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -2188,8 +2188,8 @@ int CPP_bracketchar ()
 
 int CPP_brackettick ()
 {
-  CPP_tick ();
-  return CPP_literal();  
+  int e = CPP_tick ();
+  if (e) return e; else return CPP_literal();  
 }
 //-------------------------------------------------------------------
 // experimental non-standard word MY-NAME
