@@ -24,29 +24,30 @@
 \                   func_Ngauss.4th, and modified parameter ordering
 \                   accordingly
 \   2016-06-04  km; update path for fitting function.
+\   2023-11-13  km; updated to use with curvefit.4th v2.0
 
 include ans-words
+include strings
 include fsl/fsl-util
 include fsl/dynmem
 include fsl/gaussj
-
+include fsl/extras/curvefit
 
 \ Define the fitting function.
 
 include fsl/extras/func_Ngauss
 2 to Npeaks
 
-include fsl/extras/curvefit   ( functn must be defined prior to loading curvefit)
-
 FLOAT DARRAY  x{
 FLOAT DARRAY  y{
+FLOAT DARRAY yfit{
 
 0 value np	\ number of data points
 
 : put_data ( y1 ... yn -- )
     & x{ np }malloc
     & y{ np }malloc
-
+    & yfit{ np }malloc
     np 0 DO  s>f y{ np 1- I - } F!  LOOP
     np 0 DO  I 1+ s>f x{ I } F!	 LOOP  \ x is a running index, starting at 1
 ;
@@ -55,11 +56,11 @@ include wfms01-1.dat	\ put the data from the file onto the stack
 513 to np               \ number of data points in the file
 put_data		\ move the data from the stack to the y matrix
 
-
 7 value npar	\ number of fitting parameters
 
 npar FLOAT ARRAY  a{
 npar FLOAT ARRAY  deltaa{
+npar FLOAT ARRAY  sigmaa{
 
 \ Setup initial values for the function parameters:
 
@@ -73,13 +74,17 @@ npar a{ }fput
 1e ( dB) 1e ( dA1) 0.1e ( dmu1) 0.1e ( dsigma1) 1e ( dA2) 0.1e ( dmu2) 0.1e ( dsigma2)
 npar deltaa{ }fput
 
-: params. ( -- | display the current values of the parameters )
-    cr npar 0 DO a{ I } F@ F. cr loop ;
+x{ y{ yfit{ a{ deltaa{ sigmaa{ npar np ' functn init-curvefit
+
+: params. ( -- | display current values of parameters and sigmas )
+    npar 0 DO 
+      a{ I } F@ 12 4 f.rd ."   +/- " sigmaa{ I } F@ 8 4 f.rd cr 
+    LOOP ;
 
 : iterate ( -- | perform one iteration of curvefit and display results )
-    x{ y{ a{ deltaa{ npar np curfit
-    ." Fitted Parameters:" cr params. cr 
-    CR ." reduced chi-squared = " F. ;
+    curfit
+    ." Fitted Parameters:" cr params. cr
+    ." reduced chi-squared = " F. ;
 
 
 : genfit ( -- | display the fitted data values )
@@ -91,7 +96,7 @@ npar deltaa{ }fput
     loop ; 
 
 cr cr
-.( Initial Parameters are: ) cr params. cr cr
+.( Initial Parameters are: ) cr params. cr 
 .( Type 'iterate' to execute curfit once and print the results.) cr
 .( Continue to 'iterate' until chi-square converges.) cr cr
 .( When the fit converges, you may write the fitted data to a file) cr
