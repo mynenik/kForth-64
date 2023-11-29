@@ -97,7 +97,7 @@ init-b-ser
 	    X-TMP F!
 
             1.0e X-TMP F@ F/
-            FDUP Z-TMP F! FDUP F*
+            FDUP Z-TMP F! FSQUARE
 
             ser{ 3 }Horner Z-TMP F@ F*
                                             

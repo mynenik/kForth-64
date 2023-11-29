@@ -71,7 +71,7 @@ Public:
     hn 1 ?DO                \ do diagonals
 	hn DUP I + SWAP I - *   S>F
         I DUP *    S>F F/
-	FDUP F* F*
+	FSQUARE F*
 	FDUP hinv{{ I I }} F!
     LOOP
     FDROP
@@ -102,7 +102,7 @@ Public:
     hn 0 DO
 	hn 0 DO
 	    I J < IF   \ numerator accumulation
-		I J - S>F FDUP F* FROT F* FSWAP
+		I J - S>F FSQUARE FROT F* FSWAP
 	    THEN
 
 	    I J + 1+ S>F F*    \ denominator accumulation

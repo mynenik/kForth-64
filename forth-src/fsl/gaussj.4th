@@ -99,7 +99,7 @@
 \               : F2DUP ( F: r1 r2 -- r1 r2 r1 r2 ) FOVER FOVER ;
 \               : 1/F  ( F: r -- 1/r ) 1e FSWAP F/ ;
 \               : F+! ( addr -- ) ( F: r -- )  DUP F@ F+ F! ;
-\               : FSQR ( F: r1 -- r2 ) FDUP F* ;
+\               : FSQUARE ( F: r1 -- r2 ) FDUP F* ;
 
 \ Note: the code uses 5 fp stack cells (iForth vsn 1.07) when executing
 \       the test words.
@@ -135,7 +135,7 @@ Public:
 [undefined] f2dup [IF] : F2DUP ( r1 r2 -- r1 r2 r1 r2 ) FOVER FOVER ; [THEN]
 [undefined] 1/F   [IF] : 1/F  ( f -- 1/f )   1e FSWAP F/ ; [THEN]
 [undefined] F+!   [IF] : F+!  ( f a --   )   DUP >R F@ F+ R> F! ; [THEN] 
-[undefined] FSQR  [IF] : FSQR ( f -- f^2)    FDUP F* ; [THEN]
+[undefined] FSQUARE [IF] : FSQUARE ( f -- f^2)    FDUP F* ; [THEN]
 
 Private:
 
@@ -453,7 +453,7 @@ Public:
 : }}absmat ( 'A r c -- )  ( F: -- e )
         ( LOCALS| c1 r1 a{{ |)
 	TO c1  TO r1  TO a{{
-        0e  r1 0 ?DO  c1 0 ?DO  a{{ J I }} F@  FSQR  F+  LOOP LOOP  FSQRT ;
+        0e  r1 0 ?DO  c1 0 ?DO  a{{ J I }} F@  FSQUARE  F+  LOOP LOOP  FSQRT ;
 
 \ Initialize all matrix elements of A to the number e.
 

@@ -218,7 +218,7 @@ Public:
 
                               1+ 2 DO
                                    I 2* 1- S>F b F@ F*
-                                   c F@ FDUP F* a F@ F* F+
+                                   c F@ FSQUARE a F@ F* F+
                                    b F@ a F!
                                    b F!
                                 LOOP

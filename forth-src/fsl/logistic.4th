@@ -34,7 +34,7 @@ BASE @ DECIMAL
         FOVER F* FROT F+
         FEXP
         
-        FDUP 1.0e0 F+ FDUP F*
+        FDUP 1.0e0 F+ FSQUARE
         F/ F*
 ;
 

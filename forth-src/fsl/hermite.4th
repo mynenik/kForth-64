@@ -66,8 +66,8 @@ Public:
                                        \ now update h
                                        FROT FROT
                                        FOVER
-                                       x{ I } F@ F- FDUP F*
-                                       x{ J } F@ x{ I } F@ F- FDUP F*
+                                       x{ I } F@ F- FSQUARE
+                                       x{ J } F@ x{ I } F@ F- FSQUARE
                                        F/ F*
 
                                        FROT

@@ -81,10 +81,10 @@ FVARIABLE BU-TMP
 
 : asymptotic-u ( fnu fx -- U[nu,x] )
 
-    0.5e FOVER FDUP F* F/
+    0.5e FOVER FSQUARE F/
     A-TMP F!
 
-    FDUP FDUP F* -0.25e F*
+    FDUP FSQUARE -0.25e F*
     FEXP D-TMP F!
 
     FOVER 0.5e F+ F** D-TMP F@ FSWAP F/
@@ -109,10 +109,10 @@ FVARIABLE BU-TMP
 
 : asymptotic-v ( fnu fx -- V[nu,x] )
 
-    0.5e FOVER FDUP F* F/
+    0.5e FOVER FSQUARE F/
     A-TMP F!
 
-    FDUP FDUP F* 0.25e F*
+    FDUP FSQUARE 0.25e F*
     FEXP D-TMP F!
 
     FOVER 0.5e F- F** D-TMP F@ F*
@@ -337,13 +337,13 @@ Public:
 
                   FSWAP 0.5e F* FSWAP         \ nu is now 0.5*nu
 
-                  FDUP FDUP F* -0.25e F* FEXP A-TMP F!
+                  FDUP FSQUARE -0.25e F* FEXP A-TMP F!
                   FOVER 0.25e F+ 2.0e FSWAP F**
                   A-TMP F@ FSWAP F/  A-TMP F!
 
                   FDUP 0.0e F> IF
 
-                              FDUP F* 0.5e F*
+                              FSQUARE 0.5e F*
                               FSWAP 0.25e F+ FSWAP
                               0.5e FSWAP
 
@@ -361,13 +361,13 @@ Public:
 
                               NU-TMP F@ 0.25e F+ 
                               0.5e
-                              XU-TMP F@ FDUP F* 0.5e F*
+                              XU-TMP F@ FSQUARE 0.5e F*
 
                               M() B-TMP F@ F/ B-TMP F!
 
                               NU-TMP F@ 0.75e F+
                               1.5e
-                              XU-TMP F@ FDUP F* 0.5e F*
+                              XU-TMP F@ FSQUARE 0.5e F*
 
                               M() C-TMP F@ F/ 2.0e FSQRT F* XU-TMP F@ F* FNEGATE
 

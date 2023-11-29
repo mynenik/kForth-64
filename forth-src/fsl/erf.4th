@@ -106,7 +106,7 @@ Public:
 
 \ Error function for positive real arguments 
 : erfc1_pos ( f: x -- erfc[x] ) \ for non-negative x only; abs error <= 2.5e-5
-    FDUP func1 FSWAP FDUP F* FNEGATE FEXP F* ; ( erfc[x] )
+    FDUP func1 FSWAP FSQUARE FNEGATE FEXP F* ; ( erfc[x] )
  
 : erfc1 ( f: x -- erfc[x] ) \ for all x, using erfc(-x) = 2 - erfc(x)
     FDUP F0<  >R FABS erfc1_pos  R> IF  2e FSWAP F-  THEN ;
@@ -287,7 +287,7 @@ erfc_coeffs2{ 19 }  ptr  /erfc_coeff2
 \ erf(x), domain 2: -2 <= x < 2
 : erf_d2 ( F: x -- y)
    2.0e0 f/  fdup
-   fdup f* 2.0e0 f* 1.0e0 f-  
+   fsquare 2.0e0 f* 1.0e0 f-  
    erf_coeffs /erf_coeff chebev
 
    f* ;
@@ -298,11 +298,11 @@ erfc_coeffs2{ 19 }  ptr  /erfc_coeff2
 : erfc_d3 ( F: x -- y)
 
     fdup
-    fdup f* fnegate fexp  fover sqrt(pi) f* f/  fswap 
+    fsquare fnegate fexp  fover sqrt(pi) f* f/  fswap 
 
     fdup 4.0e f> if
       4.0e0 fswap f/
-      fdup f* 2.0e0 f* 1.0e0 f-
+      fsquare 2.0e0 f* 1.0e0 f-
       erfc_coeffs /erfc_coeff chebev
     else
       3.0e f-

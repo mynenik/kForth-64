@@ -349,7 +349,7 @@ FVARIABLE t_start
 \ y(0) = 1
 \ Exact solution is y(t) = 1 / sqrt(t + 1)
 : derivs-A2() ( t 'u 'dudt -- )
-    >R 0 } F@ FDUP FDUP F* F* FNEGATE 2e F/ R> 0 } F! FDROP ;
+    >R 0 } F@ FDUP FSQUARE F* FNEGATE 2e F/ R> 0 } F! FDROP ;
 
 : A2 ( t -- r )
     1e F+ FSQRT 1e FSWAP F/ ;

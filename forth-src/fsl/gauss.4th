@@ -68,7 +68,7 @@ Private:
 
 : gauss-small-y ( y -- z )
 
-       FDUP FDUP F*
+       FDUP FSQUARE
        small{ 8 }Horner
        F* 2.0E0 F*
 ;

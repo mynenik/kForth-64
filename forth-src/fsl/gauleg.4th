@@ -88,7 +88,7 @@ FLOAT DARRAY w{
          LOOP         
 
          >R z F@ p1 F@ F* pp F@ F- R@ S>F F*
-         z F@ FDUP F* 1.0E0 F- F/       pp F!
+         z F@ FSQUARE 1.0E0 F- F/       pp F!
 	 R>
 
          p1 F@ pp F@ F/ FNEGATE
@@ -99,7 +99,7 @@ FLOAT DARRAY w{
          F- FABS eps F<
        UNTIL
 
-       pp F@ FDUP F*
+       pp F@ FSQUARE
 ;
 
 Public:
@@ -123,7 +123,7 @@ VARIABLE gleg-n
               I S>F 0.75E0 F+ F*     FCOS z F!
 	      gleg-n @
               calc-pp ROT DROP
-              z F@ FDUP F* FNEGATE 1.0E0 F+ F*
+              z F@ FSQUARE FNEGATE 1.0E0 F+ F*
               2.0E0 xl F@ F* FSWAP F/
               FDUP  w{ I } F!     
 	      w{ gleg-n @ 1- I - } F!

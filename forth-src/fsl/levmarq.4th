@@ -53,7 +53,7 @@
 \		: F2DUP ( F: r1 r2 -- r1 r2 r1 r2 ) FOVER FOVER ;
 \	        : 1/F  ( F: r -- 1/r ) 1e FSWAP F/ ;
 \		: F+! ( addr -- ) ( F: r -- )  DUP F@ F+ F! ;
-\		: FSQR ( F: r1 -- r2 ) FDUP F* ;
+\		: FSQUARE ( F: r1 -- r2 ) FDUP F* ;
 \		: F1+ ( F: r -- r ) 1e F+ ;
 
 \ Note: the code uses 8 fp stack cells (iForth vsn 1.05) when executing
@@ -171,7 +171,7 @@ fvariable temp
 	LOOP
 	0e ( chi2)
 	ndata 0 DO \ summation loop over all data
-		   sig{ I } F@ FSQR 1/F ( -- chi2 s2)
+		   sig{ I } F@ FSQUARE 1/F ( -- chi2 s2)
 		   y{ I } F@
 		   x{ I } F@ a2{ dyda{ MrqFitter ( -- ... ymod)
 		   F- ( chi2 s2 dy)
@@ -183,7 +183,7 @@ fvariable temp
 		 	     LOOP ( -- chi2 s2 dy wt)
 			     FOVER F* beta{ I } F+!
 		   LOOP ( -- chi2 s2 dy)
-		   FSQR F* F+ ( -- chi2)
+		   FSQUARE F* F+ ( -- chi2)
 	LOOP
 	chisq F!
 	mfit 1 DO  I 0 DO  alpha2{{ J I }} F@ alpha2{{ I J }} F!  LOOP LOOP ;
@@ -336,7 +336,7 @@ FVARIABLE c
 	  DO	
 		I #params/f * TO ix
 		FOVER arr{ ix 1+ } F@ F-  arr{ ix 2+ } F@ F/ ( arg) FDUP a F!
-		FSQR FNEGATE FEXP ( ex) FDUP b F!
+		FSQUARE FNEGATE FEXP ( ex) FDUP b F!
 		a F@ F* F2* arr{ ix } F@ F* ( fac) c F!  ( -- x y)
 		arr{ ix } F@ b F@ F* F+ ( -- x y')
 		b F@ dyda{ ix } F!
@@ -383,9 +383,9 @@ FVARIABLE spread	\ actual value does NOT influence the number of
 
 	#datapoints 0 DO  I gscale   x{ I } F!  LOOP 
  	
-	#datapoints 0 DO I gscale 2.5e F- 1.5e F/ FSQR FNEGATE FEXP 3.3e F*
-			 I gscale 1.3e F- 2.1e F/ FSQR FNEGATE FEXP 6.6e F*  F-
-			 I gscale 6.5e F- 7.5e F/ FSQR FNEGATE FEXP 2.2e F*  F+
+	#datapoints 0 DO I gscale 2.5e F- 1.5e F/ FSQUARE FNEGATE FEXP 3.3e F*
+			 I gscale 1.3e F- 2.1e F/ FSQUARE FNEGATE FEXP 6.6e F*  F-
+			 I gscale 6.5e F- 7.5e F/ FSQUARE FNEGATE FEXP 2.2e F*  F+
 			 y{ I } F!
 	            LOOP 
 	

@@ -76,7 +76,7 @@ Public:
 
 : K[k] ( -- ) ( F: k -- K[k] )                  \ ACM Algorithm #55
 
-       FDUP F* 1.0E0 FSWAP F-
+       FSQUARE 1.0E0 FSWAP F-
 
        FDUP K-Coefs2{ 3 }Horner
        FSWAP FDUP K-Coefs1{ 3 }Horner
@@ -87,7 +87,7 @@ Public:
 
 : E[k] ( -- ) ( F: k -- K[k] )                  \ ACM Algorithm #56
 
-       FDUP F* 1.0E0 FSWAP F-
+       FSQUARE 1.0E0 FSWAP F-
 
        FDUP E-Coefs2{ 3 }Horner
        FSWAP FDUP E-Coefs1{ 2 }Horner
@@ -104,7 +104,7 @@ BASE @
 DECIMAL
 
 \ convert a modulus angle in degrees to the  modulus
-: modulus   PI F* 180.0E0 F/ FCOS FDUP F* 1.0E0 FSWAP F- FSQRT ;
+: modulus   PI F* 180.0E0 F/ FCOS FSQUARE 1.0E0 FSWAP F- FSQRT ;
 
 \ test driver,  calculates the complete elliptic integral of the first
 \ and second kind compare with Abramowitz & Stegun,
