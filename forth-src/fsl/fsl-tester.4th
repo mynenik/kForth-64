@@ -31,7 +31,7 @@
 \    2011-01-25  km; added elip12
 \    2011-01-29  km; added quadratic
 \    2021-07-22  km; use Forth 200x structures
-
+\    2023-11-30  km; added shellsrt
 include ans-words
 include fsl-util
 include dynmem
@@ -154,4 +154,8 @@ include gauss
 CR CR
 include r250
 
+CR CR
+include shellsrt
+
+CR CR
 bye

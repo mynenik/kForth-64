@@ -27,8 +27,10 @@
 \	ans-words.4th
 \	fsl-util.4th
 \
+\ Revisions:
+\   2023-11-30 km; added automated test code
 
-.( SHELLSORT         v1.3b          28 October 1994   cgm ) CR    
+CR .( SHELLSORT         v1.3c          30 November 2023  cgm,km)
 
 0 ptr astart  \ storage for base address used in array access
 0 ptr a1
@@ -65,22 +67,37 @@
 ;
 
 TEST-CODE? [IF]     \ test code =============================================
+[undefined] T{ [IF] s" ttester" included [THEN]
+BASE @
+DECIMAL
 
-33 FLOAT ARRAY Test{
+33 value Np
+Np FLOAT ARRAY Test{
 
-: fillTest{  ( -- )  33 0 DO  I S>F 0.7e F/ FSIN Test{ I } F!  LOOP  ;
+: fillTest{  ( -- )  Np 0 DO  I S>F 0.7e F/ FSIN Test{ I } F!  LOOP  ;
 
-   \ PRECISION  3 SET-PRECISION  print-width @ 10 print-width !
+0 value idx
+: all-descending? ( -- flag )
+    0 to idx 
+    BEGIN
+      Test{ idx 1+ } F@ Test{ idx } F@ F<=
+      idx 1+ Np < and
+    WHILE
+      idx 1+ to idx
+    REPEAT
+    idx 1+ Np = ;
 
-   fillTest{
-   cr .( UNSORTED values: ) cr  
-   33  Test{ }fprint cr
-   cr .( SORTED values: ) cr
-   33  Test{ }shellsort
-   33  Test{ }fprint cr
+CR
+TESTING }SHELLSORT      
+t{ fillTest{  ->  }t
+\   cr .( UNSORTED values: ) cr  
+\   Np  Test{ }fprint cr
+\   cr .( SORTED values: ) cr
+t{ Np Test{ }shellsort ->  }t
+\   Np  Test{ }fprint cr
+t{ all-descending? -> true }t
 
-   \ print-width ! SET-PRECISION
-
+BASE !
 [THEN]
 
 \ end of file
