@@ -11,7 +11,7 @@
 \ Revisions:
 \   2020-10-06  km  updated for 2019 redefinition of S.I. base units 
 \   2023-12-04  km  further updates for m_e, m_p, eps0, alpha^-1,
-\                   J/ev, kg/amu; added mu0.
+\                   J/ev, kg/amu; added mu0; correct units for dnu_Cs.
 
 BASE @
 DECIMAL
@@ -21,7 +21,7 @@ DECIMAL
 
 \ Physical Constants
 
-    9192631770e  fconstant  dnu_Cs \ hyperfine interval in Cs133 in s^-2 (exact)
+    9192631770e  fconstant  dnu_Cs \ hyperfine interval in Cs133 in Hz (exact)
      299792458e  fconstant  c	  \ speed of light in m/s  (exact)
  6.62607015e-34  fconstant  h     \ Planck's constant in J*s (exact)
 h 2pi f/         fconstant  hbar  \ 
@@ -48,6 +48,7 @@ h 2pi f/         fconstant  hbar  \
 .( Defined FCONSTANTs [physical constants in MKS units]: ) CR CR
 .(        pi ) CR
 .(       2pi ) CR
+.(    dnu_Cs     hyperfine transition frequency of Cs-133 [exact]) CR
 .(         c     speed of light [exact]) CR
 .(         h     Planck's constant [exact]) CR
 .(      hbar ) CR
