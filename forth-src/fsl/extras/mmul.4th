@@ -26,6 +26,7 @@
 \   2017-05-21  km; added SET_MMUL_PARAMS to be able to use DF_R1C2>A1A2
 \                   and DF_MUL_R1C2 independently of DF_MMUL.
 \   2021-05-09  km; added separate stack versions of words.
+\   2023-12-05  km; fix comment for DF_MMUL.
 \
 \ Notes:
 \   0. Matrix data is assumed to be stored in row order
@@ -88,7 +89,7 @@ Public:
 \ Multiply two double-precision matrices with data beginning at
 \ a1 and a2, and store at a3. Proper memory allocation is
 \ assumed, as are the dimensions for a2, i.e. nr2 = nc1 is
-\ assumed. This word assumes an integrated data/fp stack.
+\ assumed.
 [DEFINED] FDEPTH [IF]
 : df_mmul ( a1 a2 a3 nr1 nc1 nc2 -- )
     set_mmul_params
