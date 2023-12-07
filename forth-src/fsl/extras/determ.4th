@@ -14,6 +14,7 @@
 \   2017-06-11 km; rewrote determ.4th, factoring code for
 \                  clarity of algorithm and improving execution
 \                  efficiency.
+\   2023-12-05 km; use F+! to simplify DF_SUB_ROWS
 \
 \ determ is based on a similar routine from P.R. Bevington,
 \   "Data Reduction and Error Analysis for the Physical Sciences",
@@ -77,7 +78,7 @@ Public:
       arr{{ I L }} f@ fover f/ 
       Norder L 1+ DO
 	arr{{ L I }} f@ fover f* fnegate
-	arr{{ J I }} dup >r f@ f+ r> f!
+        arr{{ J I }} f+!
       LOOP
       fdrop
     LOOP

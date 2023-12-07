@@ -62,7 +62,7 @@ fvariable T_n+1
 Public:
 
 : numerov_integrate ( 'P 'Q n h -- )
-    fdup F* 12e F/ h^2/12 F!
+    FSQUARE 12e F/ h^2/12 F!
     >r  to num_Q{  to num_P{
     & num_F{ r@ }malloc
     malloc-fail? ABORT" numerov_integrate: Unable to allocate mem!"
