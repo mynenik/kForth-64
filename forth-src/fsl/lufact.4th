@@ -58,7 +58,8 @@
 \   2012-02-19  km; use KM/DNW's modules library     
 \   2021-05-16  km; update for use in separate fp stack system.
 \   2021-07-22  km; use Forth 200x data structures.
-CR .( LUFACT            V1.6i         22 July      2021   EFC )
+\   2023-12-11  km; use F+! to simplify calc.
+CR .( LUFACT            V1.6j         11 December  2023   EFCikm)
 BEGIN-MODULE
 
 BASE @ DECIMAL
@@ -210,8 +211,8 @@ FVARIABLE fscale2
          FDUP  fscale2 F! R> F!
 
          OVER OVER 1+ DO
-           matrix{{ OVER I }} F@ fscale2 F@ F* FNEGATE ftemp F!
-           matrix{{ J I }} DUP >R F@ ftemp F@ F+ R> F!
+           matrix{{ OVER I }} F@ fscale2 F@ F* FNEGATE 
+           matrix{{ J I }} F+!
          LOOP
               
        LOOP

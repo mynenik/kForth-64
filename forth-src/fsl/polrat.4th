@@ -84,7 +84,7 @@ FLOAT DARRAY xa{
 	OVER 2* 3 PICK ROT - 3 - < IF c{ OVER 1+ } F@
 				 ELSE d{ OVER    } >R  1-  R> F@ 
 				 THEN
-	FDUP y F@  F+ y F!
+	FDUP y F+!
 ;
 
 
