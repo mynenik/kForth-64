@@ -2,7 +2,7 @@
 //
 // Common declarations and data for kForth 64-bit Virtual Machine
 //
-// Copyright (c) 1998--2022 Krishna Myneni,
+// Copyright (c) 1998--2023 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -141,7 +141,8 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad L_nop, L_nop, L_nop, L_nop                 # 412--415
            .quad L_nop, L_udivmod, L_uddivmod, L_nop        # 416--419
            .quad L_sfloats, L_sfloatplus, L_floats, L_floatplus # 420--423
-           .quad L_fplusstore, L_pi, L_fsquare, L_nop       # 424--427
+           .quad L_fplusstore, L_pi, L_fsquare, L_starplus  # 424--427
+           .quad L_nop, L_nop, L_fsl_mat_addr, L_nop        # 428--431
 .text
 	.align WSIZE
 .global JumpTable

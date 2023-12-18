@@ -2,7 +2,7 @@
 //
 // The assembler portion of kForth 64-bit Virtual Machine
 //
-// Copyright (c) 1998--2022 Krishna Myneni,
+// Copyright (c) 1998--2023 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU 
@@ -2006,6 +2006,46 @@ L_add:
 	andb %ah, %al		# and the two types to preserve addr type
 	inc %rbx
 	movb %al, (%rbx)
+	xor %rax, %rax
+	NEXT
+
+L_starplus:
+	LDSP
+	INC_DSP
+	mov (%rbx), %rcx
+	INC_DSP 
+	STSP
+	mov (%rbx), %rax
+	INC_DSP
+	imulq (%rbx)
+	add %rcx, %rax
+	mov %rax, (%rbx)
+  .ifdef __FAST__
+	DEC_DSP
+  .endif
+	INC2_DTSP
+	xor %rax, %rax
+	NEXT
+
+L_fsl_mat_addr:
+	LDSP
+	INC_DSP
+	mov (%rbx), %rcx   # rcx = j (column index)
+	INC_DSP
+	STSP
+	mov (%rbx), %rdx   # rdx = i (row index)
+	mov WSIZE(%rbx), %rax   # adress of first element
+	sub $2*WSIZE, %rax # rax = a - 2 cells
+	mov %rax, %rdi
+	mov (%rax), %rax   # rax = ncols
+	imulq %rdx         # rax = i*ncols 
+        add %rax, %rcx     # rcx = i*ncols + j 
+	mov %rdi, %rax
+	add $WSIZE, %rax
+	mov (%rax), %rax   # rax = size
+	imulq %rcx         # rax = size*(i*ncols + j)
+	add %rax, WSIZE(%rbx)   # TOS = a + rax
+	INC2_DTSP
 	xor %rax, %rax
 	NEXT
 

@@ -2,7 +2,7 @@
 //
 // The intrinsic Forth word list for kForth
 //
-// Copyright (c) 2008--2022 Krishna Myneni,
+// Copyright (c) 2008--2023 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org> 
 //
 // This software is provided under the terms of the GNU
@@ -111,6 +111,7 @@ WordTemplate ForthWords[] =
     { "SFLOATS",   OP_SFLOATS,      0 },
     { "SFLOAT+",   OP_SFLOATPLUS,   0 },
 #endif
+    { "}}",        OP_FSL_MAT_ADDR, 0 },
     { "?",         OP_QUESTION,     0 },
     { "@",         OP_FETCH,        0 },
     { "!",         OP_STORE,        0 },
@@ -317,6 +318,7 @@ WordTemplate ForthWords[] =
     { "+",         OP_ADD,          0 },
     { "-",         OP_SUB,          0 },
     { "*",         OP_MUL,          0 },
+    { "*+",        OP_STARPLUS,     0 },
     { "/",         OP_DIV,          0 },
     { "MOD",       OP_MOD,          0 },
     { "/MOD",      OP_SLASHMOD,     0 },

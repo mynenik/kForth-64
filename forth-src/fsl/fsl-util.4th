@@ -362,10 +362,13 @@ fp-stack? [IF]
 : DMATRIX ( size -- )  DARRAY ;
 
 \ word to fetch 2-D array addresses
-: }}  ( addr i j -- addr[i][j] ) 
-    >R >R
-    DUP [ 2 CELLS ] LITERAL - 2@     \ &a[0][0] size m
-    R> * R> + * + ;
+[UNDEFINED] }} [IF]
+cr .( Using FSL Forth source definition of }} ) cr
+    : }} ( addr i j -- addr[i][j] )
+       >R >R
+       DUP [ 2 CELLS ] LITERAL - 2@     \ &a[0][0] size m
+       R> * R> + * + ;
+[THEN]
 
 \ print nXm elements of a float 2-D array
 : }}fprint ( n m addr -- ) 

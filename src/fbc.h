@@ -2,7 +2,7 @@
 //
 //  Forth Byte Codes (FBC) for kForth
 //
-//  Copyright (c) 1996--2022 Krishna Myneni,
+//  Copyright (c) 1996--2023 Krishna Myneni,
 //    <krishna.myneni@ccreweb.org>
 //
 //  This software is provided under the terms of the GNU
@@ -438,6 +438,10 @@
 #define OP_FPLUSSTORE           424
 #define OP_PI                   425
 #define OP_FSQUARE              426
+#define OP_STARPLUS             427
+#define OP_FSTARPLUS            428
+
+#define OP_FSL_MAT_ADDR         430   // row ordered indexing
 
 // Windows specific opcodes
 #define OP_VALLOC               450
