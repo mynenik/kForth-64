@@ -55,6 +55,7 @@
 \                   systems.
 \   2020-03-14  km; added code to validate the pde solution by
 \                   computing the Laplacian in the grid.
+\   2023-12-19  km; use *+ for speeding up addressing; other minor changes.
 
 include ans-words
 
@@ -69,8 +70,13 @@ create grid[[ GRIDSIZE dup * FLOATS allot
 \ copy of last grid values for convergence test
 create last_grid[[ GRIDSIZE dup * FLOATS allot	
 
-: ]]F@ ( a row col -- r )  >r GRIDSIZE * r> + floats + f@ ;
-: ]]F! ( r a row col -- )  >r GRIDSIZE * r> + floats + f! ;
+[DEFINED] *+ [IF]
+: ]]F@ ( a row col -- ) ( F: -- r) GRIDSIZE swap *+ floats + f@ ;
+: ]]F! ( a row col -- ) ( F: r --) GRIDSIZE swap *+ floats + f! ;
+[ELSE]
+: ]]F@ ( a row col -- ) ( F: -- r) >r GRIDSIZE * r> + floats + f@ ;
+: ]]F! ( a row col -- ) ( F: r --) >r GRIDSIZE * r> + floats + f! ;
+[THEN]
 
 : zero-matrix ( a -- ) GRIDSIZE dup * floats erase ;
 : copy-matrix ( a1 a2 n m -- ) * floats move ;
@@ -145,13 +151,13 @@ defer inside?
     ['] inside_rectangle? is inside?
     init_rectangular_grid ;
 
-
-: nearest@ ( i j -- f1 f2 f3 f4 | fetch the nearest neighbor grid values )
+\ Fetch the nearest neighbor grid values )
+: nearest@ ( i j -- ) ( F: -- r1 r2 r3 r4 )
     2>R
-    grid[[ 2R@ 1- 0 MAX ]]F@         \ fetch left nearest neighbor
-    grid[[ 2R@ 1+ GRIDSIZE 1- MIN ]]F@  \ fetch right nearest neighbor
-    grid[[ 2R@ SWAP 1- 0 MAX SWAP ]]F@  \ fetch up nearest neighbor
-    grid[[ 2R> SWAP 1+ GRIDSIZE 1- MIN SWAP ]]F@ \ fetch down nearest neighbor
+    grid[[ 2R@ 1- 0 MAX ]]F@            \ left nn
+    grid[[ 2R@ 1+ GRIDSIZE 1- MIN ]]F@  \ right nn
+    grid[[ 2R@ SWAP 1- 0 MAX SWAP ]]F@  \ up nn
+    grid[[ 2R> SWAP 1+ GRIDSIZE 1- MIN SWAP ]]F@ \ down nn
 ;	    	  
 
 \ Apply the mean value theorem once to each of the interior grid values:
@@ -179,10 +185,10 @@ fvariable tol	\ tolerance for solution
     GRIDSIZE 0 DO
       GRIDSIZE 0 DO
         J I inside? IF grid[[ J I ]]F@  last_grid[[ J I ]]F@ f-
-	               fabs tol f@ f> IF FALSE unloop unloop EXIT THEN
+	               fabs tol f@ f> IF FALSE UNLOOP UNLOOP EXIT THEN
 		    THEN
-      loop
-    loop TRUE ;
+      LOOP
+    LOOP TRUE ;
 
 
 \ Iterate until the solution converges to the specified tolerance 
@@ -198,7 +204,7 @@ fvariable tol	\ tolerance for solution
 
 
 fvariable temp
-: grid_minmax ( -- fmin fmax | find min and max of grid values )
+: grid_minmax ( F: -- rmin rmax | find min and max of grid values )
 	grid[[ 0 0 ]]F@ fdup
 	GRIDSIZE 0 DO
 	  GRIDSIZE 0 DO
@@ -215,13 +221,13 @@ fvariable temp
 	cr
 	GRIDSIZE 0 ?DO
 	  GRIDSIZE 0 ?DO
-	    fover fover
+	    f2dup
 	    grid[[ J I ]]F@ fswap f- f*
 	    fround>s dup 9 >
 	    if 55 + else 48 + then emit
-	  loop
+	  LOOP
 	  cr
-	loop
+	LOOP
 
 	f2drop
 ;
