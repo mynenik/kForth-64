@@ -628,6 +628,9 @@ L_slashstring:
 	NEXT
 
 L_call:
+	LDFSP
+	add %rax, %rbx
+	mov %rbx, %rcx  # rcx = top of fp stack
 	LDSP
 	DROP
 	jmpq *(%rbx)
