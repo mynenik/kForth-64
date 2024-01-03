@@ -197,8 +197,8 @@ end-struct  mpf_struct%
 : mpz_cdiv_r ( a a a -- )
    [ s" __gmpz_cdiv_r" lsym check-lib-error ] literal fcall3 drop ;
 
-\ : mpz_cdiv_qr ( a a a a -- )
-\   [ s" __gmpz_cdiv_qr" lsym check-lib-error ] literal fcall4 drop ;
+: mpz_cdiv_qr ( a a a a -- )
+   [ s" __gmpz_cdiv_qr" lsym check-lib-error ] literal fcall4 drop ;
 
 : mpz_cdiv_q_ui ( a a n -- n )
    [ s" __gmpz_cdiv_q_ui" lsym check-lib-error ] literal fcall3 ;
@@ -206,8 +206,8 @@ end-struct  mpf_struct%
 : mpz_cdiv_r_ui ( a a n -- n )
    [ s" __gmpz_cdiv_r_ui" lsym check-lib-error ] literal fcall3 ;
 
-\ : mpz_cdiv_qr_ui ( a a a n -- n )
-\   [ s" __gmpz_cdiv_qr_ui" lsym check-lib-error ] literal fcall4 ;
+: mpz_cdiv_qr_ui ( a a a n -- n )
+   [ s" __gmpz_cdiv_qr_ui" lsym check-lib-error ] literal fcall4 ;
 
 : mpz_cdiv_ui ( a n -- n )
    [ s" __gmpz_cdiv_ui" lsym check-lib-error ] literal fcall2 ;
@@ -224,8 +224,8 @@ end-struct  mpf_struct%
 : mpz_fdiv_r ( a a a -- )
    [ s" __gmpz_fdiv_r" lsym check-lib-error ] literal fcall3 drop ;
 
-\ : mpz_fdiv_qr ( a a a a -- )
-\   [ s" __gmpz_fdiv_qr" lsym check-lib-error ] literal fcall4 drop ;
+: mpz_fdiv_qr ( a a a a -- )
+   [ s" __gmpz_fdiv_qr" lsym check-lib-error ] literal fcall4 drop ;
 
 \ mpz_fdiv_q_ui
 \ mpz_fdiv_r_ui
@@ -241,11 +241,11 @@ end-struct  mpf_struct%
 
 \ 5.7 Exponentiation
 
-\ : mpz_powm ( a a a a -- )
-\   [ s" __gmpz_powm" lsym check-lib-error ] literal fcall4 drop ;
+: mpz_powm ( a a a a -- )
+   [ s" __gmpz_powm" lsym check-lib-error ] literal fcall4 drop ;
 
-\ : mpz_powm_ui ( a a n a -- )
-\   [ s" __gmpz_powm_ui" lsym check-lib-error ] literal fcall4 drop ;
+: mpz_powm_ui ( a a n a -- )
+   [ s" __gmpz_powm_ui" lsym check-lib-error ] literal fcall4 drop ;
 
 : mpz_pow_ui ( a a n -- )
    [ s" __gmpz_pow_ui" lsym check-lib-error ] literal fcall3 drop ;
@@ -259,8 +259,8 @@ end-struct  mpf_struct%
 : mpz_root ( a a n -- n )
    [ s" __gmpz_root" lsym check-lib-error ] literal fcall3 ;
 
-\ : mpz_rootrem ( a a a n -- )
-\   [ s" __gmpz_rootrem" lsym check-lib-error ] literal fcall4 drop ;
+: mpz_rootrem ( a a a n -- )
+   [ s" __gmpz_rootrem" lsym check-lib-error ] literal fcall4 drop ;
 
 : mpz_sqrt ( a a -- )
    [ s" __gmpz_sqrt" lsym check-lib-error ] literal fcall2 drop ;
