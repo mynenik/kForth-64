@@ -110,10 +110,12 @@ MPFR_RNDA  constant  GMP_RNDA
 0 [IF]
 : mpfr_set_flt ( a s n -- n )
    [ s" mpfr_set_flt" lsym check-lib-error ] literal fcall3-dq  ;  \ C-word   mpfr_set_flt ( a s n -- n )
-: mpfr_set_d ( a n -- n ) ( F: r -- )
-   [ s" mpfr_set_d" lsym check-lib-error ] literal fcall(2,1;1,1)s fdrop ;
-\ s" mpfr_set_ld" C-word  mpfr_set_ld  ( a ld n -- n ) \ long double not supported
 [THEN]
+
+: mpfr_set_d ( a n -- n ) ( F: r -- )
+   [ s" mpfr_set_d" lsym check-lib-error ] literal fcall(2,1;1,0) ;
+
+\ s" mpfr_set_ld" C-word  mpfr_set_ld  ( a ld n -- n ) \ long double not supported
 
 : mpfr_set_z ( a a n -- n )
    [ s" mpfr_set_z" lsym check-lib-error ] literal fcall3-dq ;
@@ -171,10 +173,10 @@ s" mpfr_init_set_str"     C-word  mpfr_init_set_str  ( a a n n -- n )
 
 0 [IF]
 s" mpfr_get_flt"          C-word  mpfr_get_flt  ( a n -- r )
+[THEN]
 
 : mpfr_get_d ( a n -- ) ( F: -- r )
    [ s" mpfr_get_d" lsym check-lib-error ] literal fcall(2,0;0,1) ;
-[THEN]
 
 \ s" mpfr_get_ld" C-word  mpfr_get_ld   ( a n -- ld )  \ long double not supported
 

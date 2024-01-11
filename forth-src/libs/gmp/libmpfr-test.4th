@@ -92,20 +92,22 @@ t{ ONE$ dst sdcomp -> 0 }t
 t{ num GMP_RNDN mpfr_const_log2 -> 1 }t
 t{ dst num GMP_RNDN mpfr_set -> 0 }t
 t{ LN2$ dst sdcomp -> 0 }t
-0 [IF]
-TESTING mpfr_set_flt  mpfr_set_d
+
+\ TESTING mpfr_set_flt  mpfr_set_d
+TESTING mpfr_set_d
 fvariable f1
-t{ 1e f1 sf! -> }t
-t{ dst f1 @ GMP_RNDN mpfr_set_flt -> 0 }t
-t{ ONE$ dst sdcomp -> 0 }t
+\ t{ 1e f1 sf! -> }t
+\ t{ dst f1 @ GMP_RNDN mpfr_set_flt -> 0 }t
+\ t{ ONE$ dst sdcomp -> 0 }t
 t{ 1e f1 df! -> }t
 t{ dst f1 df@ GMP_RNDN mpfr_set_d -> 0 }t
 t{ ONE$ dst sdcomp -> 0 }t
-TESTING mpfr_get_flt  mpfr_get_d
+\ TESTING mpfr_get_flt  mpfr_get_d
+TESTING mpfr_get_d
 t{ dst GMP_RNDN mpfr_const_pi -> -1 }t
-t{ dst GMP_RNDN mpfr_get_flt -> -1e facos f1 sf! f1 sf@ r}t
+\ t{ dst GMP_RNDN mpfr_get_flt -> -1e facos f1 sf! f1 sf@ r}t
 t{ dst GMP_RNDN mpfr_get_d   -> -1e facos r}t
-[THEN]
+
 cr
 COMMENT MPFR Arithmetic
 TESTING mpfr_add_ui  mpfr_mul_ui  mpfr_div_ui  mpfr_ui_div

@@ -95,8 +95,8 @@ dup MC-Table fcall1-dq-code
 MC-Put
 
 \ Call a function with one cell arg, and one
-\ fp arg. One return value on data stack, and zero
-\ return values on the fp stack.
+\ fp arg. One return value on data stack, and one
+\ return value on the fp stack.
 \ fcall(1,1;1,1)-code ( x1 addr -- xret ) ( F: r1 -- r2 )
   48 83 c3 08    \ 8 # rbx      add,
   48 8b 03       \ 0 [rbx] rax  mov,
@@ -175,6 +175,29 @@ MC-Put
 dup MC-Table fcall2-dq-code
 MC-Put
 
+\ Call a function with two cell args, and one
+\ fp arg. One return value on data stack, and one
+\ return value on the fp stack.
+\ fcall(2,1;1,1)-code ( x1 x2 addr -- xret ) ( F: r1 -- r2 )
+  48 83 c3 08    \ 8 # rbx      add,
+  48 8b 03       \ 0 [rbx] rax  mov,
+  48 83 c3 08    \ 8 # rbx      add,
+  48 8b 33       \ 0 [rbx] rsi  mov,
+  48 83 c3 08    \ 8 # rbx      add,
+  48 8b 3b       \ 0 [rbx] rdi  mov,
+  53             \ rbx          push,
+  51             \ rcx          push,
+  f2 0f 10 01    \ 0 [rcx] xmm0 movsd,  
+  ff d0          \ rax          call,
+  59             \ rcx          pop,
+  5b             \ rbx          pop,
+  48 89 03       \ rax 0 [rbx]  mov,
+  f2 0f 11 01    \ xmm0 0 [rcx] movsd,
+  48 31 c0       \ rax rax      xor,
+  c3             \              ret,
+2a
+dup MC-Table fcall(2,1;1,1)-code
+MC-Put
 
 \ Call a function with three args and one 64-bit return value.
 \ fcall3-code ( x1 x2 x3 addr -- xret )
@@ -388,8 +411,8 @@ MC-Put
 : fcall6-dq ( x1 x2 x3 x4 x5 x6 a -- xret32) 
     fcall6-dq-code call 2drop 2drop 2drop ;
 
-\ Calls with one data stack arg, and zero/one floating-point number
-\ args and zero/one fp return.
+\ Calls with one data stack arg, and zero/one double-precision
+\ floating-point number args and zero/one fp return.
 
 : fcall(1,0;1,1) ( x addr -- xret ) ( F: -- r )
     0.0e0 fcall(1,0;1,1)-code call drop ;
@@ -402,6 +425,21 @@ MC-Put
 
 : fcall(1,1;0,0) ( x addr -- ) ( F: r -- )
     fcall(1,1;1,1)-code call 2drop fdrop ;
+
+\ Calls with two data stack args, and zero/one double-precision
+\ floating-point number args and zero/on fp return.
+
+: fcall(2,1;1,1) ( x1 x2 addr -- xret ) ( F: r1 -- r2 )
+    fcall(2,1;1,1)-code call 2drop ;
+
+: fcall(2,0;0,1) ( x1 x2 addr -- ) ( F: -- r )
+    0.0e0 fcall(2,1;1,1)-code call 2drop drop ;
+
+: fcall(2,1;0,0) ( x1 x2 addr -- ) ( F: r -- )
+    fcall(2,1;1,1)-code call 2drop drop fdrop ;
+
+: fcall(2,1;1,0) ( x1 x2 addr -- xret ) ( F: r -- )
+    fcall(2,1;1,1)-code call 2drop fdrop ;
 
 BASE !
 
