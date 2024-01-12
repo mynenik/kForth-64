@@ -41,7 +41,10 @@
 \ Revisions:
 \    2011-09-16  km; use Neal Bridges' anonymous modules.
 \    2012-02-19  km; use KM/DNW's modules library.
-
+\    2024-01-11  km; Backwards compatible update to allow passing
+\                    of arbitrary element addresses of input FSL 
+\                    float arrays. 'P and 'Q, for higher efficiency,
+\                    and consistency with assembly language version.
 BEGIN-MODULE
 
 BASE @
@@ -49,34 +52,39 @@ DECIMAL
 
 Private:
 
-0 ptr num_Q{
-0 ptr num_P{
+0 ptr num_Q[
+0 ptr num_P[
 
-FLOAT DARRAY num_F{
+0 ptr num_F[
 
 fvariable h^2/12
 fvariable T_n-1
 fvariable T_n
 fvariable T_n+1
 
+: ]F@ ( a idx -- ) ( F: -- r ) 
+   postpone floats postpone + postpone f@ ; immediate
+: ]F! ( a idx -- ) ( F: r -- )
+   postpone floats postpone + postpone f! ; immediate
+
 Public:
 
 : numerov_integrate ( 'P 'Q n h -- )
     FSQUARE 12e F/ h^2/12 F!
-    >r  to num_Q{  to num_P{
-    & num_F{ r@ }malloc
-    malloc-fail? ABORT" numerov_integrate: Unable to allocate mem!"
+    >r  to num_Q[  to num_P[
+    r@ floats allocate ABORT" numerov_integrate: Unable to allocate mem!"
+    to num_F[
     \ compute F_0 and F_1
-    1e num_Q{ 0 } F@  h^2/12 F@ F* fdup T_n-1 F!  F- num_P{ 0 } F@ F*  num_F{ 0 } F!
-    1e num_Q{ 1 } F@  h^2/12 F@ F* fdup T_n   F!  F- num_P{ 1 } F@ F*  num_F{ 1 } F!
+    1e num_Q[ 0 ]F@  h^2/12 F@ F* fdup T_n-1 F!  F- num_P[ 0 ]F@ F*  num_F[ 0 ]F!
+    1e num_Q[ 1 ]F@  h^2/12 F@ F* fdup T_n   F!  F- num_P[ 1 ]F@ F*  num_F[ 1 ]F!
     r> 2 DO
-      num_Q{ I } F@  h^2/12 F@ F*  T_n+1 F!
-      T_n F@ 10e F* 2e F+  num_F{ I 1- } F@ F*  1e  T_n F@ F- F/
-      num_F{ I 2 - } F@  F-  fdup num_F{ I } F!
-      1e T_n+1 F@ F- F/  num_P{ I } F!
+      num_Q[ I ]F@  h^2/12 F@ F*  T_n+1 F!
+      T_n F@ 10e F* 2e F+  num_F[ I 1- ]F@ F*  1e  T_n F@ F- F/
+      num_F[ I 2 - ]F@  F-  fdup num_F[ I ]F!
+      1e T_n+1 F@ F- F/  num_P[ I ]F!
       T_n F@  T_n-1 F!  T_n+1 F@  T_n F!
     LOOP
-    & num_F{ }free
+    num_F[ free ABORT" numerov_integrate: Unable to free mem!"
 ;
 
 

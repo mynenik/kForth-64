@@ -42,7 +42,6 @@
 \      on Wolfram Alpha.
 
 [UNDEFINED] square  [IF] : square  dup * ;   [THEN]
-[UNDEFINED] fsquare [IF] : fsquare fdup f* ; [THEN]
 
 BEGIN-MODULE
 BASE @ DECIMAL

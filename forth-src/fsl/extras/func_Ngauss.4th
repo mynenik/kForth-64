@@ -33,8 +33,8 @@ fvariable fx
     params{ 0 } F@
     Npeaks 0 ?DO
 	I 3 * 1+ TO idx           \ index of first param for each peak
-	params{ idx 1+ } F@ fx F@ F- FDUP F*
-	params{ idx 2+ } F@ FDUP F* 2e F* F/
+	params{ idx 1+ } F@ fx F@ F- FSQUARE
+	params{ idx 2+ } F@ FSQUARE 2e F* F/
 	FNEGATE FEXP
 	params{ idx } F@ F*
 	F+

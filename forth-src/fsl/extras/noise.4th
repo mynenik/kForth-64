@@ -38,8 +38,9 @@
 \   2012-02-19  km; use KM/DNW's modules library
 \   2013-03-12  km; added Poisson random number generation:
 \                     POISSON-INIT and POISSON-KNUTH
+\   2023-12-05  km; replace FDUP F* with FSQUARE
 
-CR .( NOISE             V1.0e         12 March     2013   KM )
+CR .( NOISE             V1.0f         05 December  2023   KM )
 BEGIN-MODULE
 
 BASE @ DECIMAL
@@ -105,7 +106,7 @@ Public:
 \ 	XP = T - (C0+C1*T+C2*T**2.)/(1.+D1*T+D2*T**2.+D3*T**3.)
 \ 	IF (IFLAG) XP = -XP
 
-    fdup F* 1e fswap F/ fln fsqrt
+    fsquare 1e fswap F/ fln fsqrt
     fdup C{ 2 }Horner  fover D{ 3 }Horner F/ F-
     iflag @ IF fnegate THEN
 ;

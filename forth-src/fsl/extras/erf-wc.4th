@@ -27,6 +27,7 @@
 \                    calculations.
 \    2009-07-13  km; modified CALERF for proper argument order to
 \                    integrated fp/data stack Forth systems.
+\    2023-12-05  km; replaced FDUP F* with FSQUARE
 \
 \  Notes from original program:
 \
@@ -243,7 +244,7 @@ FVARIABLE YSQ
                ELSE
                      X F@ SIXTEEN F* FTRUNC SIXTEEN F/  YSQ F!
                      X F@ YSQ F@ F-  X F@ YSQ F@ F+  F*  DEL F!
-                     YSQ F@ FDUP F* FEXP  DEL F@ FEXP  F*  Y F!
+                     YSQ F@ FSQUARE FEXP  DEL F@ FEXP  F*  Y F!
                      Y F@ FDUP F+ RESULT F@ F-  RESULT F!
                THEN
              THEN
@@ -261,7 +262,7 @@ FVARIABLE YSQ
 \  Evaluate  erf  for  |X| <= 0.46875
 \ ------------------------------------------------------------------
         ZERO  YSQ F!
-        Y F@ XSMALL F>  IF  Y F@ FDUP F*  YSQ F!  THEN
+        Y F@ XSMALL F>  IF  Y F@ FSQUARE  YSQ F!  THEN
         A{ 4 } F@ YSQ F@ F*  XNUM F!
         YSQ F@  XDEN F!
         3 0 DO 
@@ -286,7 +287,7 @@ FVARIABLE YSQ
           JINT @ 2 <> IF
             Y F@ SIXTEEN F* FTRUNC SIXTEEN F/  YSQ F!
             Y F@ YSQ F@ F- Y F@ YSQ F@ F+  F*  DEL F!
-            YSQ F@ FDUP F* FNEGATE FEXP  DEL F@ FNEGATE FEXP F* 
+            YSQ F@ FSQUARE FNEGATE FEXP  DEL F@ FNEGATE FEXP F* 
             RESULT F@ F*  RESULT F!
           THEN
 \ ------------------------------------------------------------------
@@ -303,7 +304,7 @@ FVARIABLE YSQ
               NEG-ARG-FIXUP  RESULT F@ EXIT
             THEN
           THEN
-          ONE Y F@ FDUP F* F/  YSQ F!
+          ONE Y F@ FSQUARE F/  YSQ F!
           P{ 5 } F@ YSQ F@ F*  XNUM F!
           YSQ F@  XDEN F!
           4 0 DO 
@@ -315,7 +316,7 @@ FVARIABLE YSQ
           JINT @ 2 <>  IF
             Y F@  SIXTEEN F* FTRUNC SIXTEEN F/  YSQ F!
             Y F@ YSQ F@ F-  Y F@ YSQ F@ F+  F*  DEL F!
-            YSQ F@ FDUP F* FNEGATE FEXP  
+            YSQ F@ FSQUARE FNEGATE FEXP  
 	    DEL F@ FNEGATE FEXP F* RESULT F@ F*  RESULT F!
           THEN
         THEN

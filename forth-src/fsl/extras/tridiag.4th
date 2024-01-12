@@ -30,8 +30,6 @@
 BEGIN-MODULE
 BASE @
 
-[undefined] fsquare [IF] : fsquare fdup f* ; [THEN]
-
 FLOAT DMATRIX Ap{{
 FLOAT DMATRIX P{{
 FLOAT DARRAY  v{

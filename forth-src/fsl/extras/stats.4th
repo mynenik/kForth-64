@@ -22,8 +22,9 @@
 \   2013-03-12  km; fix stack comment for .STATS
 \   2017-04-21  km; added }IMEAN and }IVARIANCE ; made .stats
 \                   a private word and provided }ISTATS. and }FSTATS.
+\   2023-12-05  km; replaced FDUP F* with FSQUARE
 
-CR .( STATS             V1.1g          21 April     2017   KM )
+CR .( STATS             V1.1h          05 December  2023   KM )
 BEGIN-MODULE
 
 BASE @ 
@@ -50,7 +51,7 @@ Public:
 
 : }ivariance ( u 'a -- fsigma2 | variance of integer array )
     }imean
-    0e Nsamples 0 ?DO fover arr{ I } @ s>f F- fdup F* F+ LOOP
+    0e Nsamples 0 ?DO fover arr{ I } @ s>f F- fsquare F+ LOOP
     fswap fdrop 
     Nsamples 1- s>f F/ 
     fdup sigma2 F! ;   
@@ -62,7 +63,7 @@ Public:
 
 : }fvariance ( u 'a -- fsigma2 | variance of floating point array )
     }fmean
-    0e Nsamples 0 ?DO fover arr{ I } F@ F- fdup F* F+ LOOP
+    0e Nsamples 0 ?DO fover arr{ I } F@ F- fsquare F+ LOOP
     fswap fdrop 
     Nsamples 1- s>f F/ 
     fdup sigma2 F! ;
@@ -81,7 +82,7 @@ Public:
 
 : pgauss ( fx fmu fsigma -- fpdf | evaluate gaussian probability density at fx)
     fdup F0= ABORT" PGAUSS: zero sigma value"
-    2>r F- 2r@ F/ fdup F* 2e F/ fnegate fexp
+    2>r F- 2r@ F/ fsquare 2e F/ fnegate fexp
     0.3989422804e F* 2r> F/ ;
 
 \ Evaluate area between the limits (mu - z*sigma) to (mu + z*sigma)
@@ -102,7 +103,7 @@ Public:
     fdup  0e F<= IF fdrop 0e exit THEN	\ -- z
     fdup  sqrt{2} F/			\ -- z term
     fdup  agauss_term F! agauss_sum F!	\ -- z
-    fdup  F* 2e F/				\ -- y2		
+    fsquare 2e F/			\ -- y2		
        
        \ Accumulate sum of terms
 

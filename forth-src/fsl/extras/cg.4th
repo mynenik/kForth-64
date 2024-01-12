@@ -129,9 +129,9 @@
 \       the probability of a transition to these sublevels is zero. The
 \       relative probabilities for the remaining sublevels are given by:
 \
-\       cg< 2 -1  1  1 | 1 0 >  fdup f* f.   \  30%  |1,0> --> |2, m = -1>
-\       cg< 2  0  1  0 | 1 0 >  fdup f* f.   \  40%  |1,0> --> |2, m =  0>  
-\       cg< 2  1  1 -1 | 1 0 >  fdup f* f.   \  30%  |1,0> --> |2, m =  1>
+\       cg< 2 -1  1  1 | 1 0 >  fsquare f.   \  30%  |1,0> --> |2, m = -1>
+\       cg< 2  0  1  0 | 1 0 >  fsquare f.   \  40%  |1,0> --> |2, m =  0>  
+\       cg< 2  1  1 -1 | 1 0 >  fsquare f.   \  30%  |1,0> --> |2, m =  1>
 \
 \
 \  References:

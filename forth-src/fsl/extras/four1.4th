@@ -34,6 +34,7 @@
 \                   word from fft-x86
 \   2009-10-30  km; defined complex constant z=1, which is no longer
 \                   provided by complex.4th
+\   2023-12-05  km; replaced FDUP F* with FSQUARE
 zvariable w
 zvariable wp
 1e 0e zconstant z=1
@@ -76,7 +77,7 @@ variable istep
 	    mmax 2* istep !
 	    6.28318530717959e0 mmax s>f F/
 	    isign 0< IF fnegate THEN fdup 
-	    0.5e F* fsin fdup F* -2e F*
+	    0.5e F* fsin fsquare -2e F*
 	    fswap fsin wp z!
 
 	    z=1 w z!

@@ -20,6 +20,7 @@
 \ Revisions:
 \   2003-02-20  created
 \   2019-10-26  revised for FSL matrices and added test code
+\   2023-12-05  replace FDUP F* with FSQUARE
 \
 \ Usage:
 \
@@ -73,7 +74,7 @@ BASE @ DECIMAL
 
 : z22_root_part ( 'm -- r | intermediate step in calc)
 	>r
-	r@ 0 0 }} z@ real  r@ 1 1 }} z@ real  f- fdup f*
+	r@ 0 0 }} z@ real  r@ 1 1 }} z@ real  f- fsquare
 	r> 0 1 }} z@ |z|^2 4e f*  f+ fsqrt
 ;
 
