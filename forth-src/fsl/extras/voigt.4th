@@ -89,10 +89,11 @@
 \   2022-05-10  km  v1.1; fixed bug in SET-FWHM-WIDTHS with
 \                   computing V_Y (imaginary part of z);
 \                   modified test code accordingly.
+\   2023-12-05  km  v1.1b; replace FDUP F* with FSQUARE
 \
 \ Requires fsl-util.4th zwofz.4th
 [UNDEFINED] zwofz [IF] include zwofz [THEN]
-CR .( VOIGT             V1.1      10 May  2022 )
+CR .( VOIGT             V1.1b     05 Dec  2023 )
 BASE @
 DECIMAL
 
@@ -144,11 +145,11 @@ fvariable v_im_z
 
 \ Lorentzian probability density function
 : L(x) ( F: x -- L[x] )
-     v_gamma f@ fswap fdup f* fover fdup f* f+ f/ pi f/ ; 
+     v_gamma f@ fswap fsquare fover fsquare f+ f/ pi f/ ; 
 
 \ Gaussian probability density function
 : G(x) ( F: x -- G[x] )
-    v_sigma f@ fswap fdup f* fover fdup f* 2e f* f/ fnegate fexp 
+    v_sigma f@ fswap fsquare fover fsquare 2e f* f/ fnegate fexp 
     fswap SQRT_2PI f* f/ ;
 
 \ standard form of the Voigt function used in spectroscopy
