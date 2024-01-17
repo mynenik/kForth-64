@@ -3,7 +3,7 @@
 \ Module for reading/computing potential energy curve
 \ for use by Schroedinger radial equation solver.
 \
-\ Copyright (c) 2012--2022, Krishna Myneni
+\ Copyright (c) 2012--2024, Krishna Myneni
 \
 \ This code may be used for any purpose, as long as the copyright
 \ notice above is preserved.
@@ -19,7 +19,8 @@
 \   2014-12-12  km  first working version.
 \   2015-02-07  km  READ-POTNL returns number of points read from file.
 \   2015-02-11  km  implemented GET-NPOTNL, }COPY-R, }COPY-V.
-\   2022-03-01  km  added SCALE-V and SCALE-R
+\   2022-02-24  km  added SCALE-V and SCALE-R
+\   2024-01-02  km  added EXTEND-POTNL
 
 Module: qm.potential
 
@@ -36,7 +37,7 @@ variable Npotnl
  
 Defer ppotnl
 
-4096 constant MAX_POTNL
+8192 constant MAX_POTNL
 
 MAX_POTNL FLOAT ARRAY r{
 MAX_POTNL FLOAT ARRAY V{
@@ -67,20 +68,54 @@ Public:
     Npotnl @
 ;
 
+\ Extend a loaded potential energy file to a new Rmax by padding
+\ the PEC with the last value, using the specified dr value.
+\ Return new number of point
+: extend-potnl ( -- N ierr ) ( F: rmax dr -- ) 
+    Npotnl @ dup 0< IF   \ Error: no data loaded
+      -1 EXIT
+    THEN
+    0= IF  
+      0.0e0 r{ 0 } F!
+      0.0e0 V{ 0 } F!
+      1 Npotnl !
+    THEN
+    f2dup fswap r{ 0 } f@ f- fswap 
+    f/ ftrunc>s 1+   \ number of additional points needed
+    Npotnl @ +
+    dup MAX_POTNL > IF
+      drop Npotnl @ -2 EXIT  \ Error: too many points to extend.
+    THEN  
+    dup >r
+    Npotnl @ DO
+      fdup r{ I 1- } f@ f+ r{ I } f!
+      V{ I 1- } f@ V{ I } f!
+    LOOP
+    fdrop
+    Rmax F!
+    r> dup Npotnl !
+    0
+;
+
 : scale-V ( F: vscale -- )
-    Npotnl @ V{ }fscale
-    Npotnl @
+    Npotnl @ 0 ?DO
+      V{ I } dup >r F@ fover f* r> F!
+    LOOP fdrop 
+    Npotnl @ 
     dup V{ }fmin Vmin F!
         V{ }fmax Vmax F!
 ;
 
 : scale-R ( F: rscale -- )
-    fdup Npotnl @ r{ }fscale Rdel_min F@ F* Rdel_min F!
-    Npotnl @
+    Npotnl @ 0 ?DO
+      r{ I } dup >r F@ fover F* r> F!
+    LOOP
+    Rdel_min F@ F* Rdel_min F!
+    Npotnl @ 
     dup r{ }fmin Rmin F!
         r{ }fmax Rmax F!
 ;
-
+    
 : get-Npotnl ( -- n ) Npotnl @ ;  \ < 0 indicates no potential data available.
 : get-Rlims ( -- Rmin Rmax )  Rmin F@  Rmax F@ ;
 : get-Vlims ( -- Vmin Vmax )  Vmin F@  Vmax F@ ;
