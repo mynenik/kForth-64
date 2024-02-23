@@ -2,16 +2,16 @@
 \
 \ kForth interface words for Linux serial communcations.
 \
-\ Copyright (c) 2000--2012 David P. Wallace, Krishna Myneni
+\ Copyright (c) 2000--2024 David P. Wallace, Krishna Myneni
 \ Provided under the terms of the GNU General Public License
 \
 \ Requires:
 \
-\       ans-words.4th
-\	strings.4th
-\       struct.4th
-\       struct-ext.4th
-\	modules.4th       v 0.3.4 or later
+\   ans-words.4th
+\   strings.4th
+\   struct-200x.4th
+\   struct-200x-ext.4th
+\   modules.4th       v 0.3.4 or later
 \
 \ Revisions:
 \
@@ -30,24 +30,28 @@
 \     2012-03-24 km added modem line constants and additional ioctl constants;
 \                     added LOWER-DTR and RAISE-DTR.
 \     2022-02-13 km added LOWER-RTS and RAISE-RTS.
-
+\     2024-02-21 km updated termios structure to Forth 200x structure
+\                     and fixed field offsets and sizes; also use UL@ and L!
+\                     to set fields in the structure!
 module: serial
 begin-module
 
 \ termios structure
 
-struct
-    int:    C_IFLAG
-    int:    C_OFLAG
-    int:    C_CFLAG
-    int:    C_LFLAG
-    int16:  C_LINE
-    64 buf: C_CC
-    int:    C_ISPEED
-    int:    C_OSPEED
-end-struct termios%
+BEGIN-STRUCTURE termios%
+    +LFIELD  C_IFLAG
+    +LFIELD  C_OFLAG
+    +LFIELD  C_CFLAG
+    +LFIELD  C_LFLAG
+    CFIELD:  C_LINE
+ 35 +FIELD   C_CC
+    +LFIELD  C_ISPEED
+    +LFIELD  C_OSPEED
+END-STRUCTURE
 
-create termios termios% %allot drop
+create termios termios% allot
+
+\ cr .( termios structure size is ) termios% 4 .r cr
 
 \ modem lines
 hex
@@ -198,9 +202,9 @@ decimal
     get-options
     \ set the parameter
     swap
-    termios C_CFLAG @
+    termios C_CFLAG UL@
     r> invert and  or
-    termios C_CFLAG !
+    termios C_CFLAG L!
     set-options ;
 
 Public:
@@ -223,21 +227,21 @@ Public:
 	
 	\ Disable XON/XOFF flow control and CR to NL mapping
 
-	termios C_IFLAG @
+	termios C_IFLAG UL@
 	IXON IXOFF or IXANY or ICRNL or invert and
-	termios C_IFLAG !
+	termios C_IFLAG L!
 
 	\ Open for raw input
 
-	termios C_LFLAG @
+	termios C_LFLAG UL@
 	ISIG ICANON or ECHO or ECHOE or invert
-	and  termios C_LFLAG !
+	and  termios C_LFLAG L!
 
 	\ Open for raw output
 
-	termios C_OFLAG @
+	termios C_OFLAG UL@
 	OPOST invert
-	and  termios C_OFLAG !
+	and  termios C_OFLAG L!
 	set-options
     THEN ;
 	

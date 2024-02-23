@@ -2,8 +2,8 @@
 
 include ans-words
 include modules.fs
-include struct
-include struct-ext
+include struct-200x
+include struct-200x-ext
 include strings
 include ansi
 include files

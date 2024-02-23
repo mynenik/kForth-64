@@ -2,6 +2,7 @@
 \
 \ Module for serial port communication functions.
 \
+\ Rev: 2024-02-21 km; use Forth 200x structures
 
 Module: serial-comm
 
@@ -14,13 +15,13 @@ create buf 64 allot
 
 Public:
 
-struct
-   cell% field   port
-   cell% field   baud
-   cell% field   params
-end-struct serial-config%
+BEGIN-STRUCTURE serial-config%
+   FIELD:   port
+   FIELD:   baud
+   FIELD:   params
+END-STRUCTURE
 
-create config serial-config% %allot drop
+create config serial-config% allot
 
 \ Default values for comm port configuration
 COM1    config port !

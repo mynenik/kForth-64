@@ -7,8 +7,8 @@
 \
 \       ans-words.4th
 \	modules.4th
-\       struct.4th
-\       struct-ext.4th
+\       struct-200x.4th
+\       struct-200x-ext.4th
 \	strings.4th
 \	ansi.4th
 \	serial.4th  (module version)
@@ -16,11 +16,12 @@
 \ Revisions:
 \   2007-08-03 km revised to use new serial.4th, requiring structures
 \   2012-03-17 km revised to use modular version of serial.4th
+\   2024-02-23 km revised to use Forth 200x structures
    
 include ans-words
 include modules
-include struct
-include struct-ext
+include struct-200x
+include struct-200x-ext
 include strings
 include ansi
 include serial

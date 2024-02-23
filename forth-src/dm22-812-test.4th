@@ -8,8 +8,8 @@
 \
 \       ans-words.4th
 \	modules.4th
-\       struct.4th
-\       struct-ext.4th
+\       struct-200x.4th
+\       struct-200xext.4th
 \	strings.4th
 \	serial.4th  (module version)
 \
@@ -17,11 +17,12 @@
 \   2012-03-17 km based on hexterm.4th
 \   2012-03-24 km revised GET-PACKET to raise and lower DTR line
 \   2012-03-27 km added packet checksum validation
+\   2024-02-21 km load Forth 200x data structures
    
 include ans-words
 include modules
-include struct
-include struct-ext
+include struct-200x
+include struct-200x-ext
 include strings
 include serial
 
