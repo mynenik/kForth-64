@@ -108,21 +108,23 @@ fp-stack? [IF]
 
 : fvariables:     0 DO  FVARIABLE  LOOP  ;
 
-
-FALSE [IF]    \ determine base and precision of fpu
-
-    4e0 3e0 F/  1e0 F-  3e0 F*  1e0  F-  FVALUE u
-    u 2e0 F/  1e0 F+  1e0 F-  FVALUE r
-    r F0=  NOT  [IF]  r FTO u  [THEN]
-    2e0 3e0 F/ 0.5e0 F- 3e0 F* 0.5e0 F-  FVALUE uu
-    uu 2e0 F/ 0.5e0 F+ 0.5e0 F-  FVALUE rr
-    rr F0=  NOT  [IF]  rr FTO uu  [THEN]
-    u uu F/     ( f: -- beta)
-    uu  FLN  FOVER FLN  F/ FNEGATE  0.5e0 F+
-    F>S  F>S  CR  CR .( base = ) .   .( precision = ) . FORGET u
-
-[THEN]
-
+fvariable u
+fvariable r
+fvariable uu
+fvariable rr
+\ determine base and precision of fpu
+    4e0 3e0 F/  1e0 F-  3e0 F*  1e0  F-  u F!
+    u F@ 2e0 F/  1e0 F+  1e0 F-  r F!
+    r F@ F0=  INVERT  [IF]  r F@  u F!  [THEN]
+    2e0 3e0 F/ 0.5e0 F- 3e0 F* 0.5e0 F- uu F!
+    uu F@ 2e0 F/ 0.5e0 F+ 0.5e0 F- rr F!
+    rr F@ F0=  INVERT  [IF]  rr F@ uu F! [THEN]
+    u F@ uu F@ F/     ( f: -- beta)
+    uu F@ FABS FLN  FOVER FLN  F/ 0.5E0 F+ FNEGATE
+    FSWAP FTRUNC>S  CR  CR .( FPU base = ) . 
+    FTRUNC>S  .(   FPU precision = ) . 
+    CR
+FORGET u
 
 \ Exact multiplication
 
