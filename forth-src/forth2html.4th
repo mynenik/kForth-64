@@ -129,7 +129,7 @@ ONLY FORTH ALSO DEFINITIONS
 [undefined] NOOP   [IF] : NOOP ;                                            [THEN]
 [undefined] BOUNDS [IF] : BOUNDS OVER + SWAP ;                              [THEN]
 [undefined] /STRING [IF] : /STRING TUCK - >R CHARS + R> ;                   [THEN]
-[undefined] C+!    [IF] : C+! SWAP OVER C@ + SWAP C! ;                      [THEN]
+[undefined] C+!    [IF] : C+! TUCK C@ + SWAP C! ;                           [THEN]
 [undefined] FDROP  [IF] : FDROP ;         ( no floating point? fake it )    [THEN]
 [undefined] SCAN   [IF] : SCAN            ( addr len char -- addr' len' )
    >R BEGIN DUP WHILE OVER C@ R@ <> WHILE 1 /STRING REPEAT THEN R> DROP ; [THEN]

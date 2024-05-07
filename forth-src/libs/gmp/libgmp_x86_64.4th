@@ -37,9 +37,9 @@ s" libgmp.so" open-lib
 cr .( Opened the GMP library )
 cr .( Loading gmp library functions ) cr
 
-[undefined] struct [IF]
-s" struct.4th" included
-s" struct-ext.4th" included
+[undefined] BEGIN-STRUCTURE [IF]
+s" struct-200x.4th" included
+s" struct-200x-ext.4th" included
 [THEN]
 
 \ from /usr/include/gmp-x.h
@@ -49,23 +49,23 @@ s" struct-ext.4th" included
 4 constant GMP_ERROR_SQRT_OF_NEGATIVE
 8 constant GMP_ERROR_INVALID_ARGUMENT
 
-struct
-        int:         mpz_struct->mp_alloc
-        int:         mpz_struct->mp_size
-        cell% field  mpz_struct->mp_d
-end-struct  mpz_struct%
+BEGIN-STRUCTURE mpz_struct%
+        +LFIELD      mpz_struct->mp_alloc
+        +LFIELD      mpz_struct->mp_size
+        field:       mpz_struct->mp_d
+END-STRUCTURE
 
-struct
-        4 mpz_struct% %size field   mpq_struct->mp_num
-        4 mpz_struct% %size field   mpq_struct->mp_den
-end-struct  mpq_struct%
+BEGIN-STRUCTURE mpq_struct%
+        mpz_struct%  +FIELD   mpq_struct->mp_num
+        mpz_struct%  +FIELD   mpq_struct->mp_den
+END-STRUCTURE
 
-struct
-        int:         mpf_struct->mp_prec
-        int:         mpf_struct->mp_size
-        int:         mpf_struct->mp_exp
-        cell% field  mpf_struct->mp_d
-end-struct  mpf_struct%
+BEGIN-STRUCTURE mpf_struct%
+        +LFIELD      mpf_struct->mp_prec
+        +LFIELD      mpf_struct->mp_size
+        +LFIELD      mpf_struct->mp_exp
+        field:       mpf_struct->mp_d
+END-STRUCTURE
 
 \ libgmp 5.0.1 functions
 
@@ -339,13 +339,9 @@ end-struct  mpf_struct%
       0> IF 1 ELSE 0 THEN
     THEN ;
 
-: sizeof_mpz ( -- n ) mpz_struct% %size ;
-: sizeof_mpq ( -- n ) mpq_struct% %size ;
-: sizeof_mpf ( -- n ) mpf_struct% %size ;
-
-sizeof_mpz constant /MPZ
-sizeof_mpq constant /MPQ
-sizeof_mpf constant /MPF
+mpz_struct% constant /MPZ
+mpq_struct% constant /MPQ
+mpf_struct% constant /MPF
 
 also forth definitions
 

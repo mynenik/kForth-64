@@ -53,7 +53,7 @@ CREATE itimerdata  8 CELLS ALLOT
 \ Simplified interface for setup of timer signals
 
 : ms>usec,sec ( ms -- usec sec | convert milliseconds to sec and usec )
-      DUP 1000 / SWAP OVER 1000 * - 1000 * SWAP ;
+      DUP 1000 / TUCK 1000 * - 1000 * SWAP ;
 
 : set-timer ( msinterval msnow -- | generate SIGALRM every ms milli-seconds) 
       ms>usec,sec  itimerdata 2 CELLS + 2!  

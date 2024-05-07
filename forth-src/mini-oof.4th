@@ -66,7 +66,7 @@
 : >vt  ( class "name" -- addr ) ' >body @ + ;
 : bind ( class "name -- xt )     >vt a@ ;
 : defines ( xt class "name" -- ) >vt ! ;  \ define a method for a class
-: new ( class -- o ) dup @ allocate abort" ALLOCATE failure!" swap over ! ;
+: new ( class -- o ) dup @ allocate abort" ALLOCATE failure!" tuck ! ;
 : :: ( class "name" -- xt ) bind compile, ;
 
 create object 2 cells allot? 1 cells over ! cell+ 2 cells swap !

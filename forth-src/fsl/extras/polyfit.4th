@@ -23,6 +23,7 @@
 \                   added polfit1, and use [DEFINED] statement to check for
 \                   xyplot environment; fixed problem with order of args in polfit  KM
 \       2009-10-28  updated data structure members for xyplot interface  km
+\       2023-12-03  use FSQUARE and F+! to simplify code  km
 
 0  value  Nterms     \ number of terms (order - 1)               
 0  value  Nmax                                                   
@@ -71,7 +72,7 @@ FLOAT DARRAY   sumy{
 	chisq F@ params{ I } F@ sumy{ I } F@ F* 2e F* F- chisq F!
 	Nterms 0 DO
 	    sumx{ J I + } F@  params{ I } F@ F*  params{ J } F@ F*
-	    chisq F@ F+ chisq F!
+	    chisq F+!
 	LOOP
     LOOP
     
@@ -109,13 +110,13 @@ FLOAT DARRAY   sumy{
     Npts 0 DO
 	yd{ I } F@  xd{ I } F@  \ fy fx
 	1e
-	Nmax 0 DO  fdup sumx{ I } F@ F+ sumx{ I } F! fover F*  LOOP  xterm F!
+	Nmax 0 DO  fdup sumx{ I } F+! fover F*  LOOP  xterm F!
 
 	fover
-	Nterms 0 DO  fdup sumy{ I } F@ F+ sumy{ I } F! fover F*  LOOP  yterm F!
+	Nterms 0 DO  fdup sumy{ I } F+! fover F*  LOOP  yterm F!
 
-	fover fdup F* chisq F@ F+ chisq F!
-	fdrop fdrop
+	fover fsquare chisq F+!
+	f2drop
     LOOP
 
     polfit0
@@ -140,13 +141,13 @@ FLOAT DARRAY   sumy{
     Npts 0 DO
 	xyd{{ I 1 }} F@  xyd{{ I 0 }} F@  \ fy fx
 	1e
-	Nmax 0 DO  fdup sumx{ I } F@ F+ sumx{ I } F! fover F*  LOOP  xterm F!
+	Nmax 0 DO  fdup sumx{ I } F+! fover F*  LOOP  xterm F!
 
 	fover
-	Nterms 0 DO  fdup sumy{ I } F@ F+ sumy{ I } F! fover F*  LOOP  yterm F!
+	Nterms 0 DO  fdup sumy{ I } F+! fover F*  LOOP  yterm F!
 
-	fover fdup F* chisq F@ F+ chisq F!
-	fdrop fdrop
+	fover fsquare chisq F+!
+	f2drop
     LOOP
 
     polfit0
@@ -181,13 +182,13 @@ FLOAT DARRAY   sumy{
 	I pDS @xy	\ fetch the i^th point
 	fswap		\ fy fx
 	1e
-	Nmax 0 DO  fdup sumx{ I } F@ F+ sumx{ I } F! fover F*  LOOP  xterm F!
+	Nmax 0 DO  fdup sumx{ I } F+! fover F*  LOOP  xterm F!
 
 	fover
-	Nterms 0 DO  fdup sumy{ I } F@ F+ sumy{ I } F! fover F*  LOOP  yterm F!
+	Nterms 0 DO  fdup sumy{ I } F+! fover F*  LOOP  yterm F!
 
-	fover fdup F* chisq F@ F+ chisq F!
-	fdrop fdrop
+	fover fsquare chisq F+!
+	f2drop
     LOOP
 
     polfit0
@@ -199,6 +200,7 @@ FLOAT DARRAY   sumy{
 
 TEST-CODE? [IF]   \ test code ==============================================
 [undefined] T{      [IF]  include ttester.4th  [THEN]
+BASE @
 DECIMAL
 
 1e-15 rel-near F!
@@ -221,4 +223,5 @@ t{ coeffs{ 0 } F@            -> 0e  r}t
 t{ coeffs{ 1 } F@            -> 0e  r}t
 t{ coeffs{ 2 } F@            -> 1e  r}t
 
+BASE !
 [THEN]

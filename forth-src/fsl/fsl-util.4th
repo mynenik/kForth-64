@@ -79,11 +79,12 @@
 \   2021-05-16  km;  provide def. of }}FCOPY for separate FP stack.
 \   2021-05-18  km;  define FP-STACK? for conditional compilation.
 \   2021-09-11  km;  replace instances of ?ALLOT with ALLOT?
+\   2024-04-21  km;  added conditional defns of FSQUARE and F+!
 \ ================= kForth specific defs/notes ==============================
 \ Requires ans-words.4th
 \ ================= end of kForth specific defs =============================
 
-CR .( FSL-UTIL          V1.3c          11 Sep 2021   EFC, KM )
+CR .( FSL-UTIL          V1.3d          21 Apr 2024   EFC, KM )
 BASE @ DECIMAL
 
 \ ================= compilation control =====================================
@@ -106,6 +107,14 @@ TRUE CONSTANT HAS-MEMORY-WORDS?
 \ FSL NonANS words
 
 [undefined] s>f [IF] : s>f    S>D D>F ;  [THEN]
+[undefined] fsquare [IF] : fsquare fdup f* ; [THEN]
+[undefined] f+! [IF]
+fp-stack? [IF]
+  : f+! ( a -- ) ( F: r -- ) dup f@ f+ f! ;
+[ELSE]
+  : f+! ( r a -- ) dup >r f@ f+ r> f! ;
+[THEN]
+[THEN]
 
 \ The following has been superceded by use of KM's modules.4th
 

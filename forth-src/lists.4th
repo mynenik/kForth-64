@@ -568,7 +568,7 @@ nil ptr temp-list
 : reduce  ( n1|^val1|list1  list2  xt -- n2|^val2|list3 )     \ LISP "reduce"
     >r
     BEGIN dup nil? 0= 
-    WHILE swap over first r@ execute swap rest
+    WHILE tuck first r@ execute swap rest
     REPEAT drop r> drop ;
 
 0 value ]?

@@ -42,13 +42,15 @@
 \    2012-02-19  km; use KM/DNW's modules library
 \    2022-03-25  km; make )GL-INTEGRATE re-entrant
 \    2022-04-02  km; make re-entrant for unified fp stack as well
-\
+\    2024-05-07  km; fix CALC-PP for separate fp stack system; increase
+\                    test code accuracy by two orders of magnitude with
+\                    updated weights and abscissas; ver 1.1g.
 \  (c) Copyright 1995 Everett F. Carter.  Permission is granted by the
 \  author to use this software for any application provided this
 \  copyright notice is preserved.
 
 
-CR .( GAULEG            V1.1f          02 April     2022   EFC,KM )
+CR .( GAULEG            V1.1g          07 May       2024   EFC,KM )
 
 BEGIN-MODULE
 
@@ -58,33 +60,24 @@ Private:
 
 3.0E-11 FCONSTANT eps
 
-FVARIABLE xm       \ scratch variables
-FVARIABLE xl
+FLOAT DARRAY x{    \ aliases to user arrays
+FLOAT DARRAY w{
+
 FVARIABLE z
 FVARIABLE p1
 FVARIABLE pp
 
-FLOAT DARRAY x{    \ aliases to user arrays
-FLOAT DARRAY w{
-
-: calc-pp ( n -- n f )           \ NOTE: changes Z
-
-
+\ NOTE: changes Z
+: calc-pp ( n -- n ) ( F: -- r ) \ or ( n -- n r )  
        BEGIN
          1.0E0 p1 F!    0.0E0 pp F!
 
          DUP 1+ 1 DO
-                     pp F@
-                     p1 F@    FDUP pp F!
-
-                     I 2* 1- S>F F*
-                     z F@ F*
-
-                     FSWAP I 1- NEGATE S>F F* F+
-                     I S>F F/
-
-                     p1 F!
-
+           pp F@  p1 F@    FDUP pp F!
+           I 2* 1- S>F F*  z F@ F*
+           FSWAP I 1- NEGATE S>F F* F+
+           I S>F F/
+           p1 F!
          LOOP         
 
          >R z F@ p1 F@ F* pp F@ F- R@ S>F F*
@@ -92,47 +85,43 @@ FLOAT DARRAY w{
 	 R>
 
          p1 F@ pp F@ F/ FNEGATE
-
          z F@ FDUP FROT F+ FDUP z F!
          
-
          F- FABS eps F<
        UNTIL
 
        pp F@ FSQUARE
 ;
 
-Public:
-
+FVARIABLE xm
+FVARIABLE xl
+FVARIABLE c1
 VARIABLE gleg-n
 
+Public:
+
 : gauleg ( &x &w n x1 x2 -- ) 
-        
-         FOVER FOVER F+ 0.5E0 F* xm F!
+         f2dup F+ 0.5E0 F* xm F!
          FSWAP F- 0.5E0 F* xl F!
  
         \ validate the parameter N
          DUP 1 < ABORT" bad value of N (must be > 0) for gauleg "
  
-
          SWAP & w{ &!     SWAP & x{ &!
-
-         DUP gleg-n ! 
+         DUP gleg-n !
+         PI gleg-n @ S>F 0.5E0 F+ F/ c1 F!
 	 1+ 2/  0 DO
-              PI gleg-n @ S>F 0.5E0 F+ F/
-              I S>F 0.75E0 F+ F*     FCOS z F!
-	      gleg-n @
-              calc-pp ROT DROP
+              c1 F@ I S>F 0.75E0 F+ F*     FCOS z F!
+	      gleg-n @ calc-pp
+[ fp-stack? 0= ] [IF] ROT [THEN]
+              DROP
               z F@ FSQUARE FNEGATE 1.0E0 F+ F*
               2.0E0 xl F@ F* FSWAP F/
               FDUP  w{ I } F!     
 	      w{ gleg-n @ 1- I - } F!
               xl F@ z F@ F* FDUP FNEGATE xm F@ F+   x{ I } F!
               xm F@ F+     x{ gleg-n @ 1- I - } F!
-
-
-           LOOP
-
+         LOOP
          \ DROP
 ;
 
@@ -167,11 +156,11 @@ END-MODULE
 
 TEST-CODE? [IF]   \ test code ==============================================
 [undefined] T{      [IF]  include ttester.4th  [THEN]    
-[undefined] CompareArrays [IF] include fsl-test-utils.4th [THEN]
+[undefined] CompareArrays [IF] include fsl/fsl-test-utils.4th [THEN]
 BASE @ DECIMAL
 
-3.0e-11 rel-near F!
-3.0e-11 abs-near F!
+2.2e-13 rel-near F!
+2.2e-13 abs-near F!
 set-near
 
 FLOAT DARRAY x{
@@ -189,13 +178,17 @@ FLOAT DARRAY wgt{
 ;
 
 8 FLOAT ARRAY x8{
-    -0.960289856498e   -0.796666477414e   -0.525532409916e   -0.183434642496e 
-     0.183434642496e    0.525532409916e    0.796666477414e    0.960289856498e
+    -0.9602898564975363e   -0.7966664774136267e   
+    -0.5255324099163290e   -0.1834346424956498e 
+     0.1834346424956498e    0.5255324099163290e
+     0.7966664774136267e    0.9602898564975363e
 8 x8{ }fput
 
 8 FLOAT ARRAY w8{
-     0.10122853629e   0.222381034453e   0.313706645878e   0.362683783378e
-     0.362683783378e  0.313706645878e   0.222381034453e   0.10122853629e
+     0.1012285362903763e   0.2223810344533745e
+     0.3137066458778873e   0.3626837833783620e
+     0.3626837833783620e   0.3137066458778873e
+     0.2223810344533745e   0.1012285362903763e
 8 w8{ }fput
 
 CR
