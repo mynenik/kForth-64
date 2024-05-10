@@ -25,6 +25,8 @@
 \                   accordingly
 \   2016-06-04  km; update path for fitting function.
 \   2023-11-13  km; updated to use with curvefit.4th v2.0
+\   2024-05-10  km; estimate parameter uncertainties using 
+\                   sqrt(chi-sqr) as uncertainty in y-values.
 
 include ans-words
 include strings
@@ -61,6 +63,7 @@ put_data		\ move the data from the stack to the y matrix
 npar FLOAT ARRAY  a{
 npar FLOAT ARRAY  deltaa{
 npar FLOAT ARRAY  sigmaa{
+fvariable chi-sqr
 
 \ Setup initial values for the function parameters:
 
@@ -77,14 +80,16 @@ npar deltaa{ }fput
 x{ y{ yfit{ a{ deltaa{ sigmaa{ npar np ' functn init-curvefit
 
 : params. ( -- | display current values of parameters and sigmas )
+    chi-sqr F@ FSQRT
     npar 0 DO 
-      a{ I } F@ 12 4 f.rd ."   +/- " sigmaa{ I } F@ 8 4 f.rd cr 
-    LOOP ;
+      a{ I } F@ 12 4 f.rd ."   +/- " 
+      sigmaa{ I } F@ FOVER F* 8 4 f.rd cr 
+    LOOP  FDROP ;
 
 : iterate ( -- | perform one iteration of curvefit and display results )
-    curfit
+    curfit chi-sqr F!
     ." Fitted Parameters:" cr params. cr
-    ." reduced chi-squared = " F. ;
+    ." reduced chi-squared = " chi-sqr F@ F. ;
 
 
 : genfit ( -- | display the fitted data values )
