@@ -2453,11 +2453,17 @@ L_utmslash:
 	cmpq $0, %rcx
 	jz   E_div_zero	
 	INC_DSP
-	mov (%rbx), %rax		# ut3
-	movq $0, %rdx
-	divq %rcx			# ut3/u
-	cmpq $0, %rax
-	jnz  E_div_overflow
+#	mov (%rbx), %rax		# ut3
+#	movq $0, %rdx
+	movq (%rbx), %rdx               # ut3
+	movq WSIZE(%rbx), %rax          # ut2
+	divq %rcx			# ut3:ut2/u  generates INT 0 on ovflow
+#	cmpq $0, %rax
+#	jnz  E_div_overflow
+	xor %rdx, %rdx
+	movq (%rbx), %rax
+	divq %rcx
+	xor %rax, %rax
 utmslash1:	
 	push %rbx			# keep local stack ptr
 	LDSP
