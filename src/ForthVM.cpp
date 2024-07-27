@@ -2136,18 +2136,46 @@ int CPP_twoconstant ()
   // stack: ( n1 n2 -- )
   if (CPP_create()) return E_V_CREATE;
   WordListEntry* pWord = *(pCompilationWL->end() - 1);
-  pWord->WordCode = OP_2VAL;
+  // pWord->WordCode = OP_2VAL;
   pWord->Pfa = new long int[2];
   DROP
   *((long int*) pWord->Pfa) = TOS;
+  bool b2 = IS_ADDR;
   DROP
   *((long int*) pWord->Pfa + 1) = TOS;
-  byte *bp = new byte[WSIZE+3];
-  pWord->Cfa = bp;
-  bp[0] = OP_ADDR;
-  *((long int*) &bp[1]) = (long int) pWord->Pfa;
-  bp[WSIZE+1] = OP_2FETCH;
-  bp[WSIZE+2] = OP_RET;
+  bool b1 = IS_ADDR;
+  if (!(b1 || b2)) {
+    pWord->WordCode = OP_2VAL;
+    byte *p = new byte[WSIZE+3];
+    pWord->Cfa = p;
+    p[0] = OP_ADDR;
+    *((long int*) &p[1]) = (long int) pWord->Pfa;
+    p[WSIZE+1] = OP_2FETCH;
+    p[WSIZE+2] = OP_RET;
+  }
+  else {
+    pWord->WordCode = OP_DEFINITION;
+    byte *p = new byte[3*WSIZE];
+    pWord->Cfa = p;
+    p[0] = OP_ADDR;
+    long int *pval = (long int *) pWord->Pfa;
+    *((long int*) &p[1]) = (long int) (pval + 1);
+    p[WSIZE+1] = OP_FETCH;
+    p[WSIZE+2] = OP_ADDR;
+    *((long int*) &p[WSIZE+3]) = (long int) pval;
+    p[2*WSIZE+3] = OP_FETCH;
+    p[2*WSIZE+4] = OP_RET;
+    if (b1 && (!b2)) {
+      p[WSIZE+1]   = OP_AFETCH;
+    }
+    else if ((!b1) && b2) {
+      p[2*WSIZE+3] = OP_AFETCH;
+    }
+    else {
+      p[WSIZE+1]   = OP_AFETCH;
+      p[2*WSIZE+3] = OP_AFETCH;
+    }
+  }
   return 0;
 }
 //------------------------------------------------------------------
