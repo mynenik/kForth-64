@@ -1,7 +1,7 @@
 # kForth-64
 64-bit Forth System for x86_64-GNU/Linux
 
-Copyright &copy; 1998--2022 Krishna Myneni, <krishna.myneni@ccreweb.org>
+Copyright &copy; 1998--2024 Krishna Myneni, <krishna.myneni@ccreweb.org>
 
 ### Contributors:
 
@@ -40,7 +40,7 @@ its source package, on a GNU/Linux system:
 
 Some or all of these packages may already be installed on your GNU/Linux
 system, but if they are not, you should install them for your GNU/Linux
-distribution. GNU C/C++ version 4.0 or later should be used.
+distribution. GNU C/C++ version 4.0 or later is recommended.
 
 To build:
 
@@ -78,6 +78,10 @@ different categories of Forth libraries or applications. These include:
 
 `games/`           console games written in Forth
 
+`libs/`            Forth interfaces to C shared object libraries, such as the
+                   GNU Multiprecision Library, gmp, and the GNU Multiprecision
+                   Floating-Point Library, mpfr.
+
 `benchmarks/`      simple benchmarks to compare the relative speed of Forth systems
 
 
@@ -88,13 +92,17 @@ Important system-level files in the `forth-src/` subdirectory include,
 * `files.4th`       Standard Forth words for file i/o
 * `ansi.4th`        ANSI terminal control
 * `dump.4th`        Forth `DUMP` utility
-* `modules.fs`      A framework for modular programming in Forth
+* `ssd.4th`         Forth `SEE` utility
+* `modules.4th`     A framework for modular programming in Forth
 * `serial.4th`      Low-level serial port interface
 * `syscalls.4th`    Operating System calls
 * `socket.4th`      Sockets interface
+* `lib-interface.4th` Interface to shared object libraries.
 * `ttester.4th`     Test harness used by the automated test code
 
 ## Documentation
 
 The current version of the kForth-64 User's Guide is located in `doc/`. A copy of the Forth-2012 standards document is also provided here. Please note important differences between kForth-64 and Forth-2012, discussed in section 4 of the User's Guide.
+
+The portable modular programming framework documentation is provided in `doc/`.
 
