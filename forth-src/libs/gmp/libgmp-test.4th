@@ -16,7 +16,7 @@
 \        It is defined in strings.4th.
 
 include ans-words
-include modules.fs
+include modules
 include syscalls
 include mc
 include asm

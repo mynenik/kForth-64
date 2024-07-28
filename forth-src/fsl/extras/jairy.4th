@@ -42,7 +42,7 @@
 \
 \ Forth version requires:
 \
-\   modules.fs
+\   modules.4th
 \   fsl-util.4th
 \   ttester.4th  (to run test code only)
 \

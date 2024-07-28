@@ -11,7 +11,7 @@
 \
 \  Requires:
 \    fsl/fsl-util.4th
-\    modules.fs
+\    modules.4th
 \
 \  Glossary:
 \

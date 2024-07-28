@@ -7,7 +7,7 @@
 \ Provided under the GNU Affero General Public License
 \ (AGPL) v3.0 or later.
 \
-\ Requires: ans-words.4th modules.fs syscalls.4th
+\ Requires: ans-words.4th modules.4th syscalls.4th
 \
 
 Also syscalls

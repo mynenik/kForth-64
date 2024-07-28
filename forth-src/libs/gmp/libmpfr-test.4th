@@ -25,7 +25,7 @@
 \                   mpfr_sec, mpfr_csc, mpfr_cot.
 
 include ans-words
-include modules.fs
+include modules
 include syscalls
 include mc
 include asm

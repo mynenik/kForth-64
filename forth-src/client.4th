@@ -25,7 +25,7 @@
 include ans-words
 include struct
 include struct-ext
-include modules.fs
+include modules
 include syscalls
 
 Also syscalls

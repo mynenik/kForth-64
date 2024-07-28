@@ -3,7 +3,7 @@
 
 include ans-words
 include strings
-include modules.fs
+include modules
 include ddarith
 include dd_io
 include fsl/fsl-util

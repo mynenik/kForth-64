@@ -1,7 +1,7 @@
 \ term.4th
 
 include ans-words
-include modules.fs
+include modules
 include struct-200x
 include struct-200x-ext
 include strings

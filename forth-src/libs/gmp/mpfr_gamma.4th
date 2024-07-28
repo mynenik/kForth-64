@@ -27,7 +27,7 @@
 \ Requires:
 \
 \  ans-words
-\  modules.fs
+\  modules
 \  syscalls
 \  mc
 \  asm

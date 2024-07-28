@@ -9,7 +9,7 @@
 \ Requires:
 \
 \	ans-words.4th
-\	modules.fs  (0.5.0 or later)
+\	modules.4th  (0.5.0 or later)
 \       struct.4th
 \       struct-ext.4th
 \	strings.4th
