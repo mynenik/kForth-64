@@ -15,6 +15,7 @@
 \   2022-10-19  km  added opcodes and info for: FIND-NAME-IN
 \                     FIND-NAME  F+!  PI  FSQUARE
 \   2023-01-22  km  conditional inclusion for non-Win32 words.
+\   2024-07-28  km  added info for: *+  }}  VALLOC  VFREE  VPROTECT
 
 [UNDEFINED] BEGIN-STRUCTURE [IF] include struct-200x [THEN]
 [UNDEFINED] BEGIN-MODULE [IF] include modules [THEN]
@@ -512,6 +513,13 @@ Private:
 424  constant  OP_F+!
 425  constant  OP_PI
 426  constant  OP_FSQUARE
+427  constant  OP_*+
+
+430  constant  OP_}}
+
+450  constant OP_VALLOC
+451  constant OP_VFREE
+452  constant OP_VPROTECT
 
 Public:
 
@@ -851,7 +859,7 @@ S" UNTIL"   0  OP_UNTIL    ti!
 S" AGAIN"   0  OP_AGAIN    ti!
 S" BYE"     0  OP_BYE      ti!
 
-\ Extended byte-code primitives in kForth 2.x
+\ Extended byte-code primitives in kForth-32 2.x, kForth-64 0.4.x
 
 S" U/MOD"   0  nc' U/MOD     OP_UDIVMOD  ti!
 S" UD/MOD"  0  nc' UD/MOD    OP_UDDIVMOD ti!
@@ -953,6 +961,8 @@ S" PI"             0 nc' PI             OP_PI             ti!
 S" FSQUARE"        0 nc' FSQUARE        OP_FSQUARE        ti!
 S" F2DROP"         0 nc' F2DROP         OP_F2DROP         ti!
 S" F2DUP"          0 nc' F2DUP          OP_F2DUP          ti!
+S" *+"             0 nc' *+             OP_*+             ti!
+S" }}"             0 nc' }}             OP_}}             ti!
 
 fp-stack? [IF]
 S" FDEPTH"         0 nc' FDEPTH         OP_FDEPTH         ti!
@@ -978,6 +988,12 @@ S" SFLOATS"        0 nc' SFLOATS        OP_SFLOATS        ti!
 S" SFLOAT+"        0 nc' SFLOAT+        OP_SFLOAT+        ti!
 S" FLOATS"         0 nc' FLOATS         OP_FLOATS         ti!
 S" FLOAT+"         0 nc' FLOAT+         OP_FLOAT+         ti!
+
+[DEFINED] _WIN32_ [IF]
+S" VALLOC"         0 nc' VALLOC         OP_VALLOC         ti!
+S" VFREE"          0 nc' VFREE          OP_VFREE          ti!
+S" VPROTECT"       0 nc' VPROTECT       OP_VPROTECT       ti!
+[THEN]
 
 END-MODULE
 
