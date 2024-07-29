@@ -51,7 +51,7 @@ To build:
    build results in two executables, `kforth64` and `kforth64-fast`.
 
 3. Move the executables into the search path. It is recommended to move
-   the kForth-64 executables to `/usr/local/bin` . You must be root to do this.
+   the kForth-64 executables to `/usr/local/bin` . You must have root privileges to do this.
 
 4. Specify the default directory in which kforth64 will search for Forth source
    files not found in the current directory. The environment variable `KFORTH_DIR`
@@ -74,7 +74,7 @@ different categories of Forth libraries or applications. These include:
 `system-test/`     A set of automated tests to validate the Forth system against
                    the Forth-2012 standard
 
-`fsl/`             modules from the Forth Scientific Library, including test code
+`fsl/`             modules for numeric computation from the Forth Scientific Library, including test code
 
 `games/`           console games written in Forth
 
@@ -96,6 +96,7 @@ Important system-level files in the `forth-src/` subdirectory include,
 * `modules.4th`     A framework for modular programming in Forth
 * `serial.4th`      Low-level serial port interface
 * `syscalls.4th`    Operating System calls
+* `signal.4th`      Signals interface (see `signals-ex.4th` and `sigfpe.4th`)
 * `socket.4th`      Sockets interface
 * `lib-interface.4th` Interface to shared object libraries.
 * `ttester.4th`     Test harness used by the automated test code
