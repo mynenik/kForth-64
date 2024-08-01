@@ -278,7 +278,7 @@ void WordList::RemoveLastWord ()
 	delete pWord;
 }
 
-WordListEntry* WordList::GetFromName (char* name)
+WordListEntry* WordList::GetFromName (const char* name)
 {
    vector<WordListEntry*>::iterator i;
    if (size()) {
@@ -346,7 +346,7 @@ int Vocabulary::Initialize( WordTemplate wt[], int n )
 }
 //---------------------------------------------------------------
 
-WordListEntry* SearchList::LocateWord (char* name)
+WordListEntry* SearchList::LocateWord (const char* name)
 {
 // Iterate through the search list, to look for an entry
 //   with the specified name. If found, return the pointer
@@ -1241,7 +1241,6 @@ int CPP_compilename ()
 int CPP_postpone ()
 {
     char token[128];
-    byte* bp;
 
     pTIB = ExtractName (pTIB, token);
     strupr(token);

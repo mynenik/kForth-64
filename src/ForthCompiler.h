@@ -44,7 +44,7 @@ struct WordListEntry
 class WordList : public vector<WordListEntry*> 
 {
 public:
-   WordListEntry* GetFromName( char* );
+   WordListEntry* GetFromName( const char* );
    WordListEntry* GetFromCfa( void* );
    void RemoveLastWord( void );
 };
@@ -60,7 +60,7 @@ public:
 class SearchList : public vector<Vocabulary*>
 {
 public:
-   WordListEntry* LocateWord( char* );
+   WordListEntry* LocateWord( const char* );
    WordListEntry* LocateCfa( void*  );
 };
 

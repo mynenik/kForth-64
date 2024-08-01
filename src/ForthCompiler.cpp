@@ -3,7 +3,7 @@
 // A compiler to generate kForth Byte Code (FBC) from expressions
 //   or programs
 //
-// Copyright (c) 1998--2021 Krishna Myneni, 
+// Copyright (c) 1998--2024 Krishna Myneni, 
 // <krishna.myneni@ccreweb.org>
 //
 // Contributors:
@@ -212,11 +212,9 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
   long int ival, *sp;
   vector<byte>::iterator ib1, ib2;
   WordListEntry* pWord;
-  byte opval, *ip, *tp;
+  byte *tp;
 
   if (debug) cout << ">Compiler Sp: " << GlobalSp << " Rp: " << GlobalRp << endl;
-
-  ip = (byte *) &ival;
 
   linecount = *pLc;
   pCurrentOps = pOpCodes;

@@ -618,13 +618,12 @@ int IsInt (char* token, long int* p)
 /* Check the string token to see if it is an integer number;
    if so set the value of *p and return True, otherwise return False. */
 
-  int b = FALSE, sign = FALSE;
+  int b = FALSE;
   unsigned long u = 0;
   char *pStr = token, *endp;
 
   if ((*pStr == '-') || isBaseDigit(*pStr))
     {
-      if (*pStr == '-') {sign = TRUE;}
       ++pStr;
       while (isBaseDigit(*pStr))	    
 	{
