@@ -2,7 +2,7 @@
 //
 // The intrinsic Forth word list for kForth
 //
-// Copyright (c) 2008--2023 Krishna Myneni,
+// Copyright (c) 2008--2024 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org> 
 //
 // This software is provided under the terms of the GNU
@@ -60,6 +60,7 @@ WordTemplate ForthWords[] =
     { "CREATE",    OP_CREATE,       NONDEFERRED },
     { "DOES>",     OP_DOES,         0 },
     { ">BODY",     OP_TOBODY,       0 },
+    { "SYNONYM",   OP_SYNONYM,      NONDEFERRED },
     { "ALIAS",     OP_ALIAS,        NONDEFERRED },
     { "FORGET",    OP_FORGET,       NONDEFERRED },
     { "COLD",      OP_COLD,         NONDEFERRED },

@@ -3,7 +3,7 @@
 // The C++ portion of the kForth Virtual Machine to 
 // execute Forth byte code.
 //
-// Copyright (c) 1996--2023 Krishna Myneni,
+// Copyright (c) 1996--2024 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -2049,6 +2049,56 @@ int CPP_queryallot ()
       PUSH_ADDR((long int) pWord->Pfa)
     }
   return e;
+}
+
+// SYNONYM ( "<newname>" "<oldname>" -- )
+// Create a word NewName with the same with the same interpretation
+// and compilation semantics of the existing word, OldName.
+// Forth 2012 Tools Ext 15.6.2.2264
+int CPP_synonym ()
+{
+    char NewName[256], OldName[256], s[256];
+    int ncNew, ncOld, ecode = 0;
+
+    pTIB = ExtractName( pTIB, NewName );
+    pTIB = ExtractName( pTIB, OldName );
+    strcpy(s, pTIB);  // remaining part of input line in TIB
+
+    strupr(NewName);
+    strupr(OldName);
+    ncNew = strlen(NewName);
+    ncOld = strlen(OldName);
+
+    if (ncOld) { 
+      WordListEntry* nt = SearchOrder.LocateWord(OldName);
+      if (nt) {
+        if (ncNew) {
+          WordListEntry* pNewWord = new WordListEntry;
+          strcpy (pNewWord->WordName, NewName);
+          pNewWord->WordCode = OP_DEFINITION;
+          pNewWord->Pfa = NULL;
+          pNewWord->Precedence = nt->Precedence;
+	  byte* p = new byte[3*WSIZE];
+          pNewWord->Cfa = p;
+          p[0] = OP_ADDR;
+	  *((long int*) &p[1]) = (long int) nt->Cfa;
+	  p[WSIZE+1] = OP_EXECUTE_BC;
+	  p[WSIZE+2] = OP_RET; 
+          pCompilationWL->push_back(pNewWord);
+        } 
+        else
+          ecode = E_V_CREATE;
+      }
+      else
+        ecode = E_V_UNDEFINED_WORD;
+    }
+    else
+      ecode = E_V_INVALID_NAMEARG;
+
+    strcpy(TIB, s);  // restore TIB with remaining input line
+    pTIB = TIB;      // restore ptr
+    
+    return ecode;
 }
 
 // ALIAS  ( xt "name" -- )

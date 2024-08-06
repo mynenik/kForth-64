@@ -17,7 +17,7 @@
 \     ansi.4th 
 \     dump.4th
 \
-\ Copyright (c) 2002--2022 Krishna Myneni
+\ Copyright (c) 2002--2024 Krishna Myneni
 \
 \ Provided under the GNU Lesser General Public License (LGPL)
 \
@@ -54,7 +54,8 @@
 \   2021-09-18  km  replace instances of ?ALLOT with ALLOT?
 \   2022-01-02  km  use VMTHROW as default exception handler.
 \   2022-01-12  km  add quotation words, [: and ;]
-\   2022-09-26  km  updated TO and VALUE ; added FVALUE and 2VALUE  
+\   2022-09-26  km  updated TO and VALUE ; added FVALUE and 2VALUE
+\   2024-08-06  km  removed source def of SYNONYM; now intrinsic  
 BASE @
 DECIMAL
 
@@ -158,10 +159,6 @@ CREATE PAD 512 ALLOT
    0= IF POSTPONE [ELSE] THEN ;  IMMEDIATE
 
 : [THEN]  ( -- )  ;  IMMEDIATE
-
-\ Forth-2012 Programming Tools 15.6.2.2264
-: SYNONYM ( "<newname>" "<oldname>" -- )
-   CREATE ' 1 CELLS allot? ! DOES> a@ EXECUTE ; 
 
 \ ============ From the FLOATING EXT wordset
 

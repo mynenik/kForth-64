@@ -1,6 +1,6 @@
 // ForthCompiler.h
 //
-// Copyright (c) 1998--2022 Krishna Myneni,
+// Copyright (c) 1998--2024 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
