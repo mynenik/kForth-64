@@ -59,15 +59,13 @@
 : pack ( a u a2 -- | copy string to counted string at a2)
     2dup c! char+ swap cmove ;	
 
-: place  ( addr len c-addr -- | copy string to counted string at a2)
-     2DUP 2>R
-     CHAR+ SWAP CHARS MOVE
-     2R> C!
-; 
+synonym place pack
 
-: $constant  ( a u <name> -- | create a string constant )
-    create dup >r cell+ allot? dup r@ swap ! cell+ r> cmove  
-    does> ( a -- a' u ) dup @ swap cell+ swap ; 
+\ $CONSTANT creates a new allocated and initialized fixed string 
+\ from an existing string which may be transient in memory or mutable.
+: $constant  ( a u <name> -- )
+    dup allocate ABORT" Unable to allocate new string"
+    swap 2dup 2>r cmove 2r> 2constant ;
 
 ( simple enumeration utility
 
