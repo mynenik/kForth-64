@@ -64,7 +64,7 @@ synonym place pack
 \ $CONSTANT creates a new allocated and initialized fixed string 
 \ from an existing string which may be transient in memory or mutable.
 : $constant  ( a u <name> -- )
-    dup allocate ABORT" Unable to allocate new string"
+    dup allocate IF -59 throw THEN
     swap 2dup 2>r cmove 2r> 2constant ;
 
 ( simple enumeration utility
