@@ -2073,7 +2073,7 @@ int CPP_synonym ()
       WordListEntry* nt = SearchOrder.LocateWord(OldName);
       if (nt) {
         if (ncNew) {
-          WordListEntry* pNewWord = new WordListEntry;
+          pNewWord = new WordListEntry;
           strcpy (pNewWord->WordName, NewName);
           pNewWord->WordCode = OP_DEFINITION;
           pNewWord->Pfa = NULL;
