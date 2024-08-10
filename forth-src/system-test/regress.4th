@@ -20,6 +20,7 @@
 \        Revised:  January 29, 2020  km; added tests for UW@ SW@ UL@ SL@ L!
 \        Revised:  February 13, 2020 km; added tests for NUMBER?
 \        Revised:  June 6, 2021 km; added tests for POSTPONE and COMPILE, 
+\        Revised:  August 19, 2024 km; added tests for SYNONYM
 s" ans-words.4th" included
 s" ttester.4th" included
 
@@ -454,6 +455,15 @@ t{ c" facadebabacafe" number?  ->  babacafe facade true }t
 t{ c" 5G" number?  ->  5 s>d false }t
 t{ c" G5" number?  ->  0 s>d false }t
 decimal
+
+testing SYNONYM
+synonym compile-char [char]
+: test-synonym-immediate compile-char A ;
+synonym integer-constant constant
+314159 integer-constant i1
+: test-synonym-nondeferred i1 ; 
+t{ test-synonym-immediate -> char A }t
+t{ test-synonym-nondeferred -> 314159 }t
 
 COMMENT Uncomment lines in regress.4th to test errors.
 
