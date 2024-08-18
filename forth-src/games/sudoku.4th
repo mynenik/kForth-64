@@ -84,8 +84,9 @@ Calls : 458
 
 )
 
-\ ======== kForth requires  ==========
+\ ======== kForth interface ==========
 include ans-words
+include strings
 \ ====================================
 
 
@@ -149,14 +150,22 @@ create sudoku_box 9 cells allot
 \ Set related: sets are sudoku_row, sudoku_col, sudoku_box
 
 \ ie x y --   ;  adds x into bitmap y
-: addbits_row 1 rot lshift swap cells sudoku_row + dup @ rot or swap ! ;
-: addbits_col 1 rot lshift swap cells sudoku_col + dup @ rot or swap ! ;
-: addbits_box 1 rot lshift swap cells sudoku_box + dup @ rot or swap ! ;
+:noname ( ie x y a -- ) 
+  >r 1 rot lshift swap cells 
+  r> + dup @ rot or swap ! ;
+
+dup  : addbits_row sudoku_row [ compile, ] ;
+dup  : addbits_col sudoku_col [ compile, ] ;
+     : addbits_box sudoku_box [ compile, ] ;
 
 \ ie x y --  ; remove number x from bitmap y
-: removebits_row 1 rot lshift swap cells sudoku_row + dup @ rot invert and swap ! ;
-: removebits_col 1 rot lshift swap cells sudoku_col + dup @ rot invert and swap ! ;
-: removebits_box 1 rot lshift swap cells sudoku_box + dup @ rot invert and swap ! ;
+:noname ( ie x y a -- )
+  >r 1 rot lshift swap cells
+  r> + dup @ rot invert and swap ! ;
+
+dup : removebits_row sudoku_row [ compile, ] ;
+dup : removebits_col sudoku_col [ compile, ] ;
+    : removebits_box sudoku_box [ compile, ] ;
 
 \ clears all bitsmaps to 0
 : clearbitmaps 9 0 do i cells
@@ -197,12 +206,24 @@ create sudoku_box 9 cells allot
 ;
 
 \ algorithm from c.l.f circa 1995 ? Will Baden
+0 [IF]
 : countbits    ( number -- bits )
         [ HEX ] DUP  55555555 AND  SWAP  1 RSHIFT  55555555 AND  +
                 DUP  33333333 AND  SWAP  2 RSHIFT  33333333 AND  +
                 DUP  0F0F0F0F AND  SWAP  4 RSHIFT  0F0F0F0F AND  +
         [ DECIMAL ] 255 MOD
 ;
+[ELSE]
+: countbits    ( number -- bits )
+        [: ( n u ushift -- ) >r swap 2dup and swap r> rshift rot and + ;]
+        >r
+        [ HEX ] 
+        55555555 1  r@ execute
+        33333333 2  r@ execute
+        0F0F0F0F 4  r> execute
+        [ DECIMAL ] 255 MOD
+;
+[THEN]
 
 \ Try tests a number in a said position of grid
 \ Returns true if it's possible, else false.
@@ -383,14 +404,6 @@ create sudoku_box 9 cells allot
   ."      help        ; for help " CR
   ."      puzzle      ; make a new puzzle from the next" CR
   ."                  ; 81 whitespace delimited digits" CR
-  ." Example:" cr cr
-  ." ( next three lines are entered as a single line )" cr
-  ."   puzzle 5 3 0 0 7 0 0 0 0 6 0 0 1 9 5 0 0 0 0 9 8 0 0 0 0 6 0" cr 
-  ."          8 0 0 0 6 0 0 0 3 4 0 0 8 0 3 0 0 1 7 0 0 0 2 0 0 0 6" cr
-  ."          0 6 0 0 0 0 2 8 0 0 0 0 4 1 9 0 0 5 0 0 0 0 8 0 0 7 9" cr
-  ."   showit" cr
-  ."   solveit" cr
-
   CR
 ;
 
