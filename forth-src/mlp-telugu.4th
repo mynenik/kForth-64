@@ -8,74 +8,73 @@
 \  13 మే  2017  -- తయారు చేసిన
 \  30 నవంబరు 2019
 
-: వెంటనే    immediate ;
-: తరువాత  postpone postpone ; వెంటనే 
+synonym వెంటనే    immediate
+synonym తరువాత  postpone 
 
-: ఉంటే 	తరువాత   if     ; వెంటనే 
-: కాదంటే 	తరువాత  else   ; వెంటనే   
-: అప్పుడు 	తరువాత  then   ; వెంటనే 
-: మొదలు 	తరువాత  begin  ; వెంటనే 
-: అయితే 	తరువాత  while  ; వెంటనే 
-: ఇంకొసారి తరువాత  repeat ; వెంటనే 
-: మళ్ళీ 	తరువాత  again  ; వెంటనే 
-: వరకు 	తరువాత  until  ; వెంటనే 
-: చెయ్యి 	తరువాత  do     ; వెంటనే
-: చెయ్యనా 	తరువాత ?do    ; వెంటనే  
-: తిరుగు 	తరువాత  loop   ; వెంటనే 
-: ఐ 		తరువాత  I      ; వెంటనే 
-: ఙే 		తరువాత  J      ; వెంటనే 
-: వదులు 	తరువాత  leave  ; వెంటనే
-: [అక్షర] 	తరువాత [char] ;  వెంటనే 
+synonym ఉంటే    if 
+synonym కాదంటే  else
+synonym అప్పుడు  then
+synonym మొదలు  begin
+synonym అయితే  while 
+synonym ఇంకొసారి  repeat
+synonym మళ్ళీ  again
+synonym వరకు  until
+synonym చెయ్యి  do
+synonym చెయ్యనా  ?do
+synonym తిరుగు  loop
+: ఐ  తరువాత  I ; వెంటనే 
+: ఙే  తరువాత  J ; వెంటనే 
+synonym వదులు  leave
+synonym [అక్షర] [char]
 : చేస్తుంది 	తరువాత does>  ; వెంటనే 
-\ : ఆపు"  	తరువాత abort" ; వెంటనే
-
-: సృజించు 	create ;
-: ఉంచు 	allot ;
-: పదము 	word ;
-: పదాలు 	words ;
-: కనిపెట్టు 	find ;
-: పారేయి     drop ;
-: 2పారేయి 	2drop ;
-: డూప్       dup ;
-: 2డూప్     2dup ;
-: మార్చు     swap ;
-: మీద 	over ;
-: రోట్ 	rot ;
-: రోల్ 	roll ;
-: గిల్లు         nip ;
-: లెక్క  	count ;
-: తుడువు 	erase ;
-: ఖాళీ 	blank ;
-: వెతుకు 	search ;
-: చేరింది 	included ;
-: చేర్చు 	include ;
-: తీసుకొ 	accept ;
-: చూపించు type ; 
-: మరియు 	and ;
-: కాని 	or ;
-: కాదు 	invert ;
-: ఎక్కువ     > ;
-: తక్కువ    <  ;
-: సమానం  =  ;
-: పెద్ద 	max ;
-: చిన్న 	min ;
-: మిగత 	mod ;
-: /మిగత 	/mod ;
-: సంఖ్యము	>number ;
-: అక్షర 	char ;
-: కీ 		key ;
-: కీ? 	key? ;
-: ఎమిట్ 	emit ;
-: మారదు 	constant ;
-: మారేది 	variable ;
-: వెళ్ళు 	exit ;
-: మానేయి 	quit ;
-: ఆపు 	abort ;
-: బై   bye ;
+synonym ఆపు" abort"
+synonym సృజించు  create
+synonym ఉంచు   allot
+synonym పదము  word
+synonym పదాలు  words
+synonym కనిపెట్టు  find
+synonym పారేయి   drop
+synonym 2పారేయి  2drop
+synonym డూప్   dup
+synonym 2డూప్  2dup
+synonym మార్చు   swap
+synonym మీద   over
+synonym రోట్  rot
+synonym రోల్  roll
+synonym గిల్లు   nip
+synonym లెక్క  count
+synonym తుడువు  erase
+synonym ఖాళీ  blank
+synonym వెతుకు  search
+synonym చేరింది  included
+synonym చేర్చు  include
+synonym తీసుకొ  accept
+synonym చూపించు  type 
+synonym మరియు  and
+synonym కాని  or
+synonym కాదు  invert
+synonym ఎక్కువ   >
+synonym తక్కువ   <
+synonym సమానం  =
+synonym పెద్ద  max
+synonym చిన్న  min
+synonym మిగత  mod
+synonym /మిగత /mod
+synonym సంఖ్యము  >number
+synonym అక్షర  char
+synonym కీ  key
+synonym కీ? key?
+synonym ఎమిట్  emit
+synonym మారదు  constant
+synonym మారేది  variable
+synonym వెళ్ళు  exit
+synonym మానేయి  quit
+synonym ఆపు  abort
+synonym బై   bye
 
 \ TRUE and FALSE constants
-true  మారదు  నిజము
-false మారదు  తప్పు
+synonym నిజము  TRUE
+synonym తప్పుడు FALSE
 
 \ CONSTANTs "sunna" and "padi"
  0 మారదు సున్న

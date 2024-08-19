@@ -8,9 +8,9 @@ include mlp-telugu
 చేర్చు strings
 చేర్చు ansi
 
-: అక్కడ  ( col row -- ) AT-XY ;
-: పేజీ  ( -- ) PAGE ;
-: అక్షరాలు ;
+synonym అక్కడ  AT-XY
+synonym పేజీ  PAGE
+synonym అక్షరాలు  CHARS
 
 \ ఈ జీవితం ఉంచు
 1 అక్షరాలు మారదు  /అక్షరము
@@ -58,8 +58,8 @@ DECIMAL
 \ compass దిక్కులు
 : ఉ  ( i -- j )  ఎంత-వెడల్పు  - ;
 : ద  ( i -- j )  ఎంత-వెడల్పు  + ;
-: తూ  ( i -- j )  1+ ;
-: ప  ( i -- j )  1- ;
+synonym తూ  1+
+synonym ప   1-
 
 \ జనాభ లెక్క
 : ఇల్లు+!  ( -1|1 i -- )  >r  బతికున్నాయి *  r> కొత్త C+! ;
