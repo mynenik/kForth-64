@@ -89,8 +89,8 @@ create last_grid[[ GRIDSIZE dup * FLOATS allot
 50e   FCONSTANT  LEFT_EDGE	\ Left edge at   50.0 V
 
 : inside_rectangle? ( row col -- flag | inside rectangular boundary?)
-    dup 0> swap GRIDSIZE 1- < AND swap
-    dup 0> swap GRIDSIZE 1- < AND AND
+    1 GRIDSIZE 1- within swap 
+    1 GRIDSIZE 1- within and
 ;
 
 : set_rectangular_bvs ( -- | setup the rectangular boundary values)
