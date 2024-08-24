@@ -35,7 +35,8 @@ const int NONDEFERRED = PRECEDENCE_NON_DEFERRED;
 
 size_t NUMBER_OF_INTRINSIC_WORDS =
    sizeof(ForthWords) / sizeof(ForthWords[0]);
-
+size_t NUMBER_OF_ROOT_WORDS =
+   sizeof(RootWords) / sizeof(RootWords[0]);
 
 extern bool debug;
 
@@ -64,7 +65,7 @@ extern "C" {
   int CPP_compile_to_current();
 
   // Provided by vmc.c
-  void strupr (char*);
+  char* strupr (char*);
   char* ExtractName(char*, char*);
   int   IsFloat(char*, double*);
   int   IsInt(char*, long int*);

@@ -529,11 +529,12 @@ int C_accept ()
 }
 /*----------------------------------------------------------*/
 
-void strupr (char* p)
+char* strupr (char* p)
 {
 /* convert string to upper case  */
-
-  while (*p) {*p = toupper(*p); ++p;}
+  char* cp = p;
+  while (*cp) {*cp = toupper(*cp); ++cp;}
+  return p;
 }
 
 char* ExtractName (char* str, char* name)

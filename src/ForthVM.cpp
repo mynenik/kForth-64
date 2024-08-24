@@ -60,6 +60,7 @@ extern WordListEntry* pNewWord;
 extern vector<byte>* pCurrentOps;
 
 extern size_t NUMBER_OF_INTRINSIC_WORDS;
+extern size_t NUMBER_OF_ROOT_WORDS;
 
 extern "C" {
 
@@ -68,7 +69,7 @@ extern "C" {
   void  set_start_time(void);
   void  save_term(void);
   void  restore_term(void);
-  void  strupr (char*);
+  char* strupr (char*);
   char* ExtractName(char*, char*);
   int   IsFloat(char*, double*);
   int   IsInt(char*, int*);
@@ -430,7 +431,7 @@ int OpenForth ()
 
     // The Dictionary initially contains the Root, Forth, and Assembler 
     // wordlists.
-    Voc_Root.Initialize(RootWords, 5);
+    Voc_Root.Initialize(RootWords, NUMBER_OF_ROOT_WORDS);
     Dictionary.push_back(&Voc_Root);
     Voc_Forth.Initialize(ForthWords, NUMBER_OF_INTRINSIC_WORDS);
     Dictionary.push_back(&Voc_Forth);
