@@ -196,6 +196,7 @@ PFE? [IF] \ only for pfe
 s" ttester.4th" included
 true verbose !
 decimal
+
 : z}t   rr}t ;
 : zz}t  rrrr}t ;
 : zzz}t  6 0 DO ftester LOOP ...}t ;
@@ -204,13 +205,13 @@ decimal
 : ?s.       ( c-addr len -- )  verbose @ IF cr type ELSE 2drop THEN ;
 : ?emit-cr  ( -- )             verbose @ IF cr THEN ;
 
-: NONAME  ( lib.case -- )
+:NONAME  ( lib.case -- )
   COMPLEX-TEST-LIB CASE
     NOBLE OF s" Testing complex.fs." ENDOF
     KAHAN OF s" Testing complex-kahan.fs." ENDOF
     PFE   OF s" Testing pfe complex words." ENDOF
     ABORT" ***No complex words loaded"
-  ENDCASE ?s. ; NONAME
+  ENDCASE ?s. ; EXECUTE
 
 verbose @ [IF]
 :noname  ( -- fp.separate? )
