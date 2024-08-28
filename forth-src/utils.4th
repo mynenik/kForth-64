@@ -9,9 +9,6 @@
 \   TABLE  ( m1 ... mn n "name" -- ) create a named table of singles
 \   CTABLE ( c1 ... cn n "name" -- ) create a named table of pchars/bytes
 \   $TABLE ( a1 u1 ... an un n umax "name" -- ) create a named string table
-\   PACK   ( a1 u1 a2 -- ) copy a string to a counted string at a2 
-\   PLACE  ( a1 u1 a2 -- ) same as PACK
-\   $CONSTANT ( a1 u1 "name" -- ) create a named and initialized string constant
 \   ENUM   ( u "namelist" -- ) create a list of enumerated constants
 \   IS-PATH-DELIM? ( c -- flag ) return true if character is a path delimiter
 \          CAUTION: the definition of IS-PATH-DELIM? may be system-specific.
@@ -55,17 +52,6 @@
     LOOP 2DROP
   DOES>  ( n a -- an un) 
     DUP @ ROT * + CELL+ COUNT ;  	
-
-: pack ( a u a2 -- | copy string to counted string at a2)
-    2dup c! char+ swap cmove ;	
-
-synonym place pack
-
-\ $CONSTANT creates a new allocated and initialized fixed string 
-\ from an existing string which may be transient in memory or mutable.
-: $constant  ( a u <name> -- )
-    dup allocate IF -59 throw THEN
-    swap 2dup 2>r cmove 2r> 2constant ;
 
 ( simple enumeration utility
 
