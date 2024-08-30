@@ -28,10 +28,11 @@
 \       PACK        ( a u a2 -- )
 \       PLACE       ( a u a2 -- )  same as PACK
 \
-\  LMI UR/Forth STRx words
 \ 	STRCPY      ( ^str a -- )
 \ 	STRLEN      ( a -- u )
 \ 	STRBUFCPY   ( ^str1 -- ^str2 )
+
+\  LMI Forth STRx words
 \ 	STRCAT      ( a1 u1 a2 u2 -- a3 u3 )
 \ 	STRPCK      ( a u -- ^str )
 \
@@ -122,7 +123,8 @@ DECIMAL
 
 synonym place pack
 
-\ Copy a counted string to address a
+\ Copy a counted string to address a.
+\ Does not append null terminator.
 : strcpy ( ^str a -- )
     over c@ 1+ cmove ;
 
@@ -138,67 +140,62 @@ synonym place pack
 
 16384 constant STR_BUF_SIZE
 create string_buf STR_BUF_SIZE allot
+string_buf STR_BUF_SIZE + constant STR_BUF_PTR_MAX
 variable str_buf_ptr
 string_buf str_buf_ptr !
 
 \ Adjust current pointer to accomodate u bytes.
 \ This word is for internal use only.
 : adjust_str_buf_ptr ( u -- )
-	str_buf_ptr a@ swap +
-	string_buf STR_BUF_SIZE + >=
-	IF
-	  string_buf str_buf_ptr !	\ wrap pointer
-	THEN ;
-
-\ Copy a counted string to the circular string buffer
-: strbufcpy ( ^str1 -- ^str2 )
-	dup c@ 1+ dup adjust_str_buf_ptr
-	swap str_buf_ptr a@ strcpy
-	str_buf_ptr a@ dup rot + str_buf_ptr ! ;
+   dup STR_BUF_SIZE >= IF -9 throw  \ string buffer not big enough
+   ELSE
+     str_buf_ptr a@ + STR_BUF_PTR_MAX >=
+     IF  string_buf str_buf_ptr !  THEN    \ wrap pointer
+   THEN ;
 
 \ Concatenate two strings. Return the concatenated string
 \ which is stored in the circular buffer and has limited
-\ persistence.
+\ persistence. Input strings are not modified.
 : strcat ( a1 u1 a2 u2 -- a3 u3 )
-	rot 2dup + 1+ adjust_str_buf_ptr 
-	-rot
-	2swap dup >r
-	str_buf_ptr a@ swap cmove
-	str_buf_ptr a@ r@ +
-	swap dup r> + >r
-	cmove 
-	str_buf_ptr a@
-	dup r@ + 0 swap c!
-	dup r@ + 1+ str_buf_ptr !
-	r> ;
+   2 pick 2dup + 1+ adjust_str_buf_ptr drop
+   2over  str_buf_ptr a@   swap cmove  \ a1 u2 a2 u2
+   tuck                                \ a1 u1 u2 a2 u2
+   3 pick str_buf_ptr a@ + swap cmove  \ a1 u1 u2 
+   + nip  str_buf_ptr a@   swap        \ abuf u1+u2  
+   2dup + 0 over c!                    \ ( null terminate )
+   1+ str_buf_ptr ! ;
 
-\ Make a counted string in the circular buffer from a string
+\ Make a counted string in the circular buffer from a string.
+\ Input string is not modified.
 : strpck ( a u -- ^str )
-	255 min dup 1+ adjust_str_buf_ptr 
-	dup str_buf_ptr a@ c!
-	tuck str_buf_ptr a@ 1+ swap cmove
-	str_buf_ptr a@ over + 1+ 0 swap c!
-	str_buf_ptr a@
-	dup rot 1+ + str_buf_ptr ! ;
+   255 min dup 2+ adjust_str_buf_ptr   \ a ulim
+   2dup str_buf_ptr a@ 2dup c!         \ a ulim a ulim abuf
+   1+ swap cmove nip                   \ ulim 
+   str_buf_ptr a@ tuck + 1+            \ abuf abuf2 
+   0 over c!                           \ ( null terminate )
+   1+ str_buf_ptr ! ;
 
+\ Copy a counted string to the circular string buffer.
+\ Return address of the copied cs. Input cs is not modified. 
+: strbufcpy ( ^str1 -- ^str2 )  count strpck ;
 
 \ Parse next token from the string separated by a blank:
 \   a2 u2 is the remaining substring
 \   a3 u3 is the token string
 : parse_token ( a u -- a2 u2 a3 u3)
-	BL SKIP 2DUP BL SCAN 2>R R@ - 2R> 2SWAP ;
+   bl skip 2dup bl scan 2>r r@ - 2r> 2swap ;
 
 : parse_line ( a u -- a1 u1 a2 u2 ... n )
-	( -trailing)
-	0 >r
-	BEGIN
-	  parse_token
-	  dup
-	WHILE
-	  r> 1+ >r
-	  2swap
-	REPEAT  
-	2drop 2drop r> ;
+   ( -trailing)
+   0 >r
+   BEGIN
+     parse_token
+     dup
+   WHILE
+     r> 1+ >r
+     2swap
+   REPEAT  
+   2drop 2drop r> ;
 
 \ Base 10 number to string conversions and vice-versa
 
