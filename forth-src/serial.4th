@@ -33,6 +33,7 @@
 \     2024-02-21 km updated termios structure to Forth 200x structure
 \                     and fixed field offsets and sizes; also use UL@ and L!
 \                     to set fields in the structure!
+\     2024-10-31 km added GET-MODEM-BITS
 module: serial
 begin-module
 
@@ -287,6 +288,10 @@ Private:
 variable status
 
 Public:
+
+: get-modem-bits ( handle -- u )
+    TIOCMGET status ioctl drop
+    status @ ;
 
 : lower-dtr ( handle -- )
     dup TIOCMGET status ioctl drop 
