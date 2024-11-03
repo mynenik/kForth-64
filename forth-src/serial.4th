@@ -34,6 +34,7 @@
 \                     and fixed field offsets and sizes; also use UL@ and L!
 \                     to set fields in the structure!
 \     2024-10-31 km added GET-MODEM-BITS
+\     2024-11-03 km added SET-MODEM-BITS
 module: serial
 begin-module
 
@@ -290,32 +291,22 @@ variable status
 Public:
 
 : get-modem-bits ( handle -- u )
-    TIOCMGET status ioctl drop
-    status @ ;
+    TIOCMGET status ioctl drop status @ ;
+
+: set-modem-bits ( handle u -- )
+    status ! TIOCMSET status ioctl drop ;
 
 : lower-dtr ( handle -- )
-    dup TIOCMGET status ioctl drop 
-    status @ TIOCM_DTR invert and status !
-    TIOCMSET status ioctl drop
-;
+    dup get-modem-bits  TIOCM_DTR invert and  set-modem-bits ;
 
 : raise-dtr ( handle -- )
-    dup TIOCMGET status ioctl drop
-    status @ TIOCM_DTR or status !
-    TIOCMSET status ioctl drop
-;
+    dup get-modem-bits  TIOCM_DTR or  set-modem-bits ;
 
 : lower-rts ( handle -- )
-    dup TIOCMGET status ioctl drop 
-    status @ TIOCM_RTS invert and status !
-    TIOCMSET status ioctl drop
-;
+    dup get-modem-bits  TIOCM_RTS invert and  set-modem-bits ;
 
 : raise-rts ( handle -- )
-    dup TIOCMGET status ioctl drop
-    status @ TIOCM_RTS or status !
-    TIOCMSET status ioctl drop
-;
+    dup get-modem-bits  TIOCM_RTS or  set-modem-bits ;
 
 
 : set-params ( handle ^str -- )
