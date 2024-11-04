@@ -34,7 +34,11 @@
 \                     and fixed field offsets and sizes; also use UL@ and L!
 \                     to set fields in the structure!
 \     2024-10-31 km added GET-MODEM-BITS
-\     2024-11-03 km added SET-MODEM-BITS
+\     2024-11-03 km added SET-MODEM-BITS; now provides port constants
+\                     for serial port interfaces provided by USB --> RS232 
+\                     adapters. In addition to COM1--COM4, the port
+\                     constants USBCOM0 and USBCOM1 map to /dev/ttyUSB0 
+\                     and /dev/ttyUSB1
 module: serial
 begin-module
 
@@ -160,6 +164,8 @@ Public:
 1 constant COM2
 2 constant COM3
 3 constant COM4
+10 constant USBCOM1
+11 constant USBCOM2
 
 Private:
 
@@ -213,39 +219,51 @@ Public:
 
 : open ( port -- handle | opens the serial port for communcation )
     \ port is the serial port to open
-    \ 0 = ttyS0 (COM1)
-    \ 1 = ttyS1 (COM2)
+    \ 0 = ttyS0 (COM1)   10 = ttyUSB0 (USBCOM1)
+    \ 1 = ttyS1 (COM2)   11 = ttyUSB1 (USBCOM2)
     \ 2 = ttyS2 (COM3)
     \ 3 = ttyS3 (COM4)
+    
     \ handle is a handle to the open serial port
     \ if handle < 0 there was an error opening the port
+    dup  \ port
+    0< IF
+      drop -1 EXIT   \ invalid port number
+    THEN
+    dup 0 4 within IF
+      >r s" /dev/ttyS" r>
+    ELSE
+      dup 10 12 within IF
+        10 - >r s" /dev/ttyUSB" r>
+      ELSE
+        drop -2 EXIT  \ port number out of range of recognized ports
+      THEN
+    THEN
+    \ caddr u n
+    s>string count strcat strpck
+    O_RDWR O_NOCTTY  O_NDELAY or or ∋ Forth open
     dup
-    0 >= IF
-	s>string count
-	s" /dev/ttyS" 2swap strcat strpck
-	O_RDWR O_NOCTTY  O_NDELAY or or ∋ Forth open
-	dup
-	dup get-options
+    dup get-options
 	
-	\ Disable XON/XOFF flow control and CR to NL mapping
+    \ Disable XON/XOFF flow control and CR to NL mapping
 
-	termios C_IFLAG UL@
-	IXON IXOFF or IXANY or ICRNL or invert and
-	termios C_IFLAG L!
+    termios C_IFLAG UL@
+    IXON IXOFF or IXANY or ICRNL or invert and
+    termios C_IFLAG L!
 
-	\ Open for raw input
+    \ Open for raw input
 
-	termios C_LFLAG UL@
-	ISIG ICANON or ECHO or ECHOE or invert
-	and  termios C_LFLAG L!
+    termios C_LFLAG UL@
+    ISIG ICANON or ECHO or ECHOE or invert
+    and  termios C_LFLAG L!
 
-	\ Open for raw output
+    \ Open for raw output
 
-	termios C_OFLAG UL@
-	OPOST invert
-	and  termios C_OFLAG L!
-	set-options
-    THEN ;
+    termios C_OFLAG UL@
+    OPOST invert
+    and  termios C_OFLAG L!
+    set-options
+;
 	
 : close ( handle -- ior | closes the port )
     \ handle = serial port handle returned by OPEN
