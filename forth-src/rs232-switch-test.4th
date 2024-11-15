@@ -13,18 +13,19 @@ include rs232-switch
 false value user-abort?
 
 : test-switch ( -- )
-    open-com ABORT" Unable to open serial port!"
+    open-sw ABORT" Unable to open serial port!"
+    enable-switch 1 ms
     read-switch IF
       cr ." CTS is raised. Ensure switch is OFF and try again."
-      cr close-com drop EXIT
+      cr close-sw drop EXIT
     THEN
     cr ." Press a key on the keyboard to raise RTS."
-    BEGIN key? UNTIL  key drop
-    enable-switch
+    BEGIN 1000 usleep key? UNTIL  key drop
     cr ." Press and hold the push-button switch."
     cr ." If there is no effect, press Esc to exit the test." cr
     false to user-abort?
     BEGIN
+      1000 us
       key? dup IF
         key 27 = and dup
         IF true to user-abort? THEN
@@ -43,7 +44,7 @@ false value user-abort?
       cr ." CTS is low (switch is OFF)."
     THEN
     disable-switch
-    close-com drop
+    close-sw drop
     user-abort? IF cr ." Test aborted by user!" cr THEN
 ;
 
