@@ -7,7 +7,7 @@
 \ This software is provided under the GNU General Public License
 \ GPL v3.0 or later.
 \
-\ Last Revised: 2024-11-15  km
+\ Last Revised: 2024-11-17  km
 \
 \ Notes:
 \
@@ -24,9 +24,14 @@
 \      of input source specs in this code -- the default
 \      source here is an external USB audio digitizer
 \      (Scarlett Solo). Example settings are also given
-\      for ordinary sound car/chipset line input.
+\      for ordinary sound card/chipset line input.
 \
-\   2. 
+\   2. This software supports a two-button hardware interface
+\      via the serial port. See rs232-switch.4th and
+\      rs232-switch-test.4th. Set the value of SW_PORT to
+\      the appropriate value of the serial port id for your
+\      system.
+ 
 include ans-words
 include modules
 include strings
@@ -35,8 +40,8 @@ include utils
 include ansi
 include struct-200x
 include struct-200x-ext
-include serial          \ supports remote record and play button
-include rs232-switch    \ start/stop switches over serial port
+include serial
+include rs232-switch
 include signal
 include syscalls
 
@@ -124,6 +129,8 @@ variable nseq          \ sequence number in series
 create ^format 8 allot \ samples format string
 create ^file-prefix  64 allot  \ file prefix
 
+\ Hardware configuration may vary: Line In/Mic may
+\ correspond to card 1 instead of card 0 on the system.
 : set-input-source ( card device -- )
     device !
     dup card !
@@ -275,11 +282,6 @@ variable rec_pid
       >r
       ^file-prefix count nip 0> IF
         r> make-play-command s" &" strcat 
-        \ $CMD_PLAY 
-        \ $PIDFILE_OPT     strcat s"  " strcat
-        \ $TMP_PLA_PIDFILE strcat s"  " strcat  
-        \ ^file-prefix r> prefix-to-name strcat
-        \ s"  &" strcat
         strpck system drop
       ELSE
         r> drop 
@@ -293,7 +295,7 @@ variable rec_pid
 : play-start ( -- ) 
     nseq @ make-play-command s" &" strcat strpck system IF
       cr ." Error executing command!"
-    THEN ;
+    THEN cr ;
 
 : play-stop  ( pid -- )
     dup SIGTERM kill IF 
@@ -359,7 +361,15 @@ variable rec_pid
 : redo ( -- ) -1 nseq +! start ;
 
 \ Play last recorded file in current sequence
-: play ( -- ) nseq @ splay ;
+: play ( -- ) nseq @ splay cr ;
+
+\ Stop the current play
+: stop-play ( -- )
+    get-play-pid dup 0> IF
+      play-stop
+    ELSE
+      drop cr ." No play processes exist."
+    THEN cr ;
 
 create inbuf 64 allot  
 : new-seq ( -- )
@@ -379,13 +389,10 @@ create inbuf 64 allot
 
 \ Set defaults (specific to system)
 0 [IF]
-  0 card !   \ internal sound chipset / sound card
-  0 device !
+  0 0 set-input-source   \ internal sound chipset / sound card
 [ELSE]
-  1 card !    \ external USB audio digitizer
-  0 device !
+  1 0 set-input-source    \ external USB audio digitizer
 [THEN]
-card @ device @ set-input-source
 0 nseq !
 MAX_DURATION duration !
 $DEF_FILE_PFX ^file-prefix pack
@@ -399,7 +406,8 @@ remove-rec-pid-file
    cr ."   STOP        stop current recording."
    cr ."   REDO        redo last recording in sequence."
    cr ."   PLAY        play last recording."
-   cr ." n SPLAY       play recording #n in sequence." 
+   cr ." n SPLAY       play recording #n in sequence."
+   cr ."   STOP-PLAY   stop current play." 
    cr ."   .OPTIONS    show current recording options."
    cr ."   HELP        display this help text."
    cr
