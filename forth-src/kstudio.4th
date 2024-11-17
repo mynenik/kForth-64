@@ -416,7 +416,7 @@ remove-rec-pid-file
 ;
 
 rec-switch-present? [IF]
-   ['] button-dispatcher set-timer-handler drop
+   ' button-dispatcher set-timer-handler drop
    start-timer
 [THEN]
 
