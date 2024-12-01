@@ -22,7 +22,7 @@ create dump_display_buf 20 allot
 : dump_display_char ( n -- n|'.' )
 	dup [char] ! < over [char] ~ > or IF drop [char] . THEN ;
 
-: .address ( a -- ) base @ >r hex u. r> base ! ;
+: .address ( a -- ) base @ swap hex u. base ! ;
 
 : dump ( a n -- | display n bytes starting at a )
 	dup 0> IF
