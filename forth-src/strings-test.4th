@@ -153,9 +153,19 @@ t{ StrArray[ 2 ]S@  s" 20"       compare -> 0 }t
 
 t{ NULL_STRING parse_line -> 0 }t
 
+TESTING PARSE_ARGS
+SET-NEAR
+1e-16 rel-near f!
+: s4_conv_ref  3.1415e0 NAN  20.0e0 3 ;  \ expected results from PARSE_ARGS
+
+t{ S4 parse_args  -> s4_conv_ref  rrrx}t
+t{ S4 s"     " strcat parse_args -> s4_conv_ref  rrrx}t  \ check trailing spaces   
+
+t{ NULL_STRING parse_args -> 0 }t
+ 
 \ TESTING STRING>S STRING>UD STRING>D
 \ TESTING U>STRING S>STRING UD>STRING D>STRING
 \ TESTING F>STRING F>FPSTR
 \ TESTING STRING>F
-\ TESTING PARSE_ARGS PARSE_CSV
+\ TESTING PARSE_CSV
 

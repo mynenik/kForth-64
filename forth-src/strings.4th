@@ -192,7 +192,7 @@ string_buf str_buf_ptr !
      parse_token
      dup
    WHILE
-     r> 1+ >r
+     1 rp@ +!  \ r> 1+ >r
      2swap
    REPEAT  
    2drop 2drop r> ;
@@ -201,15 +201,15 @@ string_buf str_buf_ptr !
 
 \ Return counted string representing u in base 10
 : u>string ( u -- ^str )
-    base @ swap decimal 0 <# #s #> strpck swap base ! ;
+    base @ swap 10 base ! 0 <# #s #> strpck swap base ! ;
 
 \ Return counted string representing ud in base 10
 : ud>string ( ud -- ^str )
-    base @ >r decimal <# #s #> strpck r> base ! ;
+    base @ >r 10 base ! <# #s #> strpck r> base ! ;
 
 \ Convert counted string to unsigned double in base 10
 : string>ud ( ^str -- ud )
-    count base @ >r decimal 0 0 2swap >number 2drop r> base ! ;
+    count base @ >r 10 base ! 0 0 2swap >number 2drop r> base ! ;
 
 \ Return counted string representing d in base 10
 : d>string ( d -- ^str )
@@ -218,7 +218,7 @@ string_buf str_buf_ptr !
 
 \ Convert counted string to signed double in base 10
 : string>d ( ^str -- d )
-    base @ >r decimal number? drop r> base ! ;
+    base @ >r 10 base ! number? drop r> base ! ;
 
 \ Return counted string representing n in  base 10
 : s>string ( n -- ^str )
@@ -323,7 +323,7 @@ variable  fnumber_digits
 0e 0e f/ fconstant NAN
 	 
 : string>f ( ^str -- ) ( F: -- r ) \ ( ^str -- r )
-    count bl skip base @ >r decimal >float 
+    count bl skip base @ >r 10 base ! >float 
     0= IF NAN THEN r> base ! ;
 
 \ Parse a string delimited by spaces into fp numbers
@@ -334,32 +334,37 @@ variable  fnumber_digits
 	BEGIN
 	  dup 0>
 	WHILE
-	  bl skip 
-	  2dup 
-	  bl scan 2>r
-	  r@ - dup 0= 
-	  IF drop r> 0 >r THEN
-	  strpck string>f
-	  2r> r> 
-	  1+ >r
+	  bl skip dup
+        WHILE
+	  2dup bl scan 
+          dup IF 
+            2>r  r@ - strpck string>f 2r>
+          ELSE
+            2drop strpck string>f 0 dup
+          THEN
+	  1 rp@ +!   \ r> 1+ >r
 	REPEAT
+        THEN
 	2drop r> ;
 [ELSE]
 : parse_args ( a u -- r1 ... rn n )
-	0 >r 
-	2>r
+	0 >r  2>r
 	BEGIN
 	  r@ 0>
 	WHILE
-	  2r> bl skip 
-	  2dup 
-	  bl scan 2>r
-	  r@ - dup 0= 
-	  IF drop r> 0 >r THEN
-	  strpck string>f
-	  2r> r> 
-	  1+ >r 2>r
+	  2r> bl skip 2>r 
+          r@
+        WHILE 
+	  2r> 2dup bl scan
+          dup IF 
+            2>r  r@ - strpck string>f 2r>
+          ELSE 
+	    2drop strpck string>f 0 dup
+          THEN
+	  1 rp@ +!   \ r> 1+ >r 
+          2>r
 	REPEAT
+        THEN
 	2r> 2drop r> ;
 [THEN]
 
