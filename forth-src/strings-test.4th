@@ -2,7 +2,7 @@
 \
 \ Test the kForth strings library
 \
-\ 2024-08-28 km
+\ Last Revised: 2024-12-06 km
 
 include ans-words
 include strings
@@ -140,32 +140,32 @@ t{ ALPHANUMERIC DIGITS search -> ALPHANUMERIC true }t
 t{ ALPHANUMERIC LC_ALPHABET search -> ALPHANUMERIC n1 - swap n1 + swap true }t
 t{ ALPHANUMERIC UC_ALPHABET search -> ALPHANUMERIC n2 - swap n2 + swap true }t
 
-TESTING PARSE_TOKEN PARSE_LINE
+TESTING PARSE-TOKEN PARSE-LINE
 s"    3.1415e0  grape      20"  2constant S4
-t{ S4 parse_token 2nip s" 3.1415e0" compare -> 0 }t
-t{ S4 parse_token 2drop parse_token 2nip s" grape" compare -> 0 }t
-t{ S4 parse_token 2drop parse_token 2drop parse_token 2nip s" 20" compare -> 0 }t
+t{ S4 parse-token 2nip s" 3.1415e0" compare -> 0 }t
+t{ S4 parse-token 2drop parse-token 2nip s" grape" compare -> 0 }t
+t{ S4 parse-token 2drop parse-token 2drop parse-token 2nip s" 20" compare -> 0 }t
 
-t{ S4 parse_line >r StrArray[ 2 ]S! StrArray[ 1 ]S! StrArray[ 0 ]S! r> -> 3 }t
+t{ S4 parse-line >r StrArray[ 2 ]S! StrArray[ 1 ]S! StrArray[ 0 ]S! r> -> 3 }t
 t{ StrArray[ 0 ]S@  s" 3.1415e0" compare -> 0 }t
 t{ StrArray[ 1 ]S@  s" grape"    compare -> 0 }t
 t{ StrArray[ 2 ]S@  s" 20"       compare -> 0 }t
 
-t{ NULL_STRING parse_line -> 0 }t
+t{ NULL_STRING parse-line -> 0 }t
 
-TESTING PARSE_ARGS
+TESTING PARSE-FLOATS
 SET-NEAR
 1e-16 rel-near f!
 : s4_conv_ref  3.1415e0 NAN  20.0e0 3 ;  \ expected results from PARSE_ARGS
 
-t{ S4 parse_args  -> s4_conv_ref  rrrx}t
-t{ S4 s"     " strcat parse_args -> s4_conv_ref  rrrx}t  \ check trailing spaces   
+t{ S4 parse-floats  -> s4_conv_ref  rrrx}t
+t{ S4 s"     " strcat parse-floats -> s4_conv_ref  rrrx}t  \ check trailing spaces   
 
-t{ NULL_STRING parse_args -> 0 }t
+t{ NULL_STRING parse-floats -> 0 }t
  
 \ TESTING STRING>S STRING>UD STRING>D
 \ TESTING U>STRING S>STRING UD>STRING D>STRING
 \ TESTING F>STRING F>FPSTR
 \ TESTING STRING>F
-\ TESTING PARSE_CSV
+\ TESTING PARSE-CSV-FLOATS
 
