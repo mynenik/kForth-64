@@ -2,16 +2,16 @@
 \
 \ Utility for reading a two-column ascii file into FSL-type arrays
 \
-\ Requires the non-standard word PARSE_ARGS, which parses a line of
+\ Requires the non-standard word PARSE-FLOATS, which parses a line of
 \ text into a sequence of floating point numbers:
 \
-\     PARSE_ARGS ( a u -- r1 r2 ... rn  n )
+\     PARSE-FLOATS ( a u -- r1 r2 ... rn  n )
 \
 \  or, for systems with a separate floating stack,
 \
-\     PARSE_ARGS ( a u -- n ) ( F: -- r1 r2 ... rn )
+\     PARSE-FLOATS ( a u -- n ) ( F: -- r1 r2 ... rn )
 \
-\  PARSE_ARGS should return zero for n if the line is empty or
+\  PARSE-FLOATS should return zero for n if the line is empty or
 \  contains only whitespace characters.
 \
 \ Notes:
@@ -39,7 +39,7 @@
 \   2015-02-07  km; fixed reading lines with trailing spaces;
 \                   drop left over zero on stack.
 \
-[undefined] parse_args [IF] include strings.4th [THEN]
+[undefined] parse-floats [IF] include strings.4th [THEN]
 [undefined] open-file  [IF] include files.4th   [THEN]
 
 0 value fid
@@ -56,7 +56,7 @@ create dline 256 allot
     WHILE
 	    dline c@ [char] # = IF dline swap cr type  \ ignore comment line
 	    ELSE
-		dline swap -trailing parse_args
+		dline swap parse-floats
 		CASE
 		    0 OF   ENDOF  \ blank line; ignore it
 		    2 OF   2R@ nip idx } F!  2R@ drop idx } F!  1 idx + to idx  ENDOF

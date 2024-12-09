@@ -79,32 +79,6 @@ variable dsign
 
 : 3dup ( a b c -- a b c a b c ) 2 pick 2 pick 2 pick ;
 
-: pack ( a u a2 -- | copy string to counted string at a2)
-    >r 0 max 255 min r> 2dup c! 1+ swap cmove ;	
-
-[UNDEFINED] scan [IF] 
-: scan  ( addr len char -- addr' len' )
-    over 0> IF
-      over 0 DO  >r over c@ r@ = 
-	IF  r> leave  ELSE  1 /string  r>  THEN
-      LOOP
-    THEN  drop ;
-[THEN]
-
-[UNDEFINED] skip [IF] 
-: skip  ( addr len char -- addr' len' )
-    over 0> IF
-      over 0 DO  >r over c@ r@ <> 
-        IF  r> leave  ELSE  1 /string r>  THEN
-      LOOP
-    THEN drop ;
-[THEN]
-
-\ parse next token from the string; a3 u3 is the token string
-: parse_token ( a u -- a2 u2 a3 u3)
-    bl skip 2dup bl scan 2>r r@ - 2r> 2swap ;
-
-
 512 1024 *  CONSTANT HEAPSIZE
 CREATE heap HEAPSIZE ALLOT
 heap ptr hptr
@@ -626,7 +600,7 @@ nil ptr temp-list
 
 : make-token-list ( a u -- list | make a flat list of tokens from a string )
 	nil >r 
-	begin  parse_token dup
+	begin  parse-token dup
 	while  $>hndl r> cons >r	  
 	repeat
 	2drop 2drop r> reverse ;

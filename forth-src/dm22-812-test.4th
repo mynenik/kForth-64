@@ -18,7 +18,7 @@
 \   2012-03-24 km revised GET-PACKET to raise and lower DTR line
 \   2012-03-27 km added packet checksum validation
 \   2024-02-21 km load Forth 200x data structures
-   
+\   2024-11-06 km revised GET-PACKET to sleep while waiting for data   
 include ans-words
 include modules
 include struct-200x
@@ -31,7 +31,7 @@ Also serial
 base @
 decimal
 
-COM1 value DM_PORT   \ serial port to which multimeter is connected
+( COM1) USBCOM1 value DM_PORT   \ serial port to which multimeter is connected
 9 constant PKT_SIZE  \ size of data packet from meter, in bytes
 
 variable com			
@@ -52,8 +52,10 @@ variable pklen
         com @ buf pklen @ + 1 ∋ serial read drop
 	1 pklen +!
       then
-      pklen @ PKT_SIZE =
-    until
+      pklen @ PKT_SIZE <>
+    while
+      1000 usleep
+    repeat
     com @ lower-dtr
     0
 ;

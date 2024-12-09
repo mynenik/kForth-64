@@ -11,7 +11,7 @@
 \       2006-04-19  km extensive revision using Hayes' style tests;
 \                     renamed from test-lists.4th to lists-test.4th 
 \       2010-06-20  km no longer requires strings.4th; renamed }LIST to L}T
-\
+\       2024-12-08  km requires strings.4th
 \ Notes:
 \
 \ 1. Some simple examples are borrowed from P. Norvig's,
@@ -22,6 +22,7 @@
 \
 
 include ans-words
+include strings
 include lists
 include ttester
 DECIMAL

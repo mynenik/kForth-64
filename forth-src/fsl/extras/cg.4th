@@ -350,18 +350,18 @@ variable denom
     2dup s" /2" search IF  nip - 0 ELSE  2drop 1 THEN >r evaluate r> lshift ;   
 
 : 3j( ( "..." -- f | parse arguments to 3j and compute)
-    [char] ) word count parse_line
+    [char] ) word count parse-line
     6 <> ABORT" Incorrect number of arguments!"
     $>j >r $>j >r $>j >r $>j >r $>j >r $>j
     r> r> r> r> r> 
     3j ;
 
 : cg< ( " ... " -- f | parse arguments to cg and compute)
-    [char] | word count parse_line
+    [char] | word count parse-line
     4 <> ABORT" Incorrect number of arguments for uncoupled state!"
     $>j >r $>j >r $>j >r $>j 
     r> r> r>
-    [char] > word count parse_line
+    [char] > word count parse-line
     2 <> ABORT" Incorrect number of arguments for coupled state!"
     $>j >r $>j r>
     cg
