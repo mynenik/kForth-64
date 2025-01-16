@@ -40,6 +40,7 @@ h 2pi f/         fconstant  hbar  \
 
 \ Unit Conversions
 1.602176634e-19   fconstant  J/eV     \ electron volts -> Joules (exact)
+4.3597447222060e-18 fconstant J/Eh    \ Hartree -> Joules
 1.66053906660e-27 fconstant  kg/amu   \ atomic mass unit -> kilograms
 219474.6314e      fconstant  cm^-1/Eh \ Hartree to wavenumber conversion
 0.5291772083e     fconstant  A/a0     \ Bohr radii to Angstroms conversion
@@ -62,6 +63,7 @@ h 2pi f/         fconstant  hbar  \
 CR
 .( Conversions between units: ) CR CR
 .(      J/eV     eV -> J ) CR
+.(      J/Eh     Hartree -> J ) CR
 .(    kg/amu     amu -> kg ) CR
 .(  cm^-1/Eh     Hartree -> wavenumber ) CR
 .(      A/a0     Bohr radius -> Angstroms ) CR
