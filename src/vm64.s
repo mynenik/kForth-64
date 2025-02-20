@@ -431,14 +431,55 @@ ret1:
 retexit:
 	ret
 
-# L_tobody:
-#	LDSP
-#	INC_DSP
-#	mov (%rbx), %rcx	# code address
-#	inc %rcx		# the data address is offset by one
-#	mov (%rcx), %rcx
-#	mov %rcx, (%rbx)
-#	ret
+L_vmthrow:      # throw VM error (used as default exception handler)
+        LDSP
+        INC_DSP
+        INC_DTSP
+        movq (%rbx), %rax
+        STSP
+        ret
+
+L_base:
+        LDSP
+        lea Base(%rip), %rcx
+        movq %rcx, (%rbx)
+        DEC_DSP
+        STSP
+        STD_ADDR
+        NEXT
+
+L_precision:
+        LDSP
+        mov Precision(%rip), %rcx
+        mov %rcx, (%rbx)
+        DEC_DSP
+        STSP
+        STD_IVAL
+        NEXT
+
+L_false:
+        LDSP
+        movq $FALSE, (%rbx)
+        DEC_DSP
+        STSP
+        STD_IVAL
+        NEXT
+
+L_true:
+        LDSP
+        movq $TRUE, (%rbx)
+        DEC_DSP
+        STSP
+        STD_IVAL
+        NEXT
+
+L_bl:
+        LDSP
+        movq $32, (%rbx)
+        DEC_DSP
+        STSP
+        STD_IVAL
+        NEXT
 
 # For precision delays, use US or MS instead of USLEEP
 # Use USLEEP when task can be put to sleep and reawakened by OS
@@ -986,30 +1027,24 @@ L_count:
 
 L_ival:
 	LDSP
-	mov %rbp, %rcx
-	inc %rcx
-	mov (%rcx), %rax
-	addq $WSIZE-1, %rcx
-	mov %rcx, %rbp
-	mov %rax, (%rbx)
+        inc %rbp
+        movq (%rbp), %rcx
+        addq $WSIZE-1, %rbp
+	mov %rcx, (%rbx)
 	DEC_DSP
 	STSP
 	STD_IVAL
-	xor %rax, %rax
 	NEXT
 
 L_addr:
 	LDSP
-	mov %rbp, %rcx
-	inc %rcx
-	mov (%rcx), %rax
-	addq $WSIZE-1, %rcx
-	mov %rcx, %rbp
-	mov %rax, (%rbx)
+        inc %rbp
+        movq (%rbp), %rcx
+        addq $WSIZE-1, %rbp
+	mov %rcx, (%rbx)
 	DEC_DSP
 	STSP
 	STD_ADDR
-	xor %rax, %rax
 	NEXT
 
 L_ptr:
@@ -2012,6 +2047,19 @@ L_add:
 	xor %rax, %rax
 	NEXT
 
+L_mul:
+        LDSP
+        mov $WSIZE, %rcx
+        add %rcx, %rbx
+        STSP
+        mov (%rbx), %rax
+        add %rcx, %rbx
+        imulq (%rbx)
+        mov %rax, (%rbx)
+        INC_DTSP
+        xor %rax, %rax
+        NEXT
+
 L_starplus:
 	LDSP
 	INC_DSP
@@ -2023,9 +2071,6 @@ L_starplus:
 	imulq (%rbx)
 	add %rcx, %rax
 	mov %rax, (%rbx)
-  .ifdef __FAST__
-	DEC_DSP
-  .endif
 	INC2_DTSP
 	xor %rax, %rax
 	NEXT
@@ -2156,16 +2201,19 @@ dabs_go:
 L_dnegate:
         LDSP
 	DNEGATE
-#	NEXT	
+        STSP
 	ret
 
 L_dplus:
+        LDSP
 	DPLUS
-#	NEXT
+        STSP
 	ret
 
 L_dminus:
+        LDSP
 	DMINUS
+        STSP
 	ret
 
 L_umstar:
@@ -2286,8 +2334,10 @@ L_mstar:
 	NEXT
 
 L_mplus:
+        LDSP
 	STOD
 	DPLUS
+        STSP
 	NEXT
 
 L_mslash:
