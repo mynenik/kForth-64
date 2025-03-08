@@ -470,13 +470,13 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 // In: rbx = DSP
 // Out: eax = 0, rbx = DSP
 .macro DOUBLE_FUNC func
-        mov %rbx, %rdi
+        push %rbx
         LDFSP   # rbx = fpsp, rax = fpsize
         add %rax, %rbx 
         movq (%rbx), %xmm0
         call \func
         movq %xmm0, (%rbx)
-        mov %rdi, %rbx
+        pop %rbx
         xor %rax, %rax
 .endm
 

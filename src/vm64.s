@@ -601,14 +601,17 @@ L_ms:
 
 L_fill:
 	LDSP
-        DROP
+        movq $WSIZE, %rax
+        add  %rax, %rbx
 	movq (%rbx), %rsi       # fill byte
-        DROP
+        add  %rax, %rbx
 	movq (%rbx), %rdx       # byte count
-	DROP
+	add  %rax, %rbx
 	movq (%rbx), %rdi       # address
-	movq GlobalTp(%rip), %rax
-	movb (%rax), %al
+	movq GlobalTp(%rip), %rcx
+        addq $3, %rcx
+        movq %rcx, GlobalTp(%rip)
+	movb (%rcx), %al
 	cmpb $OP_ADDR, %al
 	jnz E_not_addr
 	call memset@plt
@@ -1546,7 +1549,7 @@ L_pick:
 	LDSP
 	addq $WSIZE, %rbx
 	mov  %rbx, %rdx
-	movq (%rbx), %rax
+	movq (%rbx), %rax  # pick depth
 	inc  %rax
 	mov  %rax, %rcx
 	imulq $WSIZE, %rax

@@ -52,7 +52,7 @@ LIBS = -pie -lreadline -ltinfo -ldl -lm
 
 all:	
 	make kforth64
-#	make kforth64-fast
+	make kforth64-fast
 
 
 kforth64: ${OBJS} 
@@ -82,7 +82,7 @@ ForthCompiler.o: ForthCompiler.cpp ForthCompiler.h fbc.h ForthWords.h \
 
 ForthCompiler-fast.o: ForthCompiler.cpp ForthCompiler.h fbc.h ForthWords.h \
 	VMerrors.h kfmacros.h
-	${CPP} ${CPPFLAGS} ${DEBUG} ${FAST} ForthCompiler.cpp
+	${CPP} ${CPPFLAGS} ${DEBUG} ${FAST} -o ForthCompiler-fast.o ForthCompiler.cpp 
 
 ForthVM.o: ForthVM.cpp ForthVM.h fbc.h ForthCompiler.h VMerrors.h kfmacros.h
 	${CPP} ${CPPFLAGS} -DDIR_ENV_VAR=\"${DEF_DIR_VAR}\" \
