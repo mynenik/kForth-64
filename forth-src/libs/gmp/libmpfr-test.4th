@@ -39,11 +39,6 @@ true VERBOSE !
 
 DECIMAL
 
-\ Other utilities
-: $constant  ( addr u <name> -- | create a string constant )
-    create dup >r cell+ ?allot dup r@ swap ! cell+ r> cmove  
-    does> ( addr -- addr' u ) dup @ swap cell+ swap ; 
-
 \ 77 Significant Digits of Selected Constants
 \ One 
 s" 10000000000000000000000000000000000000000000000000000000000000000000000000000"
