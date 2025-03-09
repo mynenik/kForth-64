@@ -555,14 +555,16 @@ L_slashstring:
 	NEXT
 
 L_call:
-        INC_DSP
-        STSP
-        mov  %rbx, %rdi
+        mov %rbx, %rdi
 	LDFSP  # rbx = GlobalFp, rax = FpSize
 	add %rax, %rbx
 	mov %rbx, %rcx  # rcx = top of fp stack
 	mov %rdi, %rbx
-	call *(%rbx)
+        INC_DSP
+        STSP
+        push %r12
+        call *(%rbx)
+        pop %r12
         LDSP
         ret
 
