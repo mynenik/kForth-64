@@ -127,7 +127,16 @@ void** signal_xtmap [32] =
 static void forth_signal_handler (int, siginfo_t*, void*); 
 
 // powA  is copied from the source of the function pow() in paranoia.c,
-//   at  http://www.math.utah.edu/~beebe/software/ieee/ 
+//   at  http://www.math.utah.edu/~beebe/software/ieee/
+//
+//  Note: powA() was needed in place of early GNU C math library
+//  function pow() because it failed Kahan's paranoia test of
+//  floating point arithmetic for double precision numbers. Later
+//  versions of the C math library did not have this defect, and
+//  we call pow() directly. The function powA(), below, is now
+//  no longer called, but retained here in case kForth is built
+//  on systems which provide a defective pow() library function,
+//  detected by the paranoia system test program -- KM, 2025-03-16
 double powA(double x, double y) /* return x ^ y (exponentiation) */
 {
     double xy, ye;

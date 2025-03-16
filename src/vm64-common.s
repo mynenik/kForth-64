@@ -873,7 +873,8 @@ L_fpow:
         movq (%rbx), %xmm1
         add %rax, %rbx
         movq (%rbx), %xmm0
-        call powA
+#        call powA
+        call pow
         movq %xmm0, (%rbx)
         DEC_FSP
         STFSP
