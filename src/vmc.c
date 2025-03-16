@@ -155,28 +155,7 @@ double powA(double x, double y) /* return x ^ y (exponentiation) */
     return ldexp(xy, ey);
 } 
 
-// #define DOUBLE_FUNC(x)   pf = (double*)((byte*)GlobalFp+FpSize); *pf=x(*pf);
-
-// int C_fsin  () { DOUBLE_FUNC(sin)  return 0; }
-// int C_fcos  () { DOUBLE_FUNC(cos)  return 0; }
-// int C_ftan  () { DOUBLE_FUNC(tan)  return 0; }
-// int C_facos () { DOUBLE_FUNC(acos) return 0; }
-// int C_fasin () { DOUBLE_FUNC(asin) return 0; }
-// int C_fatan () { DOUBLE_FUNC(atan) return 0; }
-// int C_fsinh () { DOUBLE_FUNC(sinh) return 0; }
-// int C_fcosh () { DOUBLE_FUNC(cosh) return 0; }
-// int C_ftanh () { DOUBLE_FUNC(tanh) return 0; }
-// int C_fasinh () { DOUBLE_FUNC(asinh) return 0; }
-// int C_facosh () { DOUBLE_FUNC(acosh) return 0; }
-// int C_fatanh () { DOUBLE_FUNC(atanh) return 0; }
-// int C_fexp  () { DOUBLE_FUNC(exp)   return 0; }
-// int C_fexpm1() { DOUBLE_FUNC(expm1) return 0; }
-// int C_fln   () { DOUBLE_FUNC(log)   return 0; }
-// int C_flnp1 () { DOUBLE_FUNC(log1p) return 0; }
-// int C_flog  () { DOUBLE_FUNC(log10) return 0; }
-// int C_falog () { DOUBLE_FUNC(exp10) return 0; }
-// int C_floor () { DOUBLE_FUNC(floor) return 0; }
-
+/* now in vmxx-common.s
 int C_fpow ()
 {
 	pf = (double*)((byte*) GlobalFp + FpSize);
@@ -185,7 +164,8 @@ int C_fpow ()
 	*pf = powA (*pf, f);
 	INC_FSP
 	return 0;
-}				
+}
+*/
 
 int C_fmin ()
 {

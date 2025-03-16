@@ -82,7 +82,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad L_swfetch, L_wstore, L_dffetch, L_dfstore  # 172 -- 175
            .quad L_sffetch, L_sfstore, L_spfetch, L_plusstore # 176 -- 179
            .quad L_fadd, L_fsub, L_fmul, L_fdiv    # 180 -- 183
-           .quad L_fabs, L_fneg, C_fpow, L_fsqrt   # 184 -- 187
+           .quad L_fabs, L_fneg, L_fpow, L_fsqrt   # 184 -- 187
            .quad CPP_spstore, CPP_rpstore, L_feq, L_fne  # 188 -- 191
            .quad L_flt, L_fgt, L_fle, L_fge        # 192 -- 195
            .quad L_fzeroeq, L_fzerolt, L_fzerogt, L_nop # 196 -- 199
@@ -862,6 +862,24 @@ L_fatan2:
         mov %rdi, %rbx
         xor %rax, %rax
 	NEXT
+
+L_fpow:
+  .ifndef __FAST__
+        LDSP
+  .endif
+        push %rbx
+        LDFSP
+        add %rax, %rbx
+        movq (%rbx), %xmm1
+        add %rax, %rbx
+        movq (%rbx), %xmm0
+        call powA
+        movq %xmm0, (%rbx)
+        DEC_FSP
+        STFSP
+        pop %rbx
+        xor %rax, %rax
+        NEXT
 
 L_fround:
         mov %rbx, %rdi
