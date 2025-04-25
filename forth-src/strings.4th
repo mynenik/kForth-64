@@ -2,7 +2,7 @@
 \
 \ String utility words for kForth
 \
-\ Copyright (c) 1999--2024 Krishna Myneni
+\ Copyright (c) 1999--2025 Krishna Myneni
 \
 \ This software is provided under the terms of the
 \ GNU General Public License.
@@ -27,21 +27,18 @@
 \  Copy a string to a counted string
 \       PACK        ( a u a2 -- )
 \       PLACE       ( a u a2 -- )  same as PACK
-\
 \ 	STRCPY      ( ^str a -- )
 \ 	STRLEN      ( a -- u )
 \
 \  STRx words using circular buffer
-\ 	STRBUFCPY   ( ^str1 -- ^str2 )
+\  **	STRBUFCPY   ( ^str1 -- ^str2 )
+\       STRBUFMOVE  ( a1 u1 -- a2 u2 )
 \ 	STRCAT      ( a1 u1 a2 u2 -- a3 u3 )  \ LMI Forth
 \ 	STRPCK      ( a u -- ^str )           \ LMI Forth
 \
 \  String parsing primitives
-\ 	PARSE-TOKEN ( a u -- a2 u2 a3 u3 ) 
-\ 	PARSE-LINE  ( a u -- a1 u1 a2 u2 ... an un n )
-\
-\  * PARSE_TOKEN and PARSE_LINE are deprecated names for PARSE-TOKEN
-\    and PARSE-LINE
+\  *	PARSE-TOKEN ( a u -- a2 u2 a3 u3 ) 
+\  *	PARSE-LINE  ( a u -- a1 u1 a2 u2 ... an un n )
 \
 \  Counted string to Base 10 single and double integer conversions
 \ 	STRING>S    ( ^str -- n )
@@ -65,11 +62,19 @@
 \ 	F.RD        ( w n -- )    ( F: r -- ) | ( r w n -- )
 \
 \  String parsing and conversion to multiple floating point values
-\ 	PARSE-FLOATS     ( a u -- n ) ( F: r1 ... rn ) | ( a u -- r1 ... rn n )
-\       PARSE-CSV-FLOATS ( a u -- n ) ( F: r1 ... rn ) | ( a u -- r1 ... rn n )
+\  *	PARSE-FLOATS     ( a u -- n ) ( F: r1 ... rn ) | ( a u -- r1 ... rn n )
+\  *    PARSE-CSV-FLOATS ( a u -- n ) ( F: r1 ... rn ) | ( a u -- r1 ... rn n )
+\
+\
+\  * PARSE_TOKEN and PARSE_LINE are deprecated names for 
+\    PARSE-TOKEN and PARSE-LINE
 \
 \  * PARSE_ARGS and PARSE_CSV are deprecated names for PARSE-FLOATS
 \    and PARSE-CSV-FLOATS
+\
+\ ** STRBUFCPY is deprecated. Use COUNT STRPCK to copy a
+\    counted string to the circular buffer, and use
+\    STRBUFMOVE to copy a c-addr u string to the buffer.
  	
 BASE @
 DECIMAL
@@ -181,8 +186,22 @@ string_buf str_buf_ptr !
    1+ str_buf_ptr ! ;
 
 \ Copy a counted string to the circular string buffer.
-\ Return address of the copied cs. Input cs is not modified. 
+\ Return address of the copied cs. Input cs is not modified.
+\ ** The word STRBUFCPY is deprecated -- Use COUNT STRPCK ** 
 : strbufcpy ( ^str1 -- ^str2 )  count strpck ;
+
+\ Copy a c-addr u string to the circular string buffer.
+\ Return the address and count of the copied string. The
+\ input string is not modified.
+: strbufmove ( a1 u1 -- a2 u2 )
+    STR_BUF_SIZE 1- min  \ a1 ulim 
+    dup 1+ adjust_str_buf_ptr  \ a1 ulim
+    tuck str_buf_ptr a@  \ ulim a1 ulim abuf
+    swap cmove           \ ulim
+    str_buf_ptr a@ swap  \ abuf ulim
+    2dup +               \ abuf ulim aend
+    0 over c!            \ ( null terminate )
+    1+ str_buf_ptr ! ;
 
 \ Parse next token from a string separated by a blank:
 \   a2 u2 is the remaining substring
