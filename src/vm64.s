@@ -588,6 +588,7 @@ L_usleep:
 	mov (%rbx), %rdi
 	call usleep@plt
 	xor %rax, %rax
+	STSP
 	ret
 
 L_ms:
