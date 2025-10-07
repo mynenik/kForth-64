@@ -589,7 +589,7 @@ L_usleep:
 	call usleep@plt
 	xor %rax, %rax
 	STSP
-	ret
+	NEXT
 
 L_ms:
 	LDSP
