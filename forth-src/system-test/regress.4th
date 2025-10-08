@@ -21,6 +21,9 @@
 \        Revised:  February 13, 2020 km; added tests for NUMBER?
 \        Revised:  June 6, 2021 km; added tests for POSTPONE and COMPILE, 
 \        Revised:  August 19, 2024 km; added tests for SYNONYM
+\        Revised:  October 8, 2025 km; added tests for MS and USLEEP;
+\                    implement all F>D tests except overflow tests on
+\                    both 64-bit and 32-bit cases.
 s" ans-words.4th" included
 s" ttester.4th" included
 
@@ -545,56 +548,67 @@ t{  0  1 dnegate d>f -> -4294967296e r}t
 [THEN]
 
 hex
-[DEFINED] FDEPTH [IF]  \ has fp stack
-comment Skipping all F>D tests
-[ELSE]
--1 43dfffff           fconstant  maxftod.f
-maxftod.f fnegate     fconstant -maxftod.f
-0 40900000            fconstant  2^10.f
+
+: 2L>f PAD L! PAD 4 + L! PAD DF@ ;
+
+43dfffff -1  2L>F     fconstant  maxftod.f
+maxftod.f    fnegate  fconstant -maxftod.f
+40900000  0  2L>F     fconstant  2^10.f
+433fffff -1  2L>F     fconstant  maxnoshift.f
+maxnoshift.f fnegate  fconstant -maxnoshift.f
+3fefffff -1  2L>F     fconstant  1.0-2^[-53]
+1.0-2^[-53]  fnegate  fconstant -1.0+2^[-53]
+
 1 a lshift 0          2constant  2^10.d
-fffffc00 7fffffff     2constant  maxftod.d
-maxftod.d dnegate     2constant -maxftod.d
 -1 maxint             2constant  maxdint
 maxdint dnegate       2constant -maxdint
--1 433fffff           fconstant  maxnoshift.f
-maxnoshift.f fnegate  fconstant -maxnoshift.f
+
+64bit? [IF]
+7ffffffffffffc00 0    2constant  maxftod.d
+1fffffffffffff 0      2constant  maxnoshift.d
+[ELSE] \ 32-bit
+fffffc00 7fffffff     2constant  maxftod.d
 -1 1fffff             2constant  maxnoshift.d
+[THEN]
+maxftod.d dnegate     2constant -maxftod.d
 maxnoshift.d dnegate  2constant -maxnoshift.d
--1 3fefffff           fconstant  1.0-2^[-53]
-1.0-2^[-53] fnegate   fconstant -1.0+2^[-53]
 
 decimal
 \ underflow
 t{    0e        f>d ->  0  0 }t
 t{   .5e        f>d ->  0  0 }t
 t{  -.5e        f>d ->  0  0 }t
-comment Skipping some F>D tests
-(
 t{  1.0-2^[-53] f>d ->  0  0 }t
 t{ -1.0+2^[-53] f>d ->  0  0 }t
-)
+
 \ right shift
 t{  1e          f>d ->  1  0 }t
 t{ -1e          f>d -> -1 -1 }t
 t{  1.9e        f>d ->  1  0 }t
 t{ -1.9e        f>d -> -1 -1 }t
+
 \ no shift
-(
 t{  maxnoshift.f f>d ->  maxnoshift.d }t
 t{ -maxnoshift.f f>d -> -maxnoshift.d }t
+
 \ left shift
 t{  maxftod.f  2^10.f f- f>d ->  maxftod.d 2^10.d d- }t
 t{ -maxftod.f  2^10.f f+ f>d -> -maxftod.d 2^10.d d+ }t
 t{  maxftod.f            f>d ->  maxftod.d }t	 
 t{ -maxftod.f            f>d -> -maxftod.d }t
+
 \ overflow
+comment Skipping overflow F>D tests.
+0 [IF]
 t{  maxftod.f  2^10.f f+ f>d ->  maxdint }t	 
 t{ -maxftod.f  2^10.f f- f>d -> -maxdint }t	 
 t{  1e  0e f/            f>d ->  maxdint }t  \  Inf
 t{ -1e  0e f/            f>d -> -maxdint }t  \ -Inf
-t{  0e  0e f/            f>d ->  maxdint }t  \  NaN
-t{  0e  0e f/ fnegate    f>d -> -maxdint }t  \ -NaN
-)
+
+\ The validity of the following tests is questionable.
+\ F>D for NaN is an ambiguous condition -- km, 2025-10-08
+\ t{  0e  0e f/            f>d ->  maxdint }t  \  NaN
+\ t{  0e  0e f/ fnegate    f>d -> -maxdint }t  \ -NaN
 [THEN]
 
 decimal
@@ -759,3 +773,8 @@ t{ 4 add2b -> 6 }t
 : add2c CTc ;
 t{ 5 add2c -> 7 }t
 
+TESTING MS USLEEP
+comment Assumes MS@ works -- test MS@ manually.
+t{ ms@ 5 ms ms@ swap - 5 >= -> true }t
+t{ ms@ 5000 usleep ms@ swap - 5 >= -> true }t
+ 
