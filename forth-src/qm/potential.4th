@@ -146,15 +146,15 @@ Public:
     fdup Rmax F@ F>= IF fdrop V{ Npotnl @ 1- } F@ EXIT THEN \ return right end point
     fdup Npotnl @ r{ }ffind >R
     fdup r{ R@ } F@ F= IF  fdrop V{ R> } F@ EXIT  THEN  \ exact match
-    R> interp_order @ 2/ - 0 max
-    dup interp_order @ + Npotnl @ > 
-    IF drop Npotnl @ interp_order @ - THEN
-    interp_order @ 0 DO  
+    R> interp_order @ 1+ 2/ - 0 max
+    dup interp_order @ 1+ + Npotnl @ > 
+    IF drop Npotnl @ interp_order @ 1+ - THEN
+    interp_order @ 1+ 0 DO  
       r{ over } F@  rI{ I } F!  
       V{ over } F@  VI{ I } F!
       1+
     LOOP drop 
-    rI{  VI{ interp_order @ polint ( ratint) fdrop
+    rI{  VI{ interp_order @ 1+ polint ( ratint) fdrop
 ;
 
 End-Module
