@@ -3,9 +3,12 @@
 \ Spherical Bessel and Neumann functions for large index range
 \
 \ Use recurrence relations to compute the spherical Bessel and 
-\ Neumann functions, j_l(x) and n_l(x), for l over the range
-\ 0 to 999. The relative accuracy of j_l(x) and n_l(x) is 
-\ better than 5e-16 for x <= 100, for l=0 to 100 -- see test
+\ Neumann functions, j_l(x) and n_l(x), for l over a range of
+\ l-values. The relative accuracy of j_l(x) and n_l(x) depends
+\ on the recursion length, which may be initialized.
+\ 
+\ For recursion length of 1000, the accuracy of j_l(x) and n_l(x)
+\ is better than 5e-16 for x <= 100, for l=0 to 100 -- see test
 \ code below.
 \
 \ The computed function values for different l's are stored in
@@ -24,6 +27,9 @@
 \
 \ Forth version by Krishna Myneni, 2022-07-02
 \
+\ Revisions:
+\   2026-02-06  km  allow dynamic resizing of the recursion length.
+\
 \ References
 \   1. E. Gillman and H. R. Fiebig, "Accurate recursive generation
 \      of spherical Bessel and Neumann functions for a large range
@@ -40,6 +46,20 @@
 \   2. Reference values for test code are computed using the
 \      functions, SphericalBesselJ[l,x] and SphericalBesselY[l,x]
 \      on Wolfram Alpha.
+\
+\ Usage Example:
+\
+\   500 set-recurse .  \ alloc memory for recursion; non-zero ret = error
+\   1.2e0 sphfuncs     \ compute j_l(x), n_l(x); x = 1.2
+\   get-recurse .      \ prints current recursion length
+\   rbes{ 0 } f@ fs.   \ prints j_0( 1.2 )
+\   rneu{ 4 } f@ fs.   \ prints n_4( 1.2 )
+\   1000 set-recurse . \ resize recursion memory; non-zero return is error
+\   296.5e sphfuncs    \ recompute j_l(x), n_l(x); x = 296.5
+\   rbes{ 100 } f@ fs. \ prints j_100( 296.5 )
+\   rneu{ 15 }  f@ fs. \ prints n_15( 296.5 )
+\   0 set-recurse .    \ free recursion memory; non-zero return is error
+
 
 [UNDEFINED] square  [IF] : square  dup * ;   [THEN]
 
@@ -54,11 +74,40 @@ fvariable cv
 0 value lv
 0 value w
 
+0 value MAX-L
+
 Public:
 
-1000 value MAX-L
-MAX-L FLOAT ARRAY rbes{
-MAX-L FLOAT ARRAY rneu{
+FLOAT DARRAY rbes{
+FLOAT DARRAY rneu{
+
+: get-recurse ( -- u ) MAX-L ;
+
+: set-recurse ( u -- error )
+    \ release previously allocated memory
+    MAX-L IF
+      & rbes{ }free
+      & rneu{ }free
+      malloc-fail? IF 
+        drop
+        malloc-fail? EXIT 
+      THEN
+    THEN
+      
+    dup IF
+      & rbes{ over }malloc
+      & rneu{ over }malloc
+      malloc-fail? 0= IF 
+        to MAX-L
+      ELSE
+        drop
+      THEN
+      malloc-fail? 
+    ELSE
+      dup to MAX-L
+    THEN
+;
+    
 
 : sphfuncs ( F: x -- )
     \ Set starting values j_lmax-1(x) and n_0(x) for recursion
@@ -110,6 +159,8 @@ BASE @ DECIMAL
 set-near
 
 TESTING SPHFUNCS
+1000 set-recurse drop  \ allocate memory for recursive computation
+t{ get-recurse -> 1000 }t
 t{ 0.1e0 sphfuncs -> }t
 t{ rbes{ 0 }   f@  ->  9.98334166468281523E-001 r}t  \ j_0  (0.1)
 t{ rbes{ 10 }  f@  ->  7.27151099671367155E-021 r}t  \ j_10 (0.1)
@@ -149,6 +200,8 @@ t{ rneu{ 10 }  f@  ->  3.53275680310172060E-003 r}t  \ n_10 (200)
 t{ rneu{ 100 } f@  -> -5.01666824197730591E-003 r}t  \ n_100(200)
 t{ rneu{ 200 } f@  -> -1.26612996092208560E-002 r}t  \ n_200(200)
 t{ rneu{ 300 } f@  -> -1.46283071227275816E+026 r}t  \ n_300(200)
+
+0 set-recurse drop  \ free memory
 
 BASE !
 [THEN]
