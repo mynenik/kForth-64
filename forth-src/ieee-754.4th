@@ -56,7 +56,7 @@
 \ are not part of the proposals in Ref. 1.
 \
 \ K. Myneni, 2020-08-20
-\ Revs. 2020-08-27, 2022-08-02
+\ Revs. 2020-08-27, 2022-08-02, 2026-02-08
 \
 \ References:
 \ 1. David N. Williams, Proposal Drafts for Optional IEEE 754
@@ -121,6 +121,8 @@ constant ALL-FEXCEPTS
 
 1 cells 4 = [IF]
 
+[DEFINED] getFPUstatusX86 [IF]
+
 : GET-FFLAGS ( excepts -- flags )
     getFPUstatusX86 fpu-status @ and ;
 
@@ -159,9 +161,11 @@ constant ALL-FEXCEPTS
 : FREMAINDER ( F: x y -- r q )
 
 ;
-
 [ELSE]
-cr .( Some functions are for 32-bit system only! ) cr
+cr .( Some functions are not available.) cr
+[THEN]
+[ELSE]
+cr .( Some functions are for 32-bit system only!) cr
 [THEN]
 
 \ Constants representing  -INF  +INF  -NAN  +NAN
