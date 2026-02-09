@@ -4,8 +4,9 @@
 \ High-precision calculation using the GNU MPFR library.
 \
 \ Use recurrence relations to compute the spherical Bessel and 
-\ Neumann functions, j_l(x) and n_l(x), for l over the range
-\ 0 to 5000.
+\ Neumann functions, j_l(x) and n_l(x), for l over a range of
+\ values. The relative accuracy of j_l(x) and n_l(x) depends
+\ on the recursion length, which may be initialized.
 \
 \ The computed function values for different l's are returned in
 \ double precision arrays rbes{ and rneu{ with l as the index. 
@@ -24,6 +25,9 @@
 \ Forth version by Krishna Myneni, 2022-07-02
 \ Forth MPFR version by K. M., 2023-03-19
 \
+\ Revisions:
+\   2026-02-09  km  allow dynamic resizing of the recursion length.
+\
 \ References
 \   1. E. Gillman and H. R. Fiebig, "Accurate recursive generation
 \      of spherical Bessel and Neumann functions for a large range
@@ -36,6 +40,7 @@
 \   libs/gmp/libmpfr.4th
 \   libs/gmp/mpfr-utils.4th
 \   fsl/fsl-util.4th
+\   fsl/fsl-dynmem
 
 128 mpfr_set_default_prec
 
@@ -69,14 +74,46 @@ fvariable x
 0 value lv
 0 value w
 
+0 value MAX-L
+
 Public:
 
-5000 value MAX-L
-MAX-L FLOAT ARRAY rbes{
-MAX-L FLOAT ARRAY rneu{
+FLOAT DARRAY rbes{
+FLOAT DARRAY rneu{
 
-MAX-L /MPFR ARRAY mp_rbes{
-MAX-L /MPFR ARRAY mp_rneu{
+/MPFR DARRAY mp_rbes{
+/MPFR DARRAY mp_rneu{
+
+: get-recurse ( -- u ) MAX-L ;
+
+: set-recurse ( u -- error )
+    \ release previously allocated memory
+    MAX-L IF
+      & rbes{ }free
+      & rneu{ }free
+      & mp_rbes{ }free
+      & mp_rneu{ }free
+      malloc-fail? IF
+        drop
+        malloc-fail? EXIT
+      THEN
+    THEN
+
+    dup IF
+      & rbes{ over }malloc
+      & rneu{ over }malloc
+      & mp_rbes{ over }malloc
+      & mp_rneu{ over }malloc
+      malloc-fail? 0= IF
+        to MAX-L
+      ELSE
+        drop
+      THEN
+      malloc-fail?
+    ELSE
+      dup to MAX-L
+    THEN
+;
 
 : sphfuncs ( F: x -- )
     x f!
@@ -175,5 +212,3 @@ MAX-L /MPFR ARRAY mp_rneu{
 
 BASE !
 END-MODULE
-
-
