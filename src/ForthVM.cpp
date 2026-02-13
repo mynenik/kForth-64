@@ -678,14 +678,17 @@ if (debug)  {
   }
   else if (GlobalRp > BottomOfReturnStack)
   {
-      ecode = E_V_RET_STK_CORRUPT;
+      ecode = E_V_RET_STK_UNDERFLOW;
   }
   else
       ;
 
   // On stack underflow, update the global stack pointers.
 
-  if ((ecode == E_V_STK_UNDERFLOW) || (ecode == E_V_RET_STK_CORRUPT))
+  if ((ecode == E_V_STK_UNDERFLOW) ||
+      (ecode == E_V_RET_STK_UNDERFLOW) || 
+      (ecode == E_V_RET_STK_CORRUPT) ||
+      (ecode == E_V_FP_STK_UNDERFLOW))
   {
       L_abort();
   }
@@ -1588,11 +1591,11 @@ int CPP_ddotr ()
 // Forth-2012 Floating Point Extensions Wordset 12.6.2.1427
 int CPP_fdot ()
 {
+  INC_FSP
   if (GlobalFp > BottomOfFpStack)
-    return E_V_STK_UNDERFLOW;
+    return E_V_FP_STK_UNDERFLOW;
   else
     {
-      INC_FSP
       switch( FpSize ) {
         case 4:
 	  *pOutStream << *((float*) GlobalFp) << ' ';
@@ -1614,11 +1617,12 @@ int CPP_fdot ()
 // Forth-2012 Floating Point Extensions Wordset 12.6.2.1613
 int CPP_fsdot ()
 {
+
+  INC_FSP
   if (GlobalFp > BottomOfFpStack)
-    return E_V_STK_UNDERFLOW;
+    return E_V_FP_STK_UNDERFLOW;
   else
     {
-      INC_FSP
       ios_base::fmtflags origFlags = cout.flags();
       int origPrec = cout.precision();
       *pOutStream << setprecision(Precision-1) << scientific << 
@@ -1686,7 +1690,7 @@ int CPP_dots ()
 // F.S ( F: i*r -- i*r )
 int CPP_fdots ()
 {
-   if (GlobalFp > BottomOfFpStack) return E_V_STK_UNDERFLOW;
+   if (GlobalFp > BottomOfFpStack) return E_V_FP_STK_UNDERFLOW;
    L_fdepth();
    DROP
    long int fdepth = TOS;
@@ -3189,9 +3193,8 @@ int CPP_fpstore()
     unsigned u = FP_STACK_SIZE*FpSize;
     void* p = (void*) TOS;
     p = (void*)((byte*) p - FpSize);
-    if ((p > BottomOfFpStack) || 
-	(p < ((byte*)BottomOfFpStack - u)))
-	    return E_V_BAD_STACK_ADDR;
+    if (p > BottomOfFpStack) return E_V_FP_STK_UNDERFLOW; 
+    if (p < ((byte*)BottomOfFpStack - u)) return E_V_FP_STK_OVERFLOW;
     GlobalFp = p;  // == fixme ==> ensure FpSize alignment
     return 0;
 }
