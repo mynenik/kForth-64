@@ -165,7 +165,9 @@ void SetForthOutputStream (ostream& OutStream)
   pOutStream = &OutStream;
 }
 //---------------------------------------------------------------
-
+// tbd: this should return the execution semantics for a
+// recognized name, based on STATE and precedence. Presently
+// compilation is assumed as part of the execution semantics.
 int ExecutionMethod (int Precedence)
 {
     // Return execution method for a word, based on its Precedence and STATE
@@ -238,26 +240,32 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 	}
       ++linecount;
       pTIB = TIB;
-      while (*pTIB && (pTIB < (TIB + 255)))
+
+      // tbd: factor the line interpreter: INTERPRET
+      while (*pTIB && (pTIB < (TIB + 255)))  // start of line interpreter 
 	{
 	  if (*pTIB == ' ' || *pTIB == '\t')
 	    ++pTIB;
 
 	  else
 	   {
-	      pTIB = ExtractName (pTIB, WordToken);
+	      pTIB = ExtractName (pTIB, WordToken); // tbd: use PARSE-NAME here
 	      if (*pTIB == ' ' || *pTIB == '\t') ++pTIB; // go past next ws char
 	      strupr(WordToken);
-              pWord = SearchOrder.LocateWord(WordToken);
+
+	      // name recognizer
+              pWord = SearchOrder.LocateWord(WordToken);  // tbd: use FIND-NAME here
 	      if (pWord)
 		{
-                  PUSH_ADDR((long int) pWord)
-		  CPP_compile_to_current();		  
+		  // tbd: move compilation to section
+		  // Perform execution semantics
+                  PUSH_ADDR((long int) pWord)  
+		  CPP_compile_to_current();
 
 		  int ex_meth = ExecutionMethod((int) pWord->Precedence);
 		  vector<byte> SingleOp;
 		  
-		  switch (ex_meth)
+		  switch (ex_meth)  // Perform execution semantics
 		    {
 		    case EXECUTE_UP_TO:
 		      // Execute the opcode vector immediately up to and
@@ -287,26 +295,26 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 		      ;
 		    }
 
-		}  // end if (IsForthWord())
+		}  // end of name recognizer
 
-	      else if (IsInt(WordToken, &ival))
+	      else if (IsInt(WordToken, &ival))  // start of number recognizer
 		{
 		  pOpCodes->push_back(OP_IVAL);
 		  OpsPushInt(ival);
 		}
-	      else if (IsFloat(WordToken, &fval))
+	      else if (IsFloat(WordToken, &fval))  // start of fp number recognizer
 		{
 		  pOpCodes->push_back(OP_FVAL);
 		  OpsPushDouble(fval);
 		}
-	      else
+	      else  // did not recognize token (rec-none)
 		{
 		  *pOutStream << endl << WordToken << endl;
 		  ecode = E_V_UNDEFINED_WORD;
 		  goto endcompile;
 		}
 	     }
-	} // end while (*pTIB ...)
+	} // end of line interpreter
 	
       if ((State == 0) && pOpCodes->size())
 	{
