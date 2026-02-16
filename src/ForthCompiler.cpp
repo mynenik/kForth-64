@@ -3,7 +3,7 @@
 // A compiler to generate kForth Byte Code (FBC) from expressions
 //   or programs
 //
-// Copyright (c) 1998--2024 Krishna Myneni, 
+// Copyright (c) 1998--2026 Krishna Myneni, 
 // <krishna.myneni@ccreweb.org>
 //
 // Contributors:
@@ -62,14 +62,17 @@ extern "C" {
   int CPP_nondeferred();
   int CPP_source();
   int CPP_refill();
+  int CPP_find_name();
+  int CPP_compilename();
   int CPP_compile_to_current();
+  int CPP_dots();
 
   // Provided by vmc.c
   char* strupr (char*);
   char* ExtractName(char*, char*);
   int   IsFloat(char*, double*);
   int   IsInt(char*, long int*);
-
+  int   C_parsename();
 }
   
 // Provided by ForthVM.cpp
@@ -209,12 +212,7 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 //  other --- see ForthCompiler.h
 
   int ecode = 0;
-  char WordToken[256];
-  double fval;
-  int i, j;
-  long int ival, *sp;
-  vector<byte>::iterator ib1, ib2;
-  WordListEntry* pWord;
+  long int *sp;
   byte *tp;
 
   if (debug) cout << ">Compiler Sp: " << GlobalSp << " Rp: " << GlobalRp << endl;
@@ -227,7 +225,7 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
       // Read each line and parse
 
       pInStream->getline(TIB, 255);
-      if (debug) (*pOutStream) << TIB << endl;
+      if (debug) (*pOutStream) << linecount << ": " << TIB << endl;
 
       if (pInStream->fail())
 	{
@@ -242,91 +240,114 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
       pTIB = TIB;
 
       // tbd: factor the line interpreter: INTERPRET
-      while (*pTIB && (pTIB < (TIB + 255)))  // start of line interpreter 
-	{
-	  if (*pTIB == ' ' || *pTIB == '\t')
-	    ++pTIB;
+      while (*pTIB && (pTIB < (TIB + 255)))  {  // start of line interpreter 
+	if (*pTIB == ' ' || *pTIB == '\t')
+	  ++pTIB;
+	else {
 
-	  else
-	   {
-	      pTIB = ExtractName (pTIB, WordToken); // tbd: use PARSE-NAME here
-	      if (*pTIB == ' ' || *pTIB == '\t') ++pTIB; // go past next ws char
-	      strupr(WordToken);
+	  int i, j, ulen;
+	  unsigned long int nt;
+	  long int ival;
+	  double fval;
+	  char WordToken[256];
 
-	      // name recognizer
-              pWord = SearchOrder.LocateWord(WordToken);  // tbd: use FIND-NAME here
-	      if (pWord)
-		{
-		  // tbd: move compilation to section
-		  // Perform execution semantics
-                  PUSH_ADDR((long int) pWord)  
-		  CPP_compile_to_current();
 
-		  int ex_meth = ExecutionMethod((int) pWord->Precedence);
-		  vector<byte> SingleOp;
-		  
-		  switch (ex_meth)  // Perform execution semantics
-		    {
-		    case EXECUTE_UP_TO:
-		      // Execute the opcode vector immediately up to and
-		      //   including the current opcode
-		      pOpCodes->push_back(OP_RET);
-		      if (debug) OutputForthByteCode (pOpCodes);
-		      ecode = ForthVM (pOpCodes, &sp, &tp);
-		      pOpCodes->erase(pOpCodes->begin(), pOpCodes->end());
-		      if (ecode) goto endcompile;
-                      pOpCodes = pCurrentOps;
-		      break;
+	  // tbd: use PARSE-NAME here
+	  // pTIB = ExtractName (pTIB, WordToken);
+	  // if (*pTIB == ' ' || *pTIB == '\t') ++pTIB; // go past next ws char
+	  // ulen = strlen(WordToken);
 
-		    case EXECUTE_CURRENT_ONLY:
-		      i = ((pWord->WordCode == OP_DEFINITION) || (pWord->WordCode == OP_IVAL) || 
-			   (pWord->WordCode == OP_ADDR) || (pWord->WordCode >> 8)) ? WSIZE+1 : 1; 
-		      ib1 = pOpCodes->end() - i;
-		      for (j = 0; j < i; j++) SingleOp.push_back(*(ib1+j));
-		      SingleOp.push_back(OP_RET);
-		      pOpCodes->erase(ib1, pOpCodes->end());
-		      ecode = ForthVM (&SingleOp, &sp, &tp);
-		      SingleOp.erase(SingleOp.begin(), SingleOp.end());
-		      if (ecode) goto endcompile; 
-		      pOpCodes = pCurrentOps; // may have been redirected
-		      break;
+	  C_parsename();
+	  if (*pTIB == ' ' || *pTIB == '\t') ++pTIB; // go past next ws char
+	  DROP
+	  ulen = (int) TOS;
+	  DROP
+	  strncpy( (char*) WordToken, (char*) TOS, (size_t) ulen );
 
-		    default:
-		      ;
-		    }
+	  if (ulen) {  // parsed non-empty string
+	    WordToken[ulen] = (char) 0;
+	    strupr(WordToken);
 
-		}  // end of name recognizer
+	    // name recognizer
 
-	      else if (IsInt(WordToken, &ival))  // start of number recognizer
-		{
-		  pOpCodes->push_back(OP_IVAL);
-		  OpsPushInt(ival);
-		}
-	      else if (IsFloat(WordToken, &fval))  // start of fp number recognizer
-		{
-		  pOpCodes->push_back(OP_FVAL);
-		  OpsPushDouble(fval);
-		}
-	      else  // did not recognize token (rec-none)
-		{
-		  *pOutStream << endl << WordToken << endl;
-		  ecode = E_V_UNDEFINED_WORD;
-		  goto endcompile;
-		}
-	     }
-	} // end of line interpreter
-	
-      if ((State == 0) && pOpCodes->size())
-	{
-	  // Execute the current line in interpretation state
-	  pOpCodes->push_back(OP_RET);
-	  if (debug) OutputForthByteCode (pOpCodes);
-	  ecode = ForthVM (pOpCodes, &sp, &tp);
-	  pOpCodes->erase(pOpCodes->begin(), pOpCodes->end());
-	  if (ecode) goto endcompile; 
-	}
+	    PUSH_ADDR( (unsigned long int) WordToken );
+	    PUSH_IVAL( (long int) ulen );
+            CPP_find_name();
+	    DROP
+	    nt = (unsigned long int) TOS;
 
-    } // end while (TRUE)
+	    if (nt) {
+         
+	      // tbd: move compilation to section
+	      // Perform execution semantics
+              //   PUSH_ADDR((long int) pWord)  
+	      //	  CPP_compile_to_current();
+	      PUSH_ADDR( nt );
+	      CPP_compile_to_current();
+
+	      WordListEntry* pWord = (WordListEntry*) nt;
+	      int ex_meth = ExecutionMethod((int) pWord->Precedence);
+	      vector<byte> SingleOp;
+	      vector<byte>::iterator ib1;
+  
+	      switch (ex_meth) {  // Perform execution semantics
+	        case EXECUTE_UP_TO:
+	          // Execute the opcode vector immediately up to and
+	          //   including the current opcode
+	          pOpCodes->push_back(OP_RET);
+	          if (debug) OutputForthByteCode (pOpCodes);
+	          ecode = ForthVM (pOpCodes, &sp, &tp);
+	          pOpCodes->erase(pOpCodes->begin(), pOpCodes->end());
+	          if (ecode) goto endcompile;
+                  pOpCodes = pCurrentOps;
+	          break;
+
+	        case EXECUTE_CURRENT_ONLY:
+	          i = ((pWord->WordCode == OP_DEFINITION) || 
+		       (pWord->WordCode == OP_IVAL) || 
+	               (pWord->WordCode == OP_ADDR) || 
+	               (pWord->WordCode >> 8)) ? WSIZE+1 : 1; 
+	          ib1 = pOpCodes->end() - i;
+		  for (j = 0; j < i; j++) SingleOp.push_back(*(ib1+j));
+		  SingleOp.push_back(OP_RET);
+		  pOpCodes->erase(ib1, pOpCodes->end());
+		  ecode = ForthVM (&SingleOp, &sp, &tp);
+		  SingleOp.erase(SingleOp.begin(), SingleOp.end());
+		  if (ecode) goto endcompile; 
+		  pOpCodes = pCurrentOps; // may have been redirected
+		  break;
+
+	        default:
+	          ;
+	      } // end switch(ex_meth)
+	    }
+	    else if (IsInt(WordToken, &ival)) {  // number recognizer
+	      pOpCodes->push_back(OP_IVAL);
+	      OpsPushInt(ival);
+	    }
+	    else if (IsFloat(WordToken, &fval)) {  // fp number recognizer
+	      pOpCodes->push_back(OP_FVAL);
+	      OpsPushDouble(fval);
+	    }
+	    else { // did not recognize token (rec-none)
+	      *pOutStream << endl << WordToken << endl;
+	      ecode = E_V_UNDEFINED_WORD;
+	      goto endcompile;
+	    } // end if(nt)
+	  } // end if(ulen) 
+	} // end if (*pTIB ...  	
+      } // end of line interpreter
+
+      if ((State == 0) && pOpCodes->size()) {
+	// Execute the current line in interpretation state
+	pOpCodes->push_back(OP_RET);
+	if (debug) OutputForthByteCode (pOpCodes);
+	ecode = ForthVM (pOpCodes, &sp, &tp);
+	pOpCodes->erase(pOpCodes->begin(), pOpCodes->end());
+	if (ecode) goto endcompile; 
+      }
+
+    } // end while(TRUE)
 
 endcompile:
   
