@@ -227,44 +227,44 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
       pInStream->getline(TIB, 255);
       if (debug) (*pOutStream) << linecount << ": " << TIB << endl;
 
-      if (pInStream->fail())
-	{
-	  if (State)
-	    {
-	      ecode = E_V_END_OF_STREAM;  // end of stream before end of definition
-	      break;
-	    }
-	  break;    // end of stream reached
+      if (pInStream->fail()) {
+        if (State) {
+	  ecode = E_V_END_OF_STREAM;  // end of stream before end of definition
+	  break;
 	}
+	break;    // end of stream reached
+      }
       ++linecount;
+
+// === start of line interpreter: INTERPRET
+// tbd: factor INTERPRET
+
       pTIB = TIB;
 
-      // tbd: factor the line interpreter: INTERPRET
-      while (*pTIB && (pTIB < (TIB + 255)))  {  // start of line interpreter 
-	if (*pTIB == ' ' || *pTIB == '\t')
+      while (*pTIB && (pTIB < (TIB + 255))) {
+        if (*pTIB == ' ' || *pTIB == '\t') 
 	  ++pTIB;
-	else {
+        else {
 
-	  int i, j, ulen;
-	  unsigned long int nt;
-	  long int ival;
-	  double fval;
-	  char WordToken[256];
+          int i, j, ulen;
+          unsigned long int nt;
+          long int ival;
+          double fval;
+          char WordToken[256];
 
+          // tbd: use PARSE-NAME here
+          // pTIB = ExtractName (pTIB, WordToken);
+          // if (*pTIB == ' ' || *pTIB == '\t') ++pTIB; // go past next ws char
+          // ulen = strlen(WordToken);
 
-	  // tbd: use PARSE-NAME here
-	  // pTIB = ExtractName (pTIB, WordToken);
-	  // if (*pTIB == ' ' || *pTIB == '\t') ++pTIB; // go past next ws char
-	  // ulen = strlen(WordToken);
+          C_parsename();  // Forth PARSE-NAME
+          if (*pTIB == ' ' || *pTIB == '\t') ++pTIB; // go past next ws char
+          DROP
+          ulen = (int) TOS;
+          DROP
+          strncpy( (char*) WordToken, (char*) TOS, (size_t) ulen );
 
-	  C_parsename();
-	  if (*pTIB == ' ' || *pTIB == '\t') ++pTIB; // go past next ws char
-	  DROP
-	  ulen = (int) TOS;
-	  DROP
-	  strncpy( (char*) WordToken, (char*) TOS, (size_t) ulen );
-
-	  if (ulen) {  // parsed non-empty string
+          if (ulen) {  // parsed non-empty string
 	    WordToken[ulen] = (char) 0;
 	    strupr(WordToken);
 
@@ -272,7 +272,7 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 
 	    PUSH_ADDR( (unsigned long int) WordToken );
 	    PUSH_IVAL( (long int) ulen );
-            CPP_find_name();
+            CPP_find_name();  // Forth FIND-NAME
 	    DROP
 	    nt = (unsigned long int) TOS;
 
@@ -304,18 +304,18 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 
 	        case EXECUTE_CURRENT_ONLY:
 	          i = ((pWord->WordCode == OP_DEFINITION) || 
-		       (pWord->WordCode == OP_IVAL) || 
+	               (pWord->WordCode == OP_IVAL) || 
 	               (pWord->WordCode == OP_ADDR) || 
 	               (pWord->WordCode >> 8)) ? WSIZE+1 : 1; 
 	          ib1 = pOpCodes->end() - i;
-		  for (j = 0; j < i; j++) SingleOp.push_back(*(ib1+j));
-		  SingleOp.push_back(OP_RET);
-		  pOpCodes->erase(ib1, pOpCodes->end());
-		  ecode = ForthVM (&SingleOp, &sp, &tp);
-		  SingleOp.erase(SingleOp.begin(), SingleOp.end());
-		  if (ecode) goto endcompile; 
-		  pOpCodes = pCurrentOps; // may have been redirected
-		  break;
+	          for (j = 0; j < i; j++) SingleOp.push_back(*(ib1+j));
+	          SingleOp.push_back(OP_RET);
+	          pOpCodes->erase(ib1, pOpCodes->end());
+	          ecode = ForthVM (&SingleOp, &sp, &tp);
+	          SingleOp.erase(SingleOp.begin(), SingleOp.end());
+	          if (ecode) goto endcompile; 
+	          pOpCodes = pCurrentOps; // may have been redirected
+	          break;
 
 	        default:
 	          ;
@@ -334,9 +334,10 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 	      ecode = E_V_UNDEFINED_WORD;
 	      goto endcompile;
 	    } // end if(nt)
-	  } // end if(ulen) 
-	} // end if (*pTIB ...  	
-      } // end of line interpreter
+          } // end if(ulen)
+        } // end if (*pTIB ...
+      } // end while
+// === end of line interpreter
 
       if ((State == 0) && pOpCodes->size()) {
 	// Execute the current line in interpretation state
