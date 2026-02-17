@@ -203,41 +203,45 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 {
 // The FORTH Compiler
 //
-// Reads and compiles the source statements from the input stream
-//   into a vector of byte codes.
+// Execute the interpreter, initializing the global
+// pointers to the current opcodes and the line count.
 //
-// Return value:
-//
-//  0   no error
-//  other --- see ForthCompiler.h
-
-  int ecode = 0;
-  long int *sp;
-  byte *tp;
-
   if (debug) cout << ">Compiler Sp: " << GlobalSp << " Rp: " << GlobalRp << endl;
 
   linecount = *pLc;
   pCurrentOps = pOpCodes;
 
-  while (TRUE)
-    {
-      // Read each line and parse
+// int ecode = CPP_interpret();  <== uncomment this line
 
-      pInStream->getline(TIB, 255);
-      if (debug) (*pOutStream) << linecount << ": " << TIB << endl;
-
-      if (pInStream->fail()) {
-        if (State) {
-	  ecode = E_V_END_OF_STREAM;  // end of stream before end of definition
-	  break;
-	}
-	break;    // end of stream reached
-      }
-      ++linecount;
-
-// === start of line interpreter: INTERPRET
 // tbd: factor INTERPRET
+//
+// INTERPRET ( -- )
+// cf. Starting Forth, 2nd ed. pp 283--284.
+// int CPP_interpret ()
+// {
+//   Return value:
+//    0   no error
+//    other --- see ForthCompiler.h
+
+  int ecode = 0;
+  long int *sp;
+  byte *tp;
+
+  while (TRUE) {
+    // Read from input stream and parse
+    pInStream->getline(TIB, 255);
+    if (debug) (*pOutStream) << linecount << ": " << TIB << endl;
+
+    if (pInStream->fail()) {
+      if (State) {
+        ecode = E_V_END_OF_STREAM;  // end of stream before end of definition
+	break;
+      }
+      break;    // end of stream reached
+    }
+    ++linecount;
+
+// start of line interpreter:
 
       pTIB = TIB;
 
@@ -277,7 +281,7 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 	    nt = (unsigned long int) TOS;
 
 	    if (nt) {
-         
+    
 	      // tbd: move compilation to section
 	      // Perform execution semantics
               //   PUSH_ADDR((long int) pWord)  
@@ -332,12 +336,12 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 	    else { // did not recognize token (rec-none)
 	      *pOutStream << endl << WordToken << endl;
 	      ecode = E_V_UNDEFINED_WORD;
-	      goto endcompile;
+	      goto endcompile; // <== change to return ecode;
 	    } // end if(nt)
           } // end if(ulen)
         } // end if (*pTIB ...
       } // end while
-// === end of line interpreter
+// end of line interpreter
 
       if ((State == 0) && pOpCodes->size()) {
 	// Execute the current line in interpretation state
@@ -345,10 +349,13 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 	if (debug) OutputForthByteCode (pOpCodes);
 	ecode = ForthVM (pOpCodes, &sp, &tp);
 	pOpCodes->erase(pOpCodes->begin(), pOpCodes->end());
-	if (ecode) goto endcompile; 
+	if (ecode) goto endcompile; // <== change to break;
       }
 
     } // end while(TRUE)
+// return ecode;   <== uncomment this line
+// }  <== uncomment this line
+// end of INTERPRET
 
 endcompile:
   
