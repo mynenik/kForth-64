@@ -2,7 +2,7 @@
 //
 //  Forth Byte Codes (FBC) for kForth
 //
-//  Copyright (c) 1996--2024 Krishna Myneni,
+//  Copyright (c) 1996--2026 Krishna Myneni,
 //    <krishna.myneni@ccreweb.org>
 //
 //  This software is provided under the terms of the GNU
@@ -341,7 +341,7 @@
 #define OP_SYSTEM               326
 #define OP_CHDIR                327
 #define OP_TIMEANDDATE          328
-
+#define OP_INTERPRET            329
 #define OP_WORDLIST             330
 #define OP_FORTHWORDLIST        331
 #define OP_GETCURRENT           332

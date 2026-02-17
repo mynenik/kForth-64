@@ -2,7 +2,7 @@
 //
 // The intrinsic Forth word list for kForth
 //
-// Copyright (c) 2008--2024 Krishna Myneni,
+// Copyright (c) 2008--2026 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org> 
 //
 // This software is provided under the terms of the GNU
@@ -437,5 +437,6 @@ WordTemplate ForthWords[] =
     { "D>F",       OP_DTOF,         0 },
     { "F>D",       OP_FTOD,         0 },
     { "FROUND>S",  OP_FROUNDTOS,    0 },
-    { "FTRUNC>S",  OP_FTRUNCTOS,    0 }
+    { "FTRUNC>S",  OP_FTRUNCTOS,    0 },
+    { "INTERPRET", OP_INTERPRET,    NONDEFERRED }
 };

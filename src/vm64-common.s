@@ -2,7 +2,7 @@
 //
 // Common declarations and data for kForth 64-bit Virtual Machine
 //
-// Copyright (c) 1998--2025 Krishna Myneni,
+// Copyright (c) 1998--2026 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -118,7 +118,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad L_nop, L_nop, L_nop, L_nop            # 316--319
            .quad C_dlopen, C_dlerror, C_dlsym, C_dlclose # 320--323
            .quad C_usec, CPP_alias, C_system, C_chdir    # 324--327
-           .quad C_timeanddate, L_nop, CPP_wordlist, CPP_forthwordlist       # 328--331
+           .quad C_timeanddate, CPP_interpret, CPP_wordlist, CPP_forthwordlist # 328--331
            .quad CPP_getcurrent, CPP_setcurrent, CPP_getorder, CPP_setorder  # 332--335
            .quad CPP_searchwordlist, CPP_definitions, CPP_vocabulary, L_nop  # 336--339
            .quad CPP_only, CPP_also, CPP_order, CPP_previous                 # 340--343
