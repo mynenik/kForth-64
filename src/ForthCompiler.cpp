@@ -181,6 +181,7 @@ int ExecutionMethod (int Precedence)
     switch (Precedence)
     {
       case IMMEDIATE:
+        // ( nt -- ) NAME>INTERPRET EXECUTE
         ex = EXECUTE_CURRENT_ONLY;
 	break;
       case NONDEFERRED:
@@ -194,6 +195,7 @@ int ExecutionMethod (int Precedence)
         ex = State ? EXECUTE_CURRENT_ONLY : EXECUTE_UP_TO;
         break;
       default:
+        // ( nt -- ) NAME>COMPILE EXECUTE
         ;
     }
     return( ex );

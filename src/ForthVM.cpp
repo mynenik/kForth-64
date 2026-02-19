@@ -989,8 +989,8 @@ int CPP_name_to_interpret()
 {
     DROP
     CHK_ADDR
-    WordListEntry* pWord = (WordListEntry*) TOS;
-    void** xt = (void**) ((byte*) pWord + offsetof(struct WordListEntry, Cfa));
+    WordListEntry* nt = (WordListEntry*) TOS;
+    void** xt = (void**) ((byte*) nt + offsetof(struct WordListEntry, Cfa));
     PUSH_ADDR( (long int) xt )
     return 0;
 }
@@ -1183,6 +1183,7 @@ int CPP_compilecomma ()
     return 0;  
 }
 
+// ( nt -- )
 int CPP_compile_to_current ()
 {
     DROP
@@ -3200,6 +3201,28 @@ int CPP_fpstore()
     return 0;
 }
 
+// EXECUTE ( xt -- )
+//
+int CPP_execute()
+{
+    vector<byte> SingleOp;
+    unsigned long int xt;
+    long int *sp;
+    byte *p_xt, *tp;
+
+    DROP
+    xt = (unsigned long int) TOS;
+    p_xt = (byte*) &xt;
+    SingleOp.push_back(OP_ADDR);
+    for (int j = 0; j < WSIZE; j++) SingleOp.push_back(*(p_xt + j));
+    SingleOp.push_back(OP_EXECUTE);
+    SingleOp.push_back(OP_RET);
+    int ec = ForthVM (&SingleOp, &sp, &tp);
+    SingleOp.erase(SingleOp.begin(), SingleOp.end());
+    return ec;
+}
+	
+                 
 // INTERPRET ( -- )
 // cf. Starting Forth, 2nd ed. pp 283--284.
 int CPP_interpret ()
@@ -3213,7 +3236,7 @@ int CPP_interpret ()
   byte *tp;
   vector<byte>* pOpCodes = pCurrentOps;
 
-  while (TRUE) {
+  while (true) {
     // Read from input stream and parse
     pInStream->getline(TIB, 255);
     if (debug) (*pOutStream) << linecount << ": " << TIB << endl;
@@ -3237,15 +3260,10 @@ int CPP_interpret ()
         else {
 
           int i, j, ulen;
-          unsigned long int nt;
+          unsigned long int xt, nt;
           long int ival;
           double fval;
           char WordToken[256];
-
-          // tbd: use PARSE-NAME here
-          // pTIB = ExtractName (pTIB, WordToken);
-          // if (*pTIB == ' ' || *pTIB == '\t') ++pTIB; // go past next ws char
-          // ulen = strlen(WordToken);
 
           C_parsename();  // Forth PARSE-NAME
           if (*pTIB == ' ' || *pTIB == '\t') ++pTIB; // go past next ws char
@@ -3267,23 +3285,16 @@ int CPP_interpret ()
             nt = (unsigned long int) TOS;
 
             if (nt) {
-
-              // tbd: move compilation to section
-              // Perform execution semantics
-              //   PUSH_ADDR((long int) pWord)
-              //          CPP_compile_to_current();
-              PUSH_ADDR( nt );
-              CPP_compile_to_current();
-
               WordListEntry* pWord = (WordListEntry*) nt;
               int ex_meth = ExecutionMethod((int) pWord->Precedence);
-              vector<byte> SingleOp;
               vector<byte>::iterator ib1;
 
               switch (ex_meth) {  // Perform execution semantics
                 case EXECUTE_UP_TO:
                   // Execute the opcode vector immediately up to and
                   //   including the current opcode
+		  PUSH_ADDR( nt )
+		  CPP_compile_to_current();
                   pOpCodes->push_back(OP_RET);
                   if (debug) OutputForthByteCode (pOpCodes);
                   ecode = ForthVM (pOpCodes, &sp, &tp);
@@ -3293,22 +3304,21 @@ int CPP_interpret ()
                   break;
 
                 case EXECUTE_CURRENT_ONLY:
-                  i = ((pWord->WordCode == OP_DEFINITION) ||
-                       (pWord->WordCode == OP_IVAL) ||
-                       (pWord->WordCode == OP_ADDR) ||
-                       (pWord->WordCode >> 8)) ? WSIZE+1 : 1;
-                  ib1 = pOpCodes->end() - i;
-                  for (j = 0; j < i; j++) SingleOp.push_back(*(ib1+j));
-                  SingleOp.push_back(OP_RET);
-                  pOpCodes->erase(ib1, pOpCodes->end());
-                  ecode = ForthVM (&SingleOp, &sp, &tp);
-                  SingleOp.erase(SingleOp.begin(), SingleOp.end());
-                  if (ecode) return ecode;
+		  PUSH_ADDR( nt )
+	          // ( nt -- )
+		  // NAME>INTERPRET EXECUTE
+		  CPP_name_to_interpret();
+		  ecode = CPP_execute();
+		  if (ecode) return ecode;
                   pOpCodes = pCurrentOps; // may have been redirected
                   break;
 
                 default:
-                  ;
+		  PUSH_ADDR( nt )
+	          // ( nt -- )
+	          // NAME>COMPILE EXECUTE
+		  CPP_compile_to_current();
+		  break;
               } // end switch(ex_meth)
             }
             else if (IsInt(WordToken, &ival)) {  // number recognizer

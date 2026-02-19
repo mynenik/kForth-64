@@ -154,6 +154,7 @@ int CPP_rpstore();
 int CPP_fpstore();
 #endif
 int CPP_interpret();
+int CPP_execute();
 }
 #endif
 
