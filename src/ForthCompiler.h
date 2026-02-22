@@ -24,9 +24,9 @@
 // #define EXECUTE_CURRENT_ONLY    2
 
 // Execution Semantics ID
-#define ID_SEM_COMPILE             0
+#define ID_SEM_DEFER_NAME          0
 #define ID_SEM_EXECUTE_NAME        1
-#define ID_SEM_EXECUTE_ALL         2
+#define ID_SEM_EXECUTE_UP_TO       2
 #define ID_SEM_COMPILE_NAME        3
 #define ID_SEM_COMPILE_ND          4
 

@@ -178,16 +178,16 @@ int GetExecutionSemantics (WordListEntry* nt)
     if ((State & 1) == 0) {
       // INTERPRET
       switch (nt->Precedence) {
-        case 0:                    // state 0, prec 0
-          sem_id = ID_SEM_COMPILE; // compile, defer execution
+        case 0:                       // state 0, prec 0
+          sem_id = ID_SEM_DEFER_NAME; // defer execution
           break;
         case IMMEDIATE:           // state 0, prec 1
           sem_id = ID_SEM_EXECUTE_NAME;  // execute xt for name
 	  break;
 	case NONDEFERRED:         // state 0, prec 2
 	  // no break
-	case (IMMEDIATE + NONDEFERRED): // state 0, prec 3
-          sem_id = ID_SEM_EXECUTE_ALL;  // execute deferred + current xt
+	case (IMMEDIATE + NONDEFERRED):  // state 0, prec 3
+          sem_id = ID_SEM_EXECUTE_UP_TO; // execute deferred + current xt
 	  break;
 	default:
 	  sem_id = -1;  // unrecognized semantics

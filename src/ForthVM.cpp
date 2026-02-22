@@ -3234,6 +3234,7 @@ int CPP_interpret ()
   long int *sp;
   byte *tp;
   vector<byte>* pOpCodes = pCurrentOps;
+  unsigned long int xt;
 
   while (true) {
     // Read from input stream and parse
@@ -3258,8 +3259,7 @@ int CPP_interpret ()
           ++pTIB;
         else {
 
-          int i, j, ulen;
-          unsigned long int xt, nt;
+          int ulen;
           long int ival;
           double fval;
           char WordToken[256];
@@ -3281,30 +3281,28 @@ int CPP_interpret ()
             PUSH_IVAL( (long int) ulen );
             CPP_find_name();  // Forth FIND-NAME
             DROP
-            nt = (unsigned long int) TOS;
 
+            unsigned long int nt = (unsigned long int) TOS;
             if (nt) {
-              // WordListEntry* pWord = (WordListEntry*) nt;
               int sem_id = GetExecutionSemantics((WordListEntry*) nt);
-	      // *pOutStream << WordToken << " STATE: " << State << "  SEM ID: " 
-	      //      << sem_id << endl;
-              vector<byte>::iterator ib1;
 
               switch (sem_id) {  // Perform execution semantics
-		case ID_SEM_EXECUTE_ALL:  // EXECUTE_UP_TO
+	        case ID_SEM_EXECUTE_UP_TO:
                   // Execute the opcode vector immediately up to and
                   //   including the current opcode
 		  PUSH_ADDR( nt )
 		  CPP_compile_to_current();
                   pOpCodes->push_back(OP_RET);
                   if (debug) OutputForthByteCode (pOpCodes);
-                  ecode = ForthVM (pOpCodes, &sp, &tp);
-                  pOpCodes->erase(pOpCodes->begin(), pOpCodes->end());
+		  xt = (unsigned long int) pOpCodes;
+		  PUSH_ADDR( xt );
+		  ecode = CPP_execute();
+                  pOpCodes->clear();
                   if (ecode) return ecode;
                   pOpCodes = pCurrentOps;
                   break;
 
-		case ID_SEM_EXECUTE_NAME:  // EXECUTE_CURRENT_ONLY
+		case ID_SEM_EXECUTE_NAME:
 		  PUSH_ADDR( nt )
 	          // ( nt -- )  NAME>INTERPRET EXECUTE
 		  CPP_name_to_interpret();
@@ -3313,22 +3311,22 @@ int CPP_interpret ()
                   pOpCodes = pCurrentOps; // may have been redirected
                   break;
 
-		case ID_SEM_COMPILE:
+		case ID_SEM_DEFER_NAME:
 		  PUSH_ADDR( nt )
-	          // ( nt -- )  NAME>COMPILE EXECUTE
+	          // ( nt -- )  COMPILE-?
 		  CPP_compile_to_current();
 		  break;
 
 		case ID_SEM_COMPILE_ND:
 		  if (pNewWord) 
 		    pNewWord->Precedence |= PRECEDENCE_NON_DEFERRED ;
-		  // PUSH_ADDR( nt )
-	          // CPP_compile_to_current();
-		  // break;
+		    // no break!
 		case ID_SEM_COMPILE_NAME:
 		  PUSH_ADDR( nt )
-		  // ( nt -- ) COMPILE-NAME
-		  CPP_compilename();
+		  // ( nt -- ) NAME>COMPILE EXECUTE
+		  CPP_name_to_compile();
+		  ecode = CPP_execute();
+		  if (ecode) return ecode;
 		  break;
 
 		default:
@@ -3353,12 +3351,15 @@ int CPP_interpret ()
       } // end while
 // end of line interpreter
 
+      // Execute remaining deferred ops
       if ((State == 0) && pOpCodes->size()) {
         // Execute the current line in interpretation state
         pOpCodes->push_back(OP_RET);
         if (debug) OutputForthByteCode (pOpCodes);
-        ecode = ForthVM (pOpCodes, &sp, &tp);
-        pOpCodes->erase(pOpCodes->begin(), pOpCodes->end());
+        xt = (unsigned long int) pOpCodes;
+        PUSH_ADDR( xt );
+        ecode = CPP_execute();
+        pOpCodes->clear();
         if (ecode) break;
       }
 
