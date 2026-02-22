@@ -3218,7 +3218,6 @@ int CPP_execute()
     SingleOp.push_back(OP_EXECUTE);
     SingleOp.push_back(OP_RET);
     int ec = ForthVM (&SingleOp, &sp, &tp);
-    SingleOp.erase(SingleOp.begin(), SingleOp.end());
     return ec;
 }
 	
@@ -3285,12 +3284,14 @@ int CPP_interpret ()
             nt = (unsigned long int) TOS;
 
             if (nt) {
-              WordListEntry* pWord = (WordListEntry*) nt;
-              int ex_meth = ExecutionMethod((int) pWord->Precedence);
+              // WordListEntry* pWord = (WordListEntry*) nt;
+              int sem_id = GetExecutionSemantics((WordListEntry*) nt);
+	      // *pOutStream << WordToken << " STATE: " << State << "  SEM ID: " 
+	      //      << sem_id << endl;
               vector<byte>::iterator ib1;
 
-              switch (ex_meth) {  // Perform execution semantics
-                case EXECUTE_UP_TO:
+              switch (sem_id) {  // Perform execution semantics
+		case ID_SEM_EXECUTE_ALL:  // EXECUTE_UP_TO
                   // Execute the opcode vector immediately up to and
                   //   including the current opcode
 		  PUSH_ADDR( nt )
@@ -3303,23 +3304,36 @@ int CPP_interpret ()
                   pOpCodes = pCurrentOps;
                   break;
 
-                case EXECUTE_CURRENT_ONLY:
+		case ID_SEM_EXECUTE_NAME:  // EXECUTE_CURRENT_ONLY
 		  PUSH_ADDR( nt )
-	          // ( nt -- )
-		  // NAME>INTERPRET EXECUTE
+	          // ( nt -- )  NAME>INTERPRET EXECUTE
 		  CPP_name_to_interpret();
 		  ecode = CPP_execute();
 		  if (ecode) return ecode;
                   pOpCodes = pCurrentOps; // may have been redirected
                   break;
 
-                default:
+		case ID_SEM_COMPILE:
 		  PUSH_ADDR( nt )
-	          // ( nt -- )
-	          // NAME>COMPILE EXECUTE
+	          // ( nt -- )  NAME>COMPILE EXECUTE
 		  CPP_compile_to_current();
 		  break;
-              } // end switch(ex_meth)
+
+		case ID_SEM_COMPILE_ND:
+		  if (pNewWord) 
+		    pNewWord->Precedence |= PRECEDENCE_NON_DEFERRED ;
+		  // PUSH_ADDR( nt )
+	          // CPP_compile_to_current();
+		  // break;
+		case ID_SEM_COMPILE_NAME:
+		  PUSH_ADDR( nt )
+		  // ( nt -- ) COMPILE-NAME
+		  CPP_compilename();
+		  break;
+
+		default:
+		  ;  // this should throw an error
+              } // end switch(sem_id)
             }
             else if (IsInt(WordToken, &ival)) {  // number recognizer
               pOpCodes->push_back(OP_IVAL);

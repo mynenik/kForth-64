@@ -125,7 +125,7 @@ ostream* pOutStream ;
 
 WordListEntry* IsForthWord (char* name)
 {
-// Locate and Return a copy of the dictionary entry
+// Locate and return a copy of the dictionary entry
 //   with the specified name.  Return True if found,
 //   False otherwise. A copy of the entry is returned
 //   in *pE.
@@ -169,36 +169,51 @@ void SetForthOutputStream (ostream& OutStream)
   pOutStream = &OutStream;
 }
 //---------------------------------------------------------------
-// tbd: this should return the execution semantics for a
-// recognized name, based on STATE and precedence. Presently
-// compilation is assumed as part of the execution semantics.
-int ExecutionMethod (int Precedence)
+// Return an ID for execution semantics of a recognized name, 
+// based on STATE and the word's precedence (for single xt systems).
+
+int GetExecutionSemantics (WordListEntry* nt)
 {
-    // Return execution method for a word, based on its Precedence and STATE
-
-    int ex = EXECUTE_NONE;
-
-    switch (Precedence)
-    {
-      case IMMEDIATE:
-        // ( nt -- ) NAME>INTERPRET EXECUTE
-        ex = EXECUTE_CURRENT_ONLY;
-	break;
-      case NONDEFERRED:
-        if (State) {
-          if (pNewWord) pNewWord->Precedence |= NONDEFERRED ;
-        }
-	else
-          ex = EXECUTE_UP_TO;
-        break;
-      case (NONDEFERRED + IMMEDIATE):
-        ex = State ? EXECUTE_CURRENT_ONLY : EXECUTE_UP_TO;
-        break;
-      default:
-        // ( nt -- ) NAME>COMPILE EXECUTE
-        ;
+    int sem_id = -1;
+    if ((State & 1) == 0) {
+      // INTERPRET
+      switch (nt->Precedence) {
+        case 0:                    // state 0, prec 0
+          sem_id = ID_SEM_COMPILE; // compile, defer execution
+          break;
+        case IMMEDIATE:           // state 0, prec 1
+          sem_id = ID_SEM_EXECUTE_NAME;  // execute xt for name
+	  break;
+	case NONDEFERRED:         // state 0, prec 2
+	  // no break
+	case (IMMEDIATE + NONDEFERRED): // state 0, prec 3
+          sem_id = ID_SEM_EXECUTE_ALL;  // execute deferred + current xt
+	  break;
+	default:
+	  sem_id = -1;  // unrecognized semantics
+	  break;
+	} // end switch precedence
     }
-    return( ex );
+    else {  
+      // COMPILE
+      switch (nt->Precedence) {
+        case 0:
+          sem_id = ID_SEM_COMPILE_NAME;  // compile name into current def
+          break;
+	case IMMEDIATE:
+	case (IMMEDIATE+NONDEFERRED):
+          sem_id = ID_SEM_EXECUTE_NAME;  // execute xt for name
+	  break;
+	case NONDEFERRED:
+	  sem_id = ID_SEM_COMPILE_ND;   // compile a nondeferred word;
+	  break;                        // make new def nondeferred
+        default:
+          sem_id = -1;  // unrecognized
+          break;
+      } // end switch(nt->Precedence)
+    } // end if (State & 1)
+
+    return( sem_id );
 }
 //----------------------------------------------------------------
 
