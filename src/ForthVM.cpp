@@ -3227,11 +3227,11 @@ int CPP_rec_name ()
     CPP_find_name();  // Forth FIND-NAME
     DROP
     unsigned long int nt = (unsigned long int) TOS;
-    int sem_id = 0;  // temporary token for translate_none
+    int sem_id = -1;
     if (nt)
       sem_id = GetExecutionSemantics((WordListEntry*) nt);
     else
-      return -13;  // use appropriate error code
+      return -13;  // undefined word
 
     PUSH_ADDR( nt )
     PUSH_IVAL( sem_id )
