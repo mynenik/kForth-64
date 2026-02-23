@@ -1,6 +1,6 @@
 // ForthVM.h
 //
-// Copyright (c) 1996--2022, Krishna Myneni
+// Copyright (c) 1996--2026, Krishna Myneni
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -153,6 +153,7 @@ int CPP_rpstore();
 #ifndef __NO_FPSTACK__
 int CPP_fpstore();
 #endif
+int CPP_rec_name();
 int CPP_interpret();
 int CPP_execute();
 }

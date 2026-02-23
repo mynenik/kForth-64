@@ -442,6 +442,9 @@
 #define OP_FSTARPLUS            428
 
 #define OP_FSL_MAT_ADDR         430   // row ordered indexing
+#define OP_REC_NAME             431
+#define OP_REC_NUMBER           432
+#define OP_REC_FLOAT            433
 
 // Windows specific opcodes
 #define OP_VALLOC               450

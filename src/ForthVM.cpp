@@ -71,8 +71,8 @@ extern "C" {
   void  restore_term(void);
   char* strupr (char*);
   char* ExtractName(char*, char*);
-  int   IsFloat(char*, double*);
-  int   IsInt(char*, long int*);
+  int   C_rec_float();
+  int   C_rec_number();
   int   isBaseDigit(int);
   int   C_bracketsharp(void);
   int   C_sharps(void);
@@ -3220,7 +3220,31 @@ int CPP_execute()
     int ec = ForthVM (&SingleOp, &sp, &tp);
     return ec;
 }
-	
+
+// REC-NAME  ( c-addr u -- nt sem-id )
+int CPP_rec_name ()
+{
+    CPP_find_name();  // Forth FIND-NAME
+    DROP
+    unsigned long int nt = (unsigned long int) TOS;
+    int sem_id = 0;  // temporary token for translate_none
+    if (nt)
+      sem_id = GetExecutionSemantics((WordListEntry*) nt);
+    else
+      return -13;  // use appropriate error code
+
+    PUSH_ADDR( nt )
+    PUSH_IVAL( sem_id )
+    return 0;
+}
+
+// Convert sem_id to execution semantics for name
+// ( nt sem_id -- xt )
+// int CPP_sem_to_translation ()
+// {
+//    return 0;
+// }
+
                  
 // INTERPRET ( -- )
 // cf. Starting Forth, 2nd ed. pp 283--284.
@@ -3231,8 +3255,6 @@ int CPP_interpret ()
 //    other --- see ForthCompiler.h
 
   int ecode = 0;
-  long int *sp;
-  byte *tp;
   vector<byte>* pOpCodes = pCurrentOps;
   unsigned long int xt;
 
@@ -3275,77 +3297,101 @@ int CPP_interpret ()
             WordToken[ulen] = (char) 0;
             strupr(WordToken);
 
-            // name recognizer
-
             PUSH_ADDR( (unsigned long int) WordToken );
             PUSH_IVAL( (long int) ulen );
-            CPP_find_name();  // Forth FIND-NAME
-            DROP
 
-            unsigned long int nt = (unsigned long int) TOS;
-            if (nt) {
-              int sem_id = GetExecutionSemantics((WordListEntry*) nt);
+	    // rec-forth : start of recognizer sequence
+	    //
+	    int sem_id;
+
+	    ecode = CPP_rec_name(); // REC-NAME
+	    if (ecode == 0) {
+              DROP
+              sem_id = (int) TOS;
+              DROP
+              unsigned long int nt = TOS;
 
               switch (sem_id) {  // Perform execution semantics
-	        case ID_SEM_EXECUTE_UP_TO:
+                case ID_SEM_EXECUTE_UP_TO:
                   // Execute the opcode vector immediately up to and
                   //   including the current opcode
-		  PUSH_ADDR( nt )
-		  CPP_compile_to_current();
+                  PUSH_ADDR( nt )
+                  CPP_compile_to_current();
                   pOpCodes->push_back(OP_RET);
                   if (debug) OutputForthByteCode (pOpCodes);
-		  xt = (unsigned long int) pOpCodes;
-		  PUSH_ADDR( xt );
-		  ecode = CPP_execute();
+	          xt = (unsigned long int) pOpCodes;
+	          PUSH_ADDR( xt );
+	          ecode = CPP_execute();
                   pOpCodes->clear();
-                  if (ecode) return ecode;
                   pOpCodes = pCurrentOps;
                   break;
 
-		case ID_SEM_EXECUTE_NAME:
-		  PUSH_ADDR( nt )
+                case ID_SEM_EXECUTE_NAME:
+	          PUSH_ADDR( nt )
 	          // ( nt -- )  NAME>INTERPRET EXECUTE
-		  CPP_name_to_interpret();
-		  ecode = CPP_execute();
-		  if (ecode) return ecode;
+	          CPP_name_to_interpret();
+	          ecode = CPP_execute();
                   pOpCodes = pCurrentOps; // may have been redirected
                   break;
 
-		case ID_SEM_DEFER_NAME:
-		  PUSH_ADDR( nt )
-	          // ( nt -- )  COMPILE-?
-		  CPP_compile_to_current();
-		  break;
+                case ID_SEM_DEFER_NAME:
+                  PUSH_ADDR( nt )
+                  // ( nt -- )  COMPILE-?
+                  CPP_compile_to_current();
+                  break;
 
-		case ID_SEM_COMPILE_ND:
-		  if (pNewWord) 
-		    pNewWord->Precedence |= PRECEDENCE_NON_DEFERRED ;
-		    // no break!
-		case ID_SEM_COMPILE_NAME:
-		  PUSH_ADDR( nt )
-		  // ( nt -- ) NAME>COMPILE EXECUTE
-		  CPP_name_to_compile();
-		  ecode = CPP_execute();
-		  if (ecode) return ecode;
-		  break;
+                case ID_SEM_COMPILE_ND:
+                  if (pNewWord) 
+                    pNewWord->Precedence |= PRECEDENCE_NON_DEFERRED ;
+	            // no break!
+                case ID_SEM_COMPILE_NAME:
+                  PUSH_ADDR( nt )
+                  // ( nt -- ) NAME>COMPILE EXECUTE
+	          CPP_name_to_compile();
+	          ecode = CPP_execute();
+	          break;
 
-		default:
-		  ;  // this should throw an error
+                default:
+                  ecode = -13;  // which error?
               } // end switch(sem_id)
-            }
-            else if (IsInt(WordToken, &ival)) {  // number recognizer
-              pOpCodes->push_back(OP_IVAL);
-              OpsPushInt(ival);
-            }
-            else if (IsFloat(WordToken, &fval)) {  // fp number recognizer
-              pOpCodes->push_back(OP_FVAL);
-              OpsPushDouble(fval);
-            }
-            else { // did not recognize token (rec-none)
-              *pOutStream << endl << WordToken << endl;
-              ecode = E_V_UNDEFINED_WORD;
-              return ecode;
-            } // end if(nt)
+	
+	      // goal is to have an xt on the stack from each case
+	      // above, at this point and perform EXECUTE.
+	    }
+            else {
+              PUSH_ADDR( (unsigned long int) WordToken );
+              PUSH_IVAL( (long int) ulen );
+
+	      C_rec_number();  // REC-NUMBER
+
+	      DROP
+	      if (TOS) {
+	        DROP
+	        ival = TOS;
+                pOpCodes->push_back(OP_IVAL); // translation
+                OpsPushInt(ival);
+              }
+              else {
+                PUSH_ADDR( (unsigned long int) WordToken );
+                PUSH_IVAL( (long int) ulen );
+
+		C_rec_float();  // REC-FLOAT
+
+		DROP
+		if (TOS) {
+		  INC_FSP
+		  fval = *((double*) GlobalFp);	  
+                  pOpCodes->push_back(OP_FVAL);  // translation
+                  OpsPushDouble(fval);
+                }
+                else { 
+		  // rec-none
+                  *pOutStream << endl << WordToken << endl;
+                  ecode = E_V_UNDEFINED_WORD;
+                  return ecode;
+		} // end if(IsFloat)
+	      } // end if(IsInt)
+            } // end if(ecode) ; end of recognizer sequence
           } // end if(ulen)
         } // end if (*pTIB ...
       } // end while

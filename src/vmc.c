@@ -3,7 +3,7 @@ vmc.c
 
   C portion of the kForth Virtual Machine
 
-  Copyright (c) 1998--2025 Krishna Myneni, 
+  Copyright (c) 1998--2026 Krishna Myneni, 
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the GNU
@@ -78,6 +78,7 @@ int L_quit();
 int L_abort();
 int vm(byte*);
 
+int IsFloat(char*, double*);
 struct timeval ForthStartTime;
 struct termios tios0;
 struct mallinfo ForthStartMem;
@@ -550,7 +551,6 @@ at the end. Return a pointer to the next position in str.
     *pName = 0;
     return pStr;
 }
-/*----------------------------------------------------------*/
 
 int IsFloat (char* token, double* p)
 {
@@ -562,9 +562,10 @@ return False.
     char s[256];
     char *pStr = &s[0];
     char *pEnd;
-    int f = FALSE;
+    int b = FALSE;
 
     strcpy(s, token);
+    strupr(s);
 
     if (strchr(pStr, 'E'))
     {
@@ -579,18 +580,45 @@ return False.
 
             --pStr;
             if ((*pStr == '+') || (*pStr == '-')) {
-	      *pStr = '\0';
+              *pStr = '\0';
               --pStr;
-	    }
-	    if (pStr > &s[0]) {
+            }
+            if (pStr > &s[0]) {
               if (*pStr == 'E') *pStr = '\0';
-	    }
+            }
             *p = strtod(s, &pEnd);
-             if (*pEnd == 0) f = TRUE;
+             if (*pEnd == 0) b = TRUE;
         }
     }
 
-    return f;
+    return b;
+}
+
+/*----------------------------------------------------------*/
+/* REC-FLOAT ( c-addr u -- true )  ( F: -- r ) or
+ *           ( c-addr u -- false ) ( F: -- )                */
+int C_rec_float ()
+{
+/*
+Check the string token to see if it is an LMI style floating point
+number; if so return True on the data stack and the fp number
+on the floating point stack; otherwise return False.
+*/
+    char *p;
+    long int b;
+    double r;
+    DROP
+    // u = TOS;
+    DROP
+    p = (char*) TOS;
+    b = IsFloat(p, &r);
+    if (b) {
+      // push converted fp onto fp stack
+      *((double *) GlobalFp) = r;
+      DEC_FSP
+    }
+    PUSH_IVAL( b )
+    return 0;
 }
 /*----------------------------------------------------------*/
 
@@ -602,33 +630,35 @@ int isBaseDigit (int c)
 	    (isalpha(u) && (Base > 10) && ((u - 55) < Base)) );
 }
 /*---------------------------------------------------------*/
-
-int IsInt (char* token, long int* p)
+/* REC-NUMBER ( c-addr u -- x true )  or
+ *            ( c-addr u -- false )                       */
+int C_rec_number ()
 {
-/* Check the string token to see if it is an integer number;
-   if so set the value of *p and return True, otherwise return False. */
+/* Recognize a single cell number */
 
-  int b = FALSE;
-  unsigned long u = 0;
-  char *pStr = token, *endp;
+  unsigned long int unum, b = FALSE;
+  DROP
+  // unsigned long int u = TOS;
+  DROP
+  char *pStr = (char*) TOS;
+  char *endp;
 
-  if ((*pStr == '-') || isBaseDigit(*pStr))
-    {
+
+    if ((*pStr == '-') || isBaseDigit(*pStr)) {
       ++pStr;
-      while (isBaseDigit(*pStr))	    
-	{
+      while (isBaseDigit(*pStr)) {
 	  ++pStr;
-	}
-      if (*pStr == 0)
-        {
-	  u = strtoul(token, &endp, Base);
-	  b = TRUE;
-        }
-
+      }
+      if (*pStr == 0) {
+        unum = strtoul((char*) TOS, &endp, Base);
+        b = TRUE;
+      }
     }
-
-  *p = u;
-  return b;
+    if (b) {
+      PUSH_IVAL( unum )
+    }
+    PUSH_IVAL( (long int) b );
+    return 0;
 }
 /*---------------------------------------------------------*/
 
