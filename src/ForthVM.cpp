@@ -59,6 +59,12 @@ extern stack<vector<byte>*> PendingOps;
 extern WordListEntry* pNewWord;
 extern vector<byte>* pCurrentOps;
 
+extern byte** _translate_name  [];
+extern byte** _translate_cell  [];
+extern byte** _translate_dcell [];
+extern byte** _translate_float [];
+extern byte** _translate_none  [];
+
 extern size_t NUMBER_OF_INTRINSIC_WORDS;
 extern size_t NUMBER_OF_ROOT_WORDS;
 
@@ -402,6 +408,54 @@ int InitSystemVars ()
 }
 //--------------------------------------------------------------- 
 
+int InitDefaultRecognizers()
+{
+    vector<byte>* pSaveOps = pCurrentOps;
+    byte *lambda;
+    byte *bp;
+    WordListEntry* nt;
+
+    // Construct byte code sequences and xt's for translation
+    // This code is temporary working code; it needs cleanup.
+
+    lambda = new byte[ WSIZE ];
+    lambda[0] = OP_LITERAL;
+    lambda[1] = OP_RET;
+    byte** _p_lit_int  = new byte*;
+    byte** _p_lit_comp = new byte*;
+    byte** _p_lit_post = new byte*;
+    *_p_lit_int = lambda;
+    *_p_lit_comp = lambda;
+    *_p_lit_post = NULL;
+    _translate_cell[0] = _p_lit_int;
+    _translate_cell[1] = _p_lit_comp;
+    _translate_cell[2] = _p_lit_post;
+
+    lambda = new byte [WSIZE + 2];
+    lambda[0] = OP_CALLADDR;
+    const char *s = "FLITERAL";
+    PUSH_ADDR( (long int) s);
+    PUSH_IVAL( (long int) strlen(s) );
+    CPP_find_name();
+    DROP
+    nt = (WordListEntry*) TOS;
+    lambda = (byte*) nt->Cfa;
+    byte** _p_flit_int = new byte*;
+    byte** _p_flit_comp = new byte*;
+    byte** _p_flit_post = new byte*;
+    *_p_flit_int = lambda;
+    *_p_flit_comp = lambda;
+    *_p_flit_post = NULL;
+    _translate_float[0] = _p_flit_int;
+    _translate_float[1] = _p_flit_comp;
+    _translate_float[2] = _p_flit_post;  
+
+    pCurrentOps = pSaveOps;
+    return 0;
+}
+//--------------------------------------------------------------- 
+
+
 int NullSystemVars ()
 {
 // Set Pfa's of system vars to NULL to prevent Forth system
@@ -460,6 +514,7 @@ int OpenForth ()
    // Other initialization
     vmEntryRp = BottomOfReturnStack;
     InitSystemVars();
+    InitDefaultRecognizers();
 #ifndef __NO_FPSTACK__
     InitFpStack();
 #endif
@@ -3221,6 +3276,12 @@ int CPP_execute()
     return ec;
 }
 
+// TRANSLATE-NONE ( i*j xt -- )
+int CPP_translate_none ()
+{
+    return -13;
+}
+
 // REC-NAME  ( c-addr u -- nt sem-id )
 int CPP_rec_name ()
 {
@@ -3282,8 +3343,6 @@ int CPP_interpret ()
         else {
 
           int ulen;
-          long int ival;
-          double fval;
           char WordToken[256];
 
           C_parsename();  // Forth PARSE-NAME
@@ -3361,37 +3420,31 @@ int CPP_interpret ()
             else {
               PUSH_ADDR( (unsigned long int) WordToken );
               PUSH_IVAL( (long int) ulen );
-
-	      C_rec_number();  // REC-NUMBER
-
+	      // ( caddr u -- ) REC-NUMBER
+	      C_rec_number();
 	      DROP
-	      if (TOS) {
-	        DROP
-	        ival = TOS;
-                pOpCodes->push_back(OP_IVAL); // translation
-                OpsPushInt(ival);
-              }
+	      if (TOS) {  // if translation is nonzero, execute it
+		UNDROP
+		CPP_execute();
+	      }
               else {
                 PUSH_ADDR( (unsigned long int) WordToken );
                 PUSH_IVAL( (long int) ulen );
-
-		C_rec_float();  // REC-FLOAT
-
+	        // ( caddr u -- ) REC-FLOAT
+		C_rec_float();
 		DROP
 		if (TOS) {
-		  INC_FSP
-		  fval = *((double*) GlobalFp);	  
-                  pOpCodes->push_back(OP_FVAL);  // translation
-                  OpsPushDouble(fval);
+		  UNDROP
+		  CPP_execute();
                 }
                 else { 
 		  // rec-none
                   *pOutStream << endl << WordToken << endl;
                   ecode = E_V_UNDEFINED_WORD;
                   return ecode;
-		} // end if(IsFloat)
-	      } // end if(IsInt)
-            } // end if(ecode) ; end of recognizer sequence
+		} // end if
+	      } // end if
+            } // end if ; end of recognizer sequence
           } // end if(ulen)
         } // end if (*pTIB ...
       } // end while

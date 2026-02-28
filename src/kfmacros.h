@@ -3,7 +3,7 @@
 // Useful macros for kForth C and C++ source files, following
 // the convention established by DNW in vm-osxppc.s
 //
-// Copyright (c) 2009--2021, Krishna Myneni
+// Copyright (c) 2009--2026, Krishna Myneni
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
@@ -29,6 +29,7 @@
 #define STD_IVAL  *GlobalTp-- = OP_IVAL;
 #define STD_ADDR  *GlobalTp-- = OP_ADDR;
 #define DROP      ++GlobalSp; ++GlobalTp;
+#define UNDROP    --GlobalSp; --GlobalTp;
 
 #else
 
@@ -40,6 +41,7 @@
 #define STD_IVAL
 #define STD_ADDR
 #define DROP       ++GlobalSp;
+#define UNDROP     --GlobalSp;
 
 #endif
 

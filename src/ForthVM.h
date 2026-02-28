@@ -13,6 +13,7 @@
 
 int InitSystemVars ();
 int NullSystemVars ();
+int InitDefaultRecognizers ();
 #ifndef __NO_FPSTACK__
 int InitFpStack ();
 #endif

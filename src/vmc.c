@@ -57,6 +57,13 @@ extern byte* BottomOfReturnTypeStack;
 #endif
 extern int CPP_bye();
 
+// Provided by ForthCompiler.cpp
+extern byte** _translate_name  [];
+extern byte** _translate_cell  [];
+extern byte** _translate_dcell [];
+extern byte** _translate_float [];
+extern byte** _translate_none  [];
+
 // Provided by vmxx-common.s
 extern long int Base;
 extern long int State;
@@ -616,8 +623,11 @@ on the floating point stack; otherwise return False.
       // push converted fp onto fp stack
       *((double *) GlobalFp) = r;
       DEC_FSP
+      PUSH_ADDR( (long int) _translate_float[0] );
     }
-    PUSH_IVAL( b )
+    else {
+      PUSH_IVAL( b )
+    }
     return 0;
 }
 /*----------------------------------------------------------*/
@@ -630,7 +640,7 @@ int isBaseDigit (int c)
 	    (isalpha(u) && (Base > 10) && ((u - 55) < Base)) );
 }
 /*---------------------------------------------------------*/
-/* REC-NUMBER ( c-addr u -- x true )  or
+/* REC-NUMBER ( c-addr u -- x xt )  or
  *            ( c-addr u -- false )                       */
 int C_rec_number ()
 {
@@ -656,8 +666,11 @@ int C_rec_number ()
     }
     if (b) {
       PUSH_IVAL( unum )
+      PUSH_ADDR( (long int) _translate_cell[0] );
     }
-    PUSH_IVAL( (long int) b );
+    else {
+      PUSH_IVAL( (long int) b );
+    }
     return 0;
 }
 /*---------------------------------------------------------*/

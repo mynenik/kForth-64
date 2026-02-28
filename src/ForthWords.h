@@ -438,8 +438,13 @@ WordTemplate ForthWords[] =
     { "F>D",       OP_FTOD,         0 },
     { "FROUND>S",  OP_FROUNDTOS,    0 },
     { "FTRUNC>S",  OP_FTRUNCTOS,    0 },
-    { "REC-NAME",  OP_REC_NAME,     0 },
-    { "REC-NUMBER", OP_REC_NUMBER,  0 },
-    { "REC-FLOAT", OP_REC_FLOAT,    0 },
-    { "INTERPRET", OP_INTERPRET,    NONDEFERRED }
+    { "REC-NAME",        OP_REC_NAME,        0 },
+    { "REC-NUMBER",      OP_REC_NUMBER,      0 },
+    { "REC-FLOAT",       OP_REC_FLOAT,       0 },
+    { "REC-NONE",        OP_REC_NONE,        0 },
+    { "TRANSLATE-NAME",  OP_TRANSLATE_NAME,  0 },
+    { "TRANSLATE-CELL",  OP_TRANSLATE_CELL,  0 },
+    { "TRANSLATE-FLOAT", OP_TRANSLATE_FLOAT, 0 },
+    { "TRANSLATE-NONE",  OP_TRANSLATE_NONE,  0 },
+    { "INTERPRET",       OP_INTERPRET,    NONDEFERRED }
 };
