@@ -56,9 +56,9 @@ extern byte* BottomOfTypeStack;
 extern byte* BottomOfReturnTypeStack;
 #endif
 extern int CPP_bye();
-
-// Provided by ForthCompiler.cpp
-extern unsigned char** _translation_table[][3];
+extern int CPP_translate_cell();
+extern int CPP_translate_float();
+extern int CPP_translate_none();
 
 // Provided by vmxx-common.s
 extern long int Base;
@@ -598,8 +598,8 @@ return False.
 }
 
 /*----------------------------------------------------------*/
-/* REC-FLOAT ( c-addr u -- true )  ( F: -- r ) or
- *           ( c-addr u -- false ) ( F: -- )                */
+/* REC-FLOAT ( c-addr u -- translation )  ( F: -- r ) or
+ *           ( c-addr u -- translation ) ( F: -- )                */
 int C_rec_float ()
 {
 /*
@@ -619,10 +619,10 @@ on the floating point stack; otherwise return False.
       // push converted fp onto fp stack
       *((double *) GlobalFp) = r;
       DEC_FSP
-      PUSH_ADDR( (long int) _translation_table[3][1] );
+      CPP_translate_float();
     }
     else {
-      PUSH_IVAL( b )
+      CPP_translate_none();
     }
     return 0;
 }
@@ -636,8 +636,8 @@ int isBaseDigit (int c)
 	    (isalpha(u) && (Base > 10) && ((u - 55) < Base)) );
 }
 /*---------------------------------------------------------*/
-/* REC-NUMBER ( c-addr u -- x xt )  or
- *            ( c-addr u -- false )                       */
+/* REC-NUMBER ( c-addr u -- x translate )  or
+ *            ( c-addr u -- translate-none )              */
 int C_rec_number ()
 {
 /* Recognize a single cell number */
@@ -662,10 +662,10 @@ int C_rec_number ()
     }
     if (b) {
       PUSH_IVAL( unum )
-      PUSH_ADDR( (long int) _translation_table[1][1] );
+      CPP_translate_cell();
     }
     else {
-      PUSH_IVAL( (long int) b );
+      CPP_translate_none();
     }
     return 0;
 }

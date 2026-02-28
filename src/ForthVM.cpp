@@ -3280,6 +3280,8 @@ int CPP_execute()
 // TRANSLATE-NONE ( -- addr )
 int CPP_translate_none ()
 {
+    for (int i = 0; i < 3; i++)
+      _translate_none[i] = _translation_table[4][i];
     PUSH_ADDR( (long int) _translate_none );
     return 0;
 }
@@ -3287,6 +3289,8 @@ int CPP_translate_none ()
 // TRANSLATE-CELL  ( -- addr )
 int CPP_translate_cell ()
 {
+    for (int i=0; i < 3; i++)
+      _translate_cell[i] = _translation_table[1][i];
     PUSH_ADDR( (long int) _translate_cell );
     return 0;
 }
@@ -3294,6 +3298,8 @@ int CPP_translate_cell ()
 // TRANSLATE-FLOAT ( -- addr )
 int CPP_translate_float ()
 {
+    for (int i=0; i < 3; i++)
+      _translate_cell[i] = _translation_table[3][i];
     PUSH_ADDR( (long int) _translate_float );
     return 0;
 }
@@ -3440,7 +3446,9 @@ int CPP_interpret ()
 	      // ( caddr u -- ) REC-NUMBER
 	      C_rec_number();
 	      DROP
-	      if (TOS) {  // if translation is nonzero, execute it
+	      if (TOS != (long int) _translate_none) {
+		xt = (unsigned long int) *((unsigned long int*)TOS + State + 2);
+		TOS = xt;
 		UNDROP
 		CPP_execute();
 	      }
@@ -3450,7 +3458,9 @@ int CPP_interpret ()
 	        // ( caddr u -- ) REC-FLOAT
 		C_rec_float();
 		DROP
-		if (TOS) {
+		if (TOS != (long int) _translate_none) {
+		  xt = (unsigned long int) *((unsigned long int*)TOS + State + 2);
+		  TOS = xt;
 		  UNDROP
 		  CPP_execute();
                 }
