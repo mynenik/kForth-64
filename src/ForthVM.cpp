@@ -411,44 +411,33 @@ int InitSystemVars ()
 int InitDefaultRecognizers()
 {
     vector<byte>* pSaveOps = pCurrentOps;
-    byte *lambda;
-    byte *bp;
-    WordListEntry* nt;
+    char s[128];
+    byte** xt;
 
     // Construct byte code sequences and xt's for translation
-    // This code is temporary working code; it needs cleanup.
+    // This code is temporary working code; it needs factoring.
 
-    lambda = new byte[ WSIZE ];
-    lambda[0] = OP_LITERAL;
-    lambda[1] = OP_RET;
-    byte** _p_lit_int  = new byte*;
-    byte** _p_lit_comp = new byte*;
-    byte** _p_lit_post = new byte*;
-    *_p_lit_int = lambda;
-    *_p_lit_comp = lambda;
-    *_p_lit_post = NULL;
-    _translate_cell[0] = _p_lit_int;
-    _translate_cell[1] = _p_lit_comp;
-    _translate_cell[2] = _p_lit_post;
-
-    lambda = new byte [WSIZE + 2];
-    lambda[0] = OP_CALLADDR;
-    const char *s = "FLITERAL";
+    strcpy(s, "LITERAL");
     PUSH_ADDR( (long int) s);
     PUSH_IVAL( (long int) strlen(s) );
     CPP_find_name();
+    CPP_name_to_interpret();
     DROP
-    nt = (WordListEntry*) TOS;
-    lambda = (byte*) nt->Cfa;
-    byte** _p_flit_int = new byte*;
-    byte** _p_flit_comp = new byte*;
-    byte** _p_flit_post = new byte*;
-    *_p_flit_int = lambda;
-    *_p_flit_comp = lambda;
-    *_p_flit_post = NULL;
-    _translate_float[0] = _p_flit_int;
-    _translate_float[1] = _p_flit_comp;
-    _translate_float[2] = _p_flit_post;  
+    xt = (byte**) TOS;
+    _translate_cell[0] = xt;
+    _translate_cell[1] = xt;
+    _translate_cell[2] = NULL;
+
+    strcpy(s, "FLITERAL");
+    PUSH_ADDR( (long int) s);
+    PUSH_IVAL( (long int) strlen(s) );
+    CPP_find_name();
+    CPP_name_to_interpret();
+    DROP
+    xt = (byte**) TOS;
+    _translate_float[0] = xt;
+    _translate_float[1] = xt;
+    _translate_float[2] = NULL;  
 
     pCurrentOps = pSaveOps;
     return 0;
