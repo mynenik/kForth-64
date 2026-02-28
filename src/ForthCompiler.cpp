@@ -96,14 +96,18 @@ extern "C"  byte*     GlobalTp;
 // Provided by vm-common.s
 extern "C"  long int JumpTable[];
 
-// Recognizer translate vectors
-
-byte** _translate_name  [3] = { NULL, NULL, NULL };
-byte** _translate_cell  [3] = { NULL, NULL, NULL };
-byte** _translate_dcell [3] = { NULL, NULL, NULL };
-byte** _translate_float [3] = { NULL, NULL, NULL };
-byte** _translate_none  [3] = { NULL, NULL, NULL };
-
+// Recognizer translation table
+byte** _translation_table  [8] [3] = {
+//  int   comp  post
+  { NULL, NULL, NULL },  // xt's for TRANSLATE-NAME
+  { NULL, NULL, NULL },  // xt's for TRANSLATE-CELL 
+  { NULL, NULL, NULL },  // xt's for TRANSLATE-DCELL
+  { NULL, NULL, NULL },  // xt's for TRANSLATE-FLOAT
+  { NULL, NULL, NULL },  // xt's for TRANSLATE-NONE
+  { NULL, NULL, NULL },  // future use
+  { NULL, NULL, NULL },  //  :
+  { NULL, NULL, NULL }   //  :
+};
 
 // stacks for keeping track of nested control structures
 

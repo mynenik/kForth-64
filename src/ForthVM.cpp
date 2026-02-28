@@ -58,13 +58,7 @@ extern stack<WordListEntry*> PendingDefStack;
 extern stack<vector<byte>*> PendingOps;
 extern WordListEntry* pNewWord;
 extern vector<byte>* pCurrentOps;
-
-extern byte** _translate_name  [];
-extern byte** _translate_cell  [];
-extern byte** _translate_dcell [];
-extern byte** _translate_float [];
-extern byte** _translate_none  [];
-
+extern byte** _translation_table[][3];
 extern size_t NUMBER_OF_INTRINSIC_WORDS;
 extern size_t NUMBER_OF_ROOT_WORDS;
 
@@ -408,7 +402,7 @@ int InitSystemVars ()
 }
 //--------------------------------------------------------------- 
 
-int InitDefaultRecognizers()
+int InitTranslationTable()
 {
     vector<byte>* pSaveOps = pCurrentOps;
     char s[128];
@@ -417,6 +411,7 @@ int InitDefaultRecognizers()
     // Construct byte code sequences and xt's for translation
     // This code is temporary working code; it needs factoring.
 
+    // REC-NUMBER translations for single cell
     strcpy(s, "LITERAL");
     PUSH_ADDR( (long int) s);
     PUSH_IVAL( (long int) strlen(s) );
@@ -424,10 +419,11 @@ int InitDefaultRecognizers()
     CPP_name_to_interpret();
     DROP
     xt = (byte**) TOS;
-    _translate_cell[0] = xt;
-    _translate_cell[1] = xt;
-    _translate_cell[2] = NULL;
+    _translation_table[1][0] = xt;  // State 0
+    _translation_table[1][1] = xt;  // State -1
+    _translation_table[1][2] = NULL; // Postponing
 
+    // REC-FLOAT translations
     strcpy(s, "FLITERAL");
     PUSH_ADDR( (long int) s);
     PUSH_IVAL( (long int) strlen(s) );
@@ -435,9 +431,9 @@ int InitDefaultRecognizers()
     CPP_name_to_interpret();
     DROP
     xt = (byte**) TOS;
-    _translate_float[0] = xt;
-    _translate_float[1] = xt;
-    _translate_float[2] = NULL;  
+    _translation_table[3][0] = xt;
+    _translation_table[3][1] = xt;
+    _translation_table[3][2] = NULL;  
 
     pCurrentOps = pSaveOps;
     return 0;
@@ -503,7 +499,7 @@ int OpenForth ()
    // Other initialization
     vmEntryRp = BottomOfReturnStack;
     InitSystemVars();
-    InitDefaultRecognizers();
+    InitTranslationTable();
 #ifndef __NO_FPSTACK__
     InitFpStack();
 #endif

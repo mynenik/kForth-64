@@ -58,11 +58,7 @@ extern byte* BottomOfReturnTypeStack;
 extern int CPP_bye();
 
 // Provided by ForthCompiler.cpp
-extern byte** _translate_name  [];
-extern byte** _translate_cell  [];
-extern byte** _translate_dcell [];
-extern byte** _translate_float [];
-extern byte** _translate_none  [];
+extern byte** _translation_table[][3];
 
 // Provided by vmxx-common.s
 extern long int Base;
@@ -623,7 +619,7 @@ on the floating point stack; otherwise return False.
       // push converted fp onto fp stack
       *((double *) GlobalFp) = r;
       DEC_FSP
-      PUSH_ADDR( (long int) _translate_float[0] );
+      PUSH_ADDR( (long int) _translation_table[3][0] );
     }
     else {
       PUSH_IVAL( b )
@@ -666,7 +662,7 @@ int C_rec_number ()
     }
     if (b) {
       PUSH_IVAL( unum )
-      PUSH_ADDR( (long int) _translate_cell[0] );
+      PUSH_ADDR( (long int) _translation_table[1][0] );
     }
     else {
       PUSH_IVAL( (long int) b );
