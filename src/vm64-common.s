@@ -145,6 +145,9 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad L_fplusstore, L_pi, L_fsquare, L_starplus  # 424--427
            .quad L_nop, L_nop, L_fsl_mat_addr, CPP_rec_name # 428--431
 	   .quad C_rec_number, C_rec_float, L_nop, L_nop    # 432--435
+	   .quad L_nop, L_nop, CPP_translate_cell, L_nop    # 436--439
+	   .quad CPP_translate_float, L_nop, CPP_translate_none, L_nop # 440--443
+	   .quad L_nop, L_nop, L_nop, L_nop                 # 444--447
 .text
 	.align WSIZE
 .global JumpTable

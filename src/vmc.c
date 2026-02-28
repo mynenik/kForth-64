@@ -58,7 +58,7 @@ extern byte* BottomOfReturnTypeStack;
 extern int CPP_bye();
 
 // Provided by ForthCompiler.cpp
-extern byte** _translation_table[][3];
+extern unsigned char** _translation_table[][3];
 
 // Provided by vmxx-common.s
 extern long int Base;

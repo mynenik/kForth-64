@@ -99,15 +99,24 @@ extern "C"  long int JumpTable[];
 // Recognizer translation table
 byte** _translation_table  [8] [3] = {
 //  post  comp  int      // use order in reference implementation
-  { NULL, NULL, NULL },  // xt's for TRANSLATE-NAME
-  { NULL, NULL, NULL },  // xt's for TRANSLATE-CELL 
-  { NULL, NULL, NULL },  // xt's for TRANSLATE-DCELL
-  { NULL, NULL, NULL },  // xt's for TRANSLATE-FLOAT
-  { NULL, NULL, NULL },  // xt's for TRANSLATE-NONE
+  { NULL, NULL, NULL },  // row 0: xt's for TRANSLATE-NAME
+  { NULL, NULL, NULL },  // row 1: xt's for TRANSLATE-CELL 
+  { NULL, NULL, NULL },  // row 2: xt's for TRANSLATE-DCELL
+  { NULL, NULL, NULL },  // row 3: xt's for TRANSLATE-FLOAT
+  { NULL, NULL, NULL },  // row 4: xt's for TRANSLATE-NONE
   { NULL, NULL, NULL },  // future use
   { NULL, NULL, NULL },  //  :
   { NULL, NULL, NULL }   //  :
 };
+
+// Arrays for use by TRANSLATE-XXX words, to isolate
+// users from directly accessing the translation table
+// instead of the standard interface.
+byte** _translate_name  [3] = {NULL, NULL, NULL};
+byte** _translate_cell  [3] = {NULL, NULL, NULL};
+byte** _translate_dcell [3] = {NULL, NULL, NULL};
+byte** _translate_float [3] = {NULL, NULL, NULL};
+byte** _translate_none  [3] = {NULL, NULL, NULL};
 
 // stacks for keeping track of nested control structures
 

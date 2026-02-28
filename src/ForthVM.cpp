@@ -59,6 +59,11 @@ extern stack<vector<byte>*> PendingOps;
 extern WordListEntry* pNewWord;
 extern vector<byte>* pCurrentOps;
 extern byte** _translation_table[][3];
+extern byte** _translate_name[];
+extern byte** _translate_cell[];
+extern byte** _translate_dcell[];
+extern byte** _translate_float[];
+extern byte** _translate_none[];
 extern size_t NUMBER_OF_INTRINSIC_WORDS;
 extern size_t NUMBER_OF_ROOT_WORDS;
 
@@ -252,6 +257,8 @@ WordList *pCompilationWL = &Voc_Forth;   // the current compilation wordlist
 
 // Tables
 vector<char*> StringTable;               // table for persistent strings
+byte** translation_xts [3];              // for securely returning translation
+					 //   xts of a recognizer
 
 // stacks; these are global to this module
 
@@ -434,6 +441,15 @@ int InitTranslationTable()
     _translation_table[3][0] = NULL; // Postponing
     _translation_table[3][1] = xt;   // State -1
     _translation_table[3][2] = xt;   // State  0
+
+    // Copy the first five rows of the translation table
+    // to arrays for use by TRANSLATE-XXX words, for isolation
+    int i;
+    for (i=0; i<3; i++) _translate_name[i]  = _translation_table[0][i];
+    for (i=0; i<3; i++) _translate_cell[i]  = _translation_table[1][i];
+    for (i=0; i<3; i++) _translate_dcell[i] = _translation_table[2][i];
+    for (i=0; i<3; i++) _translate_float[i] = _translation_table[3][i];
+    for (i=0; i<3; i++) _translate_none[i]  = _translation_table[4][i];
 
     pCurrentOps = pSaveOps;
     return 0;
@@ -3261,11 +3277,27 @@ int CPP_execute()
     return ec;
 }
 
-// TRANSLATE-NONE ( i*j xt -- )
+// TRANSLATE-NONE ( -- addr )
 int CPP_translate_none ()
 {
-    return -13;
+    PUSH_ADDR( (long int) _translate_none );
+    return 0;
 }
+
+// TRANSLATE-CELL  ( -- addr )
+int CPP_translate_cell ()
+{
+    PUSH_ADDR( (long int) _translate_cell );
+    return 0;
+}
+
+// TRANSLATE-FLOAT ( -- addr )
+int CPP_translate_float ()
+{
+    PUSH_ADDR( (long int) _translate_float );
+    return 0;
+}
+
 
 // REC-NAME  ( c-addr u -- nt sem-id )
 int CPP_rec_name ()
