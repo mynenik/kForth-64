@@ -619,7 +619,7 @@ on the floating point stack; otherwise return False.
       // push converted fp onto fp stack
       *((double *) GlobalFp) = r;
       DEC_FSP
-      PUSH_ADDR( (long int) _translation_table[3][0] );
+      PUSH_ADDR( (long int) _translation_table[3][1] );
     }
     else {
       PUSH_IVAL( b )
@@ -662,7 +662,7 @@ int C_rec_number ()
     }
     if (b) {
       PUSH_IVAL( unum )
-      PUSH_ADDR( (long int) _translation_table[1][0] );
+      PUSH_ADDR( (long int) _translation_table[1][1] );
     }
     else {
       PUSH_IVAL( (long int) b );

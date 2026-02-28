@@ -98,7 +98,7 @@ extern "C"  long int JumpTable[];
 
 // Recognizer translation table
 byte** _translation_table  [8] [3] = {
-//  int   comp  post
+//  post  comp  int      // use order in reference implementation
   { NULL, NULL, NULL },  // xt's for TRANSLATE-NAME
   { NULL, NULL, NULL },  // xt's for TRANSLATE-CELL 
   { NULL, NULL, NULL },  // xt's for TRANSLATE-DCELL

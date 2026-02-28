@@ -419,9 +419,9 @@ int InitTranslationTable()
     CPP_name_to_interpret();
     DROP
     xt = (byte**) TOS;
-    _translation_table[1][0] = xt;  // State 0
-    _translation_table[1][1] = xt;  // State -1
-    _translation_table[1][2] = NULL; // Postponing
+    _translation_table[1][0] = NULL; // Postponing
+    _translation_table[1][1] = xt;   // State -1
+    _translation_table[1][2] = xt;   // State  0
 
     // REC-FLOAT translations
     strcpy(s, "FLITERAL");
@@ -431,9 +431,9 @@ int InitTranslationTable()
     CPP_name_to_interpret();
     DROP
     xt = (byte**) TOS;
-    _translation_table[3][0] = xt;
-    _translation_table[3][1] = xt;
-    _translation_table[3][2] = NULL;  
+    _translation_table[3][0] = NULL; // Postponing
+    _translation_table[3][1] = xt;   // State -1
+    _translation_table[3][2] = xt;   // State  0
 
     pCurrentOps = pSaveOps;
     return 0;
