@@ -28,8 +28,8 @@
 #define CHK_ADDR  if (*GlobalTp != OP_ADDR) return E_V_NOT_ADDR;
 #define STD_IVAL  *GlobalTp-- = OP_IVAL;
 #define STD_ADDR  *GlobalTp-- = OP_ADDR;
-#define DROP      ++GlobalSp; ++GlobalTp;
-#define UNDROP    --GlobalSp; --GlobalTp;
+#define DROP      INC_DSP INC_DTSP
+#define UNDROP    DEC_DSP DEC_DTSP
 
 #else
 
@@ -40,10 +40,12 @@
 #define CHK_ADDR 
 #define STD_IVAL
 #define STD_ADDR
-#define DROP       ++GlobalSp;
-#define UNDROP     --GlobalSp;
+#define DROP       INC_DSP
+#define UNDROP     DEC_DSP
 
 #endif
 
 #define PUSH_IVAL(x) TOS = (x); DEC_DSP  STD_IVAL
 #define PUSH_ADDR(x) TOS = (x); DEC_DSP  STD_ADDR
+#define PUSH_CSTRING(x) TOS=((long int)x); DEC_DSP STD_ADDR TOS=(strlen(x)); DEC_DSP STD_IVAL
+

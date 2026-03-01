@@ -64,6 +64,8 @@ extern byte** _translate_cell[];
 extern byte** _translate_dcell[];
 extern byte** _translate_float[];
 extern byte** _translate_none[];
+extern vector<byte>* p_sem_execute_name;
+extern vector<byte>* p_sem_compile_name;
 extern size_t NUMBER_OF_INTRINSIC_WORDS;
 extern size_t NUMBER_OF_ROOT_WORDS;
 
@@ -408,54 +410,6 @@ int InitSystemVars ()
     return 0;
 }
 //--------------------------------------------------------------- 
-
-int InitTranslationTable()
-{
-    vector<byte>* pSaveOps = pCurrentOps;
-    char s[128];
-    byte** xt;
-
-    // Construct byte code sequences and xt's for translation
-    // This code is temporary working code; it needs factoring.
-
-    // REC-NUMBER translations for single cell
-    strcpy(s, "LITERAL");
-    PUSH_ADDR( (long int) s);
-    PUSH_IVAL( (long int) strlen(s) );
-    CPP_find_name();
-    CPP_name_to_interpret();
-    DROP
-    xt = (byte**) TOS;
-    _translation_table[1][0] = NULL; // Postponing
-    _translation_table[1][1] = xt;   // State -1
-    _translation_table[1][2] = xt;   // State  0
-
-    // REC-FLOAT translations
-    strcpy(s, "FLITERAL");
-    PUSH_ADDR( (long int) s);
-    PUSH_IVAL( (long int) strlen(s) );
-    CPP_find_name();
-    CPP_name_to_interpret();
-    DROP
-    xt = (byte**) TOS;
-    _translation_table[3][0] = NULL; // Postponing
-    _translation_table[3][1] = xt;   // State -1
-    _translation_table[3][2] = xt;   // State  0
-
-    // Copy the first five rows of the translation table
-    // to arrays for use by TRANSLATE-XXX words, for isolation
-    int i;
-    for (i=0; i<3; i++) _translate_name[i]  = _translation_table[0][i];
-    for (i=0; i<3; i++) _translate_cell[i]  = _translation_table[1][i];
-    for (i=0; i<3; i++) _translate_dcell[i] = _translation_table[2][i];
-    for (i=0; i<3; i++) _translate_float[i] = _translation_table[3][i];
-    for (i=0; i<3; i++) _translate_none[i]  = _translation_table[4][i];
-
-    pCurrentOps = pSaveOps;
-    return 0;
-}
-//--------------------------------------------------------------- 
-
 
 int NullSystemVars ()
 {
@@ -3322,13 +3276,6 @@ int CPP_rec_name ()
     return 0;
 }
 
-// Convert sem_id to execution semantics for name
-// ( nt sem_id -- xt )
-// int CPP_sem_to_translation ()
-// {
-//    return 0;
-// }
-
                  
 // INTERPRET ( -- )
 // cf. Starting Forth, 2nd ed. pp 283--284.
@@ -3340,7 +3287,7 @@ int CPP_interpret ()
 
   int ecode = 0;
   vector<byte>* pOpCodes = pCurrentOps;
-  unsigned long int xt;
+  long int xt;
 
   while (true) {
     // Read from input stream and parse
@@ -3379,7 +3326,7 @@ int CPP_interpret ()
             WordToken[ulen] = (char) 0;
             strupr(WordToken);
 
-            PUSH_ADDR( (unsigned long int) WordToken );
+            PUSH_ADDR( (long int) WordToken );
             PUSH_IVAL( (long int) ulen );
 
 	    // rec-forth : start of recognizer sequence
@@ -3390,18 +3337,16 @@ int CPP_interpret ()
 	    if (ecode == 0) {
               DROP
               sem_id = (int) TOS;
-              DROP
-              unsigned long int nt = TOS;
+              // ( nt -- )
 
               switch (sem_id) {  // Perform execution semantics
                 case ID_SEM_EXECUTE_UP_TO:
                   // Execute the opcode vector immediately up to and
                   //   including the current opcode
-                  PUSH_ADDR( nt )
                   CPP_compile_to_current();
                   pOpCodes->push_back(OP_RET);
                   if (debug) OutputForthByteCode (pOpCodes);
-	          xt = (unsigned long int) pOpCodes;
+	          xt = (long int) pOpCodes;
 	          PUSH_ADDR( xt );
 	          ecode = CPP_execute();
                   pOpCodes->clear();
@@ -3409,15 +3354,14 @@ int CPP_interpret ()
                   break;
 
                 case ID_SEM_EXECUTE_NAME:
-	          PUSH_ADDR( nt )
 	          // ( nt -- )  NAME>INTERPRET EXECUTE
-	          CPP_name_to_interpret();
-	          ecode = CPP_execute();
+		  xt = (long int) p_sem_execute_name;
+		  PUSH_ADDR( xt );
+		  ecode = CPP_execute();
                   pOpCodes = pCurrentOps; // may have been redirected
                   break;
 
                 case ID_SEM_DEFER_NAME:
-                  PUSH_ADDR( nt )
                   // ( nt -- )  COMPILE-?
                   CPP_compile_to_current();
                   break;
@@ -3427,9 +3371,10 @@ int CPP_interpret ()
                     pNewWord->Precedence |= PRECEDENCE_NON_DEFERRED ;
 	            // no break!
                 case ID_SEM_COMPILE_NAME:
-                  PUSH_ADDR( nt )
                   // ( nt -- ) NAME>COMPILE EXECUTE
-	          CPP_name_to_compile();
+	          // CPP_name_to_compile();
+		  xt = (long int) p_sem_compile_name;
+		  PUSH_ADDR( xt );
 	          ecode = CPP_execute();
 	          break;
 

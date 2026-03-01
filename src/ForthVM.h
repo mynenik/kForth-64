@@ -13,7 +13,6 @@
 
 int InitSystemVars ();
 int NullSystemVars ();
-int InitTranslationTable ();
 #ifndef __NO_FPSTACK__
 int InitFpStack ();
 #endif

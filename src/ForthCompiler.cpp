@@ -65,6 +65,7 @@ extern "C" {
   int CPP_find_name();
   int CPP_compilename();
   int CPP_compile_to_current();
+  int CPP_name_to_interpret();
   int CPP_dots();
   int CPP_interpret();
 
@@ -117,6 +118,13 @@ byte** _translate_cell  [3] = {NULL, NULL, NULL};
 byte** _translate_dcell [3] = {NULL, NULL, NULL};
 byte** _translate_float [3] = {NULL, NULL, NULL};
 byte** _translate_none  [3] = {NULL, NULL, NULL};
+
+// Possible semantics for _translate_name entries:
+vector<byte>* p_sem_execute_up_to;
+vector<byte>* p_sem_execute_name;
+vector<byte>* p_sem_defer_name;
+vector<byte>* p_sem_compile_nd;
+vector<byte>* p_sem_compile_name;
 
 // stacks for keeping track of nested control structures
 
@@ -188,6 +196,90 @@ void SetForthOutputStream (ostream& OutStream)
   // Set the output stream for the Forth Compiler and Virtual Machine
 
   pOutStream = &OutStream;
+}
+//---------------------------------------------------------------
+
+int InitNameVectors ()
+{
+    p_sem_execute_name  = new vector<byte>; 
+    p_sem_execute_up_to = new vector<byte>;
+    p_sem_defer_name    = new vector<byte>;
+    p_sem_compile_name  = new vector<byte>;
+    p_sem_compile_nd    = new vector<byte>;
+
+    char s[128];
+    long int xt;
+
+    // Assume stack diagram for the semantics are ( nt -- )
+
+    vector<byte>* pSaveOps = pCurrentOps;
+
+    pCurrentOps = p_sem_execute_name; // NAME>INTERPRET EXECUTE
+    strcpy(s, "NAME>INTERPRET");
+    PUSH_CSTRING(s);
+    CPP_find_name();
+    CPP_compile_to_current();
+    pCurrentOps->push_back(OP_EXECUTE);
+    pCurrentOps->push_back(OP_RET);
+
+    pCurrentOps = p_sem_compile_name; // NAME>COMPILE EXECUTE
+    strcpy(s, "NAME>COMPILE");
+    PUSH_CSTRING(s);
+    CPP_find_name();
+    CPP_compile_to_current();
+    pCurrentOps->push_back(OP_EXECUTE);
+    pCurrentOps->push_back(OP_RET);
+    
+
+    pCurrentOps = pSaveOps;
+    return 0;
+}
+//--------------------------------------------------------------- 
+
+int InitTranslationTable()
+{
+    vector<byte>* pSaveOps = pCurrentOps;
+    char s[128];
+    byte** xt;
+
+    // Construct byte code sequences and xt's for translation
+    // This code is temporary working code; it needs factoring.
+
+    InitNameVectors();
+
+    // REC-NUMBER translations for single cell
+    strcpy(s, "LITERAL");
+    PUSH_CSTRING(s);
+    CPP_find_name();
+    CPP_name_to_interpret();
+    DROP
+    xt = (byte**) TOS;
+    _translation_table[1][0] = NULL; // Postponing
+    _translation_table[1][1] = xt;   // State -1
+    _translation_table[1][2] = xt;   // State  0
+
+    // REC-FLOAT translations
+    strcpy(s, "FLITERAL");
+    PUSH_CSTRING(s);
+    CPP_find_name();
+    CPP_name_to_interpret();
+    DROP
+    xt = (byte**) TOS;
+    _translation_table[3][0] = NULL; // Postponing
+    _translation_table[3][1] = xt;   // State -1
+    _translation_table[3][2] = xt;   // State  0
+
+    // Copy the first five rows of the translation table
+    // to arrays for use by TRANSLATE-XXX words, for isolation
+    int i;
+    for (i=0; i<3; i++) _translate_name[i]  = _translation_table[0][i];
+    for (i=0; i<3; i++) _translate_cell[i]  = _translation_table[1][i];
+    for (i=0; i<3; i++) _translate_dcell[i] = _translation_table[2][i];
+    for (i=0; i<3; i++) _translate_float[i] = _translation_table[3][i];
+    for (i=0; i<3; i++) _translate_none[i]  = _translation_table[4][i];
+
+    pCurrentOps = pSaveOps;
+    return 0;
 }
 //---------------------------------------------------------------
 // Return an ID for execution semantics of a recognized name, 
