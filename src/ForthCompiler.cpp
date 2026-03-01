@@ -330,6 +330,56 @@ int GetExecutionSemantics (WordListEntry* nt)
 }
 //----------------------------------------------------------------
 
+extern "C" {
+// NAME>EXECUTE ( nt -- xt-int xt-comp xt-post )
+// Return execution semantics for interpretation state,
+// compilation state, and for postponing.
+int CPP_name_to_execute()
+{
+    DROP
+    WordListEntry* nt = (WordListEntry*) TOS;
+    long int xt;
+    int prec = nt->Precedence & 3;  // four values: 0--3
+
+    // INTERPRET (State 0)
+    switch (prec) {
+      case 0:                   // state 0, prec 0
+        xt = (long int) p_sem_defer_name; // defer execution
+        break;
+      case IMMEDIATE:           // state 0, prec 1
+        xt = (long int) p_sem_execute_name;  // execute word
+        break;
+      case NONDEFERRED:         // state 0, prec 2
+        // no break
+      case (IMMEDIATE + NONDEFERRED):  // state 0, prec 3
+        xt = (long int) p_sem_execute_up_to; // execute deferred + current xt
+        break;
+    } // end switch precedence
+    PUSH_ADDR( xt )
+    
+    // COMPILE (State -1)
+    switch (prec) {
+      case 0:
+        xt = (long int) p_sem_compile_name;  // compile name into current def
+        break;
+      case IMMEDIATE:
+      case (IMMEDIATE+NONDEFERRED):
+        xt = (long int) p_sem_execute_name; // execute xt for name
+        break;
+      case NONDEFERRED:
+        xt = (long int) p_sem_compile_nd; // compile a nondeferred word;
+        break;                            // make new def nondeferred
+    }
+    PUSH_ADDR( xt )
+
+    // POSTPONing
+    PUSH_ADDR( NULL )
+
+    return 0;
+}
+} // end extern "C"
+//----------------------------------------------------------------
+
 int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
 {
 // The FORTH Compiler

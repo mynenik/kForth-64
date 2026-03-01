@@ -459,6 +459,7 @@
 #define OP_GET_RECS             445
 #define OP_SET_RECS             446
 #define OP_TRANSLATE            447
+#define OP_NAME2EXECUTE         448
 
 // Windows specific opcodes
 #define OP_VALLOC               450

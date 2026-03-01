@@ -78,5 +78,7 @@ int  InitTranslationTable();
 void OutputForthByteCode (vector<byte>*);
 void SetForthInputStream (istream&);
 void SetForthOutputStream (ostream&);
-
+extern "C" {
+int  CPP_name_to_execute();
+}
 #endif
