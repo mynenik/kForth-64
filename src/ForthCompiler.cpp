@@ -208,7 +208,7 @@ int InitNameVectors ()
     p_sem_compile_nd    = new vector<byte>;
 
     char s[128];
-    long int xt;
+    long int xt, offset;
 
     // Assume stack diagram for the semantics are ( nt -- )
 
@@ -230,6 +230,28 @@ int InitNameVectors ()
     pCurrentOps->push_back(OP_EXECUTE);
     pCurrentOps->push_back(OP_RET);
     
+    pCurrentOps = p_sem_compile_nd;
+    // MY-NAME offset + DUP @ prec_non_deferred OR SWAP ! ( -- nt)
+    // p_sem_compile_name EXECUTE ( -- ) 
+    strcpy(s, "MY-NAME");
+    PUSH_CSTRING(s);
+    CPP_find_name();
+    CPP_compile_to_current();
+    offset = (long int) (offsetof(struct WordListEntry, Precedence));
+    pCurrentOps->push_back(OP_IVAL);
+    OpsPushInt(offset);
+    pCurrentOps->push_back(OP_ADD);
+    pCurrentOps->push_back(OP_DUP);
+    pCurrentOps->push_back(OP_SWFETCH);
+    pCurrentOps->push_back(OP_IVAL);
+    OpsPushInt(PRECEDENCE_NON_DEFERRED);
+    pCurrentOps->push_back(OP_OR);
+    pCurrentOps->push_back(OP_SWAP);
+    pCurrentOps->push_back(OP_WSTORE);
+    pCurrentOps->push_back(OP_ADDR);
+    OpsPushInt( (long int) p_sem_compile_name );
+    pCurrentOps->push_back(OP_EXECUTE);
+    pCurrentOps->push_back(OP_RET);
 
     pCurrentOps = pSaveOps;
     return 0;

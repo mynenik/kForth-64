@@ -66,6 +66,7 @@ extern byte** _translate_float[];
 extern byte** _translate_none[];
 extern vector<byte>* p_sem_execute_name;
 extern vector<byte>* p_sem_compile_name;
+extern vector<byte>* p_sem_compile_nd;
 extern size_t NUMBER_OF_INTRINSIC_WORDS;
 extern size_t NUMBER_OF_ROOT_WORDS;
 
@@ -3332,7 +3333,7 @@ int CPP_interpret ()
 	    // rec-forth : start of recognizer sequence
 	    //
 	    int sem_id;
-
+	    
 	    ecode = CPP_rec_name(); // REC-NAME
 	    if (ecode == 0) {
               DROP
@@ -3367,12 +3368,14 @@ int CPP_interpret ()
                   break;
 
                 case ID_SEM_COMPILE_ND:
-                  if (pNewWord) 
-                    pNewWord->Precedence |= PRECEDENCE_NON_DEFERRED ;
-	            // no break!
+		  // ( nt -- )
+		  xt = (long int) p_sem_compile_nd;
+		  PUSH_ADDR( xt );
+		  ecode = CPP_execute();
+	          break;
+
                 case ID_SEM_COMPILE_NAME:
                   // ( nt -- ) NAME>COMPILE EXECUTE
-	          // CPP_name_to_compile();
 		  xt = (long int) p_sem_compile_name;
 		  PUSH_ADDR( xt );
 	          ecode = CPP_execute();

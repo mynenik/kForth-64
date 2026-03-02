@@ -777,4 +777,9 @@ TESTING MS USLEEP
 comment Assumes MS@ works -- test MS@ manually.
 t{ ms@ 5 ms ms@ swap - 5 >= -> true }t
 t{ ms@ 5000 usleep ms@ swap - 5 >= -> true }t
- 
+
+TESTING Deferred Execution
+t{ 10 0 do i loop -> 0 1 2 3 4 5 6 7 8 9 }t
+t{ 10 0 do i 2 +loop -> 0 2 4 6 8 }t
+t{ 10 0 do i dup 2 mod if drop then loop -> 0 2 4 6 8 }t
+
