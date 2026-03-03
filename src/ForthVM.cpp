@@ -66,7 +66,9 @@ extern byte** _translate_float[];
 extern byte** _translate_none[];
 extern vector<byte>* p_sem_execute_name;
 extern vector<byte>* p_sem_compile_name;
+extern vector<byte>* p_sem_defer_name;
 extern vector<byte>* p_sem_compile_nd;
+extern vector<byte>* p_sem_execute_up_to;
 extern size_t NUMBER_OF_INTRINSIC_WORDS;
 extern size_t NUMBER_OF_ROOT_WORDS;
 
@@ -1194,8 +1196,11 @@ int CPP_compilecomma ()
     return 0;  
 }
 
-// ( nt -- )
-int CPP_compile_to_current ()
+// COMPILE-BC ( nt -- )
+// Append the byte code to perform execution semantics
+// of nt to the current byte code vector.
+// This word is kForth-specific.
+int CPP_compile_bc ()
 {
     DROP
     CHK_ADDR
@@ -1246,7 +1251,7 @@ int CPP_compilename ()
 {
     vector<byte>* pSaveOps = pCurrentOps;
     if ( (State == 0) && PendingDefStack.size() ) pCurrentOps = PendingOps.top();
-    CPP_compile_to_current();
+    CPP_compile_bc();
     pCurrentOps = pSaveOps;
     return 0;
 }
@@ -3344,7 +3349,7 @@ int CPP_interpret ()
                 case ID_SEM_EXECUTE_UP_TO:
                   // Execute the opcode vector immediately up to and
                   //   including the current opcode
-                  CPP_compile_to_current();
+                  CPP_compile_bc();
                   pOpCodes->push_back(OP_RET);
                   if (debug) OutputForthByteCode (pOpCodes);
 	          xt = (long int) pOpCodes;
@@ -3363,8 +3368,11 @@ int CPP_interpret ()
                   break;
 
                 case ID_SEM_DEFER_NAME:
-                  // ( nt -- )  COMPILE-?
-                  CPP_compile_to_current();
+                  // ( nt -- )  COMPILE-BC
+                  // CPP_compile_bc();
+		  xt = (long int) p_sem_defer_name;
+		  PUSH_ADDR( xt );
+		  ecode = CPP_execute();
                   break;
 
                 case ID_SEM_COMPILE_ND:

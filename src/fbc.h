@@ -351,7 +351,7 @@
 #define OP_SEARCHWORDLIST       336
 #define OP_DEFINITIONS	        337
 #define OP_VOCABULARY           338
-
+#define OP_COMPILE_BC           339
 #define OP_ONLY                 340                 
 #define OP_ALSO                 341
 #define OP_ORDER                342

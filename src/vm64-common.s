@@ -115,12 +115,12 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad CPP_tofile, CPP_console, CPP_loop, CPP_plusloop  # 304--307
            .quad CPP_unloop, CPP_noname, L_nop, L_blank           # 308--311
            .quad L_slashstring, C_trailing, C_parse, C_parsename  # 312--315
-           .quad L_nop, L_nop, L_nop, L_nop            # 316--319
+           .quad L_nop, L_nop, L_nop, L_nop              # 316--319
            .quad C_dlopen, C_dlerror, C_dlsym, C_dlclose # 320--323
            .quad C_usec, CPP_alias, C_system, C_chdir    # 324--327
            .quad C_timeanddate, CPP_interpret, CPP_wordlist, CPP_forthwordlist # 328--331
            .quad CPP_getcurrent, CPP_setcurrent, CPP_getorder, CPP_setorder  # 332--335
-           .quad CPP_searchwordlist, CPP_definitions, CPP_vocabulary, L_nop  # 336--339
+           .quad CPP_searchwordlist, CPP_definitions, CPP_vocabulary, CPP_compile_bc  # 336--339
            .quad CPP_only, CPP_also, CPP_order, CPP_previous                 # 340--343
            .quad CPP_forth, CPP_assembler, CPP_traverse_wordlist, CPP_name_to_string # 344--347
            .quad CPP_name_to_interpret, CPP_name_to_compile, CPP_defined, CPP_undefined  # 348--351

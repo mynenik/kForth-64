@@ -64,7 +64,7 @@ extern "C" {
   int CPP_refill();
   int CPP_find_name();
   int CPP_compilename();
-  int CPP_compile_to_current();
+  int CPP_compile_bc();
   int CPP_name_to_interpret();
   int CPP_dots();
   int CPP_interpret();
@@ -218,7 +218,7 @@ int InitNameVectors ()
     strcpy(s, "NAME>INTERPRET");
     PUSH_CSTRING(s);
     CPP_find_name();
-    CPP_compile_to_current();
+    CPP_compile_bc();
     pCurrentOps->push_back(OP_EXECUTE);
     pCurrentOps->push_back(OP_RET);
 
@@ -226,7 +226,7 @@ int InitNameVectors ()
     strcpy(s, "NAME>COMPILE");
     PUSH_CSTRING(s);
     CPP_find_name();
-    CPP_compile_to_current();
+    CPP_compile_bc();
     pCurrentOps->push_back(OP_EXECUTE);
     pCurrentOps->push_back(OP_RET);
     
@@ -236,7 +236,7 @@ int InitNameVectors ()
     strcpy(s, "MY-NAME");
     PUSH_CSTRING(s);
     CPP_find_name();
-    CPP_compile_to_current();
+    CPP_compile_bc();
     offset = (long int) (offsetof(struct WordListEntry, Precedence));
     pCurrentOps->push_back(OP_IVAL);
     OpsPushInt(offset);
@@ -251,6 +251,14 @@ int InitNameVectors ()
     pCurrentOps->push_back(OP_ADDR);
     OpsPushInt( (long int) p_sem_compile_name );
     pCurrentOps->push_back(OP_EXECUTE);
+    pCurrentOps->push_back(OP_RET);
+
+    pCurrentOps = p_sem_defer_name;
+    // COMPILE-BC
+    strcpy(s, "COMPILE-BC");
+    PUSH_CSTRING(s);
+    CPP_find_name();
+    CPP_compile_bc();
     pCurrentOps->push_back(OP_RET);
 
     pCurrentOps = pSaveOps;
