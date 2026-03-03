@@ -3265,20 +3265,29 @@ int CPP_translate_float ()
 }
 
 
-// REC-NAME  ( c-addr u -- nt sem-id )
+// REC-NAME  ( c-addr u -- translate_name | translate_none )
 int CPP_rec_name ()
 {
     CPP_find_name();  // Forth FIND-NAME
     DROP
     unsigned long int nt = (unsigned long int) TOS;
-    int sem_id = -1;
-    if (nt)
-      sem_id = GetExecutionSemantics((WordListEntry*) nt);
-    else
-      return -13;  // undefined word
+    if (nt) {
+      UNDROP
+      CPP_name_to_execute();
+      DROP
+      _translate_name[0] = (byte**) TOS;  // postponing (null for now)
+      DROP
+      _translate_name[1] = (byte**) TOS;  // compiling
+      DROP
+      _translate_name[2] = (byte**) TOS;  // interpreting
+					  //
+      PUSH_ADDR( nt )
+      PUSH_ADDR( (long int) _translate_name );
+    }
+    else {
+      CPP_translate_none();
+    }
 
-    PUSH_ADDR( nt )
-    PUSH_IVAL( sem_id )
     return 0;
 }
 
@@ -3337,54 +3346,25 @@ int CPP_interpret ()
 
 	    // rec-forth : start of recognizer sequence
 	    //
-	    int sem_id;
-	    
-	    ecode = CPP_rec_name(); // REC-NAME
-	    if (ecode == 0) {
-              DROP
-              sem_id = (int) TOS;
-              // ( nt -- )
-
-              switch (sem_id) {  // Perform execution semantics
-                case ID_SEM_EXECUTE_UP_TO:
-                  // Execute the opcode vector immediately up to and
-                  //   including the current opcode
-                  CPP_compile_bc();
-                  pOpCodes->push_back(OP_RET);
-                  if (debug) OutputForthByteCode (pOpCodes);
-		  xt = (long int) pOpCodes;
-                  break;
-
-                case ID_SEM_EXECUTE_NAME:
-	          // ( nt -- )  NAME>INTERPRET EXECUTE
-		  xt = (long int) p_sem_execute_name;
-                  break;
-
-                case ID_SEM_DEFER_NAME:
-                  // ( nt -- )  COMPILE-BC
-		  xt = (long int) p_sem_defer_name;
-                  break;
-
-                case ID_SEM_COMPILE_ND:
-		  // ( nt -- )
-		  xt = (long int) p_sem_compile_nd;
-	          break;
-
-                case ID_SEM_COMPILE_NAME:
-                  // ( nt -- ) NAME>COMPILE EXECUTE
-		  xt = (long int) p_sem_compile_name;
-	          break;
-
-                default:
-                  ecode = -13;  // which error?
-              } // end switch(sem_id)
-	
-	      PUSH_ADDR( xt );
-	      ecode = CPP_execute();
-
-	      if (sem_id == ID_SEM_EXECUTE_UP_TO) pOpCodes->clear();
-	      if ((sem_id == ID_SEM_EXECUTE_UP_TO) ||
-		 (sem_id == ID_SEM_EXECUTE_NAME)) pOpCodes = pCurrentOps;
+	    CPP_rec_name(); // REC-NAME
+            DROP
+	    if (TOS != (long int) _translate_none) {
+	      xt = (unsigned long int) *((unsigned long int*)TOS + State + 2);
+	      if (xt == (long int) p_sem_execute_up_to) {
+	        CPP_compile_bc();
+		pOpCodes->push_back(OP_RET);
+		TOS = (long int) pOpCodes;
+	      }
+	      else {
+	        TOS = xt;
+	      }
+	      UNDROP
+	      CPP_execute();
+ 	      if (xt == (long int) p_sem_execute_up_to) {
+		pOpCodes->clear();
+	      }
+	      if ((xt == (long int) p_sem_execute_up_to) ||
+		  (xt == (long int) p_sem_execute_name)) pOpCodes = pCurrentOps;
 
 	    }
             else {
@@ -3425,6 +3405,9 @@ int CPP_interpret ()
 // end of line interpreter
 
       // Execute remaining deferred ops
+// PUSH_IVAL( pOpCodes->size() )
+// CPP_dots();
+// DROP
       if ((State == 0) && pOpCodes->size()) {
         // Execute the current line in interpretation state
         pOpCodes->push_back(OP_RET);

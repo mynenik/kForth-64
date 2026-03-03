@@ -61,6 +61,7 @@ extern "C" {
   int CPP_immediate();
   int CPP_nondeferred();
   int CPP_source();
+  int CPP_evaluate();
   int CPP_refill();
   int CPP_find_name();
   int CPP_compilename();
