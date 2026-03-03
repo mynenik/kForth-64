@@ -3352,49 +3352,40 @@ int CPP_interpret ()
                   CPP_compile_bc();
                   pOpCodes->push_back(OP_RET);
                   if (debug) OutputForthByteCode (pOpCodes);
-	          xt = (long int) pOpCodes;
-	          PUSH_ADDR( xt );
-	          ecode = CPP_execute();
-                  pOpCodes->clear();
-                  pOpCodes = pCurrentOps;
+		  xt = (long int) pOpCodes;
                   break;
 
                 case ID_SEM_EXECUTE_NAME:
 	          // ( nt -- )  NAME>INTERPRET EXECUTE
 		  xt = (long int) p_sem_execute_name;
-		  PUSH_ADDR( xt );
-		  ecode = CPP_execute();
-                  pOpCodes = pCurrentOps; // may have been redirected
                   break;
 
                 case ID_SEM_DEFER_NAME:
                   // ( nt -- )  COMPILE-BC
-                  // CPP_compile_bc();
 		  xt = (long int) p_sem_defer_name;
-		  PUSH_ADDR( xt );
-		  ecode = CPP_execute();
                   break;
 
                 case ID_SEM_COMPILE_ND:
 		  // ( nt -- )
 		  xt = (long int) p_sem_compile_nd;
-		  PUSH_ADDR( xt );
-		  ecode = CPP_execute();
 	          break;
 
                 case ID_SEM_COMPILE_NAME:
                   // ( nt -- ) NAME>COMPILE EXECUTE
 		  xt = (long int) p_sem_compile_name;
-		  PUSH_ADDR( xt );
-	          ecode = CPP_execute();
 	          break;
 
                 default:
                   ecode = -13;  // which error?
               } // end switch(sem_id)
 	
-	      // goal is to have an xt on the stack from each case
-	      // above, at this point and perform EXECUTE.
+	      PUSH_ADDR( xt );
+	      ecode = CPP_execute();
+
+	      if (sem_id == ID_SEM_EXECUTE_UP_TO) pOpCodes->clear();
+	      if ((sem_id == ID_SEM_EXECUTE_UP_TO) ||
+		 (sem_id == ID_SEM_EXECUTE_NAME)) pOpCodes = pCurrentOps;
+
 	    }
             else {
               PUSH_ADDR( (unsigned long int) WordToken );
