@@ -312,56 +312,10 @@ int InitTranslationTable()
     pCurrentOps = pSaveOps;
     return 0;
 }
-//---------------------------------------------------------------
-// Return an ID for execution semantics of a recognized name, 
-// based on STATE and the word's precedence (for single xt systems).
-
-int GetExecutionSemantics (WordListEntry* nt)
-{
-    int sem_id = -1;
-    if ((State & 1) == 0) {
-      // INTERPRET
-      switch (nt->Precedence) {
-        case 0:                       // state 0, prec 0
-          sem_id = ID_SEM_DEFER_NAME; // defer execution
-          break;
-        case IMMEDIATE:           // state 0, prec 1
-          sem_id = ID_SEM_EXECUTE_NAME;  // execute xt for name
-	  break;
-	case NONDEFERRED:         // state 0, prec 2
-	  // no break
-	case (IMMEDIATE + NONDEFERRED):  // state 0, prec 3
-          sem_id = ID_SEM_EXECUTE_UP_TO; // execute deferred + current xt
-	  break;
-	default:
-	  sem_id = -1;  // unrecognized semantics
-	  break;
-	} // end switch precedence
-    }
-    else {  
-      // COMPILE
-      switch (nt->Precedence) {
-        case 0:
-          sem_id = ID_SEM_COMPILE_NAME;  // compile name into current def
-          break;
-	case IMMEDIATE:
-	case (IMMEDIATE+NONDEFERRED):
-          sem_id = ID_SEM_EXECUTE_NAME;  // execute xt for name
-	  break;
-	case NONDEFERRED:
-	  sem_id = ID_SEM_COMPILE_ND;   // compile a nondeferred word;
-	  break;                        // make new def nondeferred
-        default:
-          sem_id = -1;  // unrecognized
-          break;
-      } // end switch(nt->Precedence)
-    } // end if (State & 1)
-
-    return( sem_id );
-}
 //----------------------------------------------------------------
 
 extern "C" {
+
 // NAME>EXECUTE ( nt -- xt-int xt-comp xt-post )
 // Return execution semantics for interpretation state,
 // compilation state, and for postponing.
@@ -408,6 +362,61 @@ int CPP_name_to_execute()
 
     return 0;
 }
+
+// TRANSLATE-NONE ( -- addr )
+int CPP_translate_none ()
+{
+    for (int i = 0; i < 3; i++)
+      _translate_none[i] = _translation_table[4][i];
+    PUSH_ADDR( (long int) _translate_none );
+    return 0;
+}
+
+// TRANSLATE-CELL  ( -- addr )
+int CPP_translate_cell ()
+{
+    for (int i=0; i < 3; i++)
+      _translate_cell[i] = _translation_table[1][i];
+    PUSH_ADDR( (long int) _translate_cell );
+    return 0;
+}
+
+// TRANSLATE-FLOAT ( -- addr )
+int CPP_translate_float ()
+{
+    for (int i=0; i < 3; i++)
+      _translate_cell[i] = _translation_table[3][i];
+    PUSH_ADDR( (long int) _translate_float );
+    return 0;
+}
+
+
+// REC-NAME  ( c-addr u -- translate_name | translate_none )
+int CPP_rec_name ()
+{
+    CPP_find_name();  // Forth FIND-NAME
+    DROP
+    unsigned long int nt = (unsigned long int) TOS;
+    if (nt) {
+      UNDROP
+      CPP_name_to_execute();
+      DROP
+      _translate_name[0] = (byte**) TOS;  // postponing (null for now)
+      DROP
+      _translate_name[1] = (byte**) TOS;  // compiling
+      DROP
+      _translate_name[2] = (byte**) TOS;  // interpreting
+					  //
+      PUSH_ADDR( nt )
+      PUSH_ADDR( (long int) _translate_name );
+    }
+    else {
+      CPP_translate_none();
+    }
+
+    return 0;
+}
+
 } // end extern "C"
 //----------------------------------------------------------------
 

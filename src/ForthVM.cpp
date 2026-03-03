@@ -3237,61 +3237,6 @@ int CPP_execute()
     return ec;
 }
 
-// TRANSLATE-NONE ( -- addr )
-int CPP_translate_none ()
-{
-    for (int i = 0; i < 3; i++)
-      _translate_none[i] = _translation_table[4][i];
-    PUSH_ADDR( (long int) _translate_none );
-    return 0;
-}
-
-// TRANSLATE-CELL  ( -- addr )
-int CPP_translate_cell ()
-{
-    for (int i=0; i < 3; i++)
-      _translate_cell[i] = _translation_table[1][i];
-    PUSH_ADDR( (long int) _translate_cell );
-    return 0;
-}
-
-// TRANSLATE-FLOAT ( -- addr )
-int CPP_translate_float ()
-{
-    for (int i=0; i < 3; i++)
-      _translate_cell[i] = _translation_table[3][i];
-    PUSH_ADDR( (long int) _translate_float );
-    return 0;
-}
-
-
-// REC-NAME  ( c-addr u -- translate_name | translate_none )
-int CPP_rec_name ()
-{
-    CPP_find_name();  // Forth FIND-NAME
-    DROP
-    unsigned long int nt = (unsigned long int) TOS;
-    if (nt) {
-      UNDROP
-      CPP_name_to_execute();
-      DROP
-      _translate_name[0] = (byte**) TOS;  // postponing (null for now)
-      DROP
-      _translate_name[1] = (byte**) TOS;  // compiling
-      DROP
-      _translate_name[2] = (byte**) TOS;  // interpreting
-					  //
-      PUSH_ADDR( nt )
-      PUSH_ADDR( (long int) _translate_name );
-    }
-    else {
-      CPP_translate_none();
-    }
-
-    return 0;
-}
-
-                 
 // INTERPRET ( -- )
 // cf. Starting Forth, 2nd ed. pp 283--284.
 int CPP_interpret ()
@@ -3319,7 +3264,6 @@ int CPP_interpret ()
     ++linecount;
 
 // start of line interpreter:
-
       pTIB = TIB;
 
       while (*pTIB && (pTIB < (TIB + 255))) {
@@ -3370,8 +3314,7 @@ int CPP_interpret ()
             else {
               PUSH_ADDR( (unsigned long int) WordToken );
               PUSH_IVAL( (long int) ulen );
-	      // ( caddr u -- ) REC-NUMBER
-	      C_rec_number();
+	      C_rec_number();  // ( caddr u -- ) REC-NUMBER
 	      DROP
 	      if (TOS != (long int) _translate_none) {
 		xt = (unsigned long int) *((unsigned long int*)TOS + State + 2);
@@ -3405,9 +3348,6 @@ int CPP_interpret ()
 // end of line interpreter
 
       // Execute remaining deferred ops
-// PUSH_IVAL( pOpCodes->size() )
-// CPP_dots();
-// DROP
       if ((State == 0) && pOpCodes->size()) {
         // Execute the current line in interpretation state
         pOpCodes->push_back(OP_RET);

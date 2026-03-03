@@ -153,10 +153,6 @@ int CPP_rpstore();
 #ifndef __NO_FPSTACK__
 int CPP_fpstore();
 #endif
-int CPP_rec_name();
-int CPP_translate_none();
-int CPP_translate_cell();
-int CPP_translate_float();
 int CPP_interpret();
 int CPP_execute();
 }
