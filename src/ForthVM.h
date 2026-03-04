@@ -59,7 +59,7 @@ int CPP_rbracket();
 int CPP_noname();
 int CPP_colon();
 int CPP_semicolon();
-int CPP_compile_bc();
+int CPP_compile_name_bc();
 int CPP_compilename();
 int CPP_lparen();
 int CPP_dotparen();

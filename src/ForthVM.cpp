@@ -1196,11 +1196,11 @@ int CPP_compilecomma ()
     return 0;  
 }
 
-// COMPILE-BC ( nt -- )
+// COMPILE-NAME-BC ( nt -- )
 // Append the byte code to perform execution semantics
 // of nt to the current byte code vector.
 // This word is kForth-specific.
-int CPP_compile_bc ()
+int CPP_compile_name_bc ()
 {
     DROP
     CHK_ADDR
@@ -1251,7 +1251,7 @@ int CPP_compilename ()
 {
     vector<byte>* pSaveOps = pCurrentOps;
     if ( (State == 0) && PendingDefStack.size() ) pCurrentOps = PendingOps.top();
-    CPP_compile_bc();
+    CPP_compile_name_bc();
     pCurrentOps = pSaveOps;
     return 0;
 }
@@ -3295,7 +3295,7 @@ int CPP_interpret ()
 	    if (TOS != (long int) _translate_none) {
 	      xt = (unsigned long int) *((unsigned long int*)TOS + State + 2);
 	      if (xt == (long int) p_sem_execute_up_to) {
-	        CPP_compile_bc();
+	        CPP_compile_name_bc();
 		pOpCodes->push_back(OP_RET);
 		TOS = (long int) pOpCodes;
 	      }

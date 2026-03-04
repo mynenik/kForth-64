@@ -70,7 +70,7 @@ extern "C" {
   int CPP_refill();
   int CPP_find_name();
   int CPP_compilename();
-  int CPP_compile_bc();
+  int CPP_compile_name_bc();
   int CPP_name_to_interpret();
   int CPP_dots();
   int CPP_interpret();
@@ -205,7 +205,7 @@ void SetForthOutputStream (ostream& OutStream)
 }
 //---------------------------------------------------------------
 
-int InitNameVectors ()
+int InitNameTranslations ()
 {
     p_sem_execute_name  = new vector<byte>; 
     p_sem_execute_up_to = new vector<byte>;
@@ -220,11 +220,16 @@ int InitNameVectors ()
 
     vector<byte>* pSaveOps = pCurrentOps;
 
+    // Note we cannot use a string containing a :NONAME
+    // definition, passed to EVALUATE to obtain the
+    // name translation vectors (xt s) because INTERPRET
+    // requires these vectors to function.
+
     pCurrentOps = p_sem_execute_name; // NAME>INTERPRET EXECUTE
     strcpy(s, "NAME>INTERPRET");
     PUSH_CSTRING(s);
     CPP_find_name();
-    CPP_compile_bc();
+    CPP_compile_name_bc();
     pCurrentOps->push_back(OP_EXECUTE);
     pCurrentOps->push_back(OP_RET);
 
@@ -232,7 +237,7 @@ int InitNameVectors ()
     strcpy(s, "NAME>COMPILE");
     PUSH_CSTRING(s);
     CPP_find_name();
-    CPP_compile_bc();
+    CPP_compile_name_bc();
     pCurrentOps->push_back(OP_EXECUTE);
     pCurrentOps->push_back(OP_RET);
     
@@ -242,7 +247,7 @@ int InitNameVectors ()
     strcpy(s, "MY-NAME");
     PUSH_CSTRING(s);
     CPP_find_name();
-    CPP_compile_bc();
+    CPP_compile_name_bc();
     offset = (long int) (offsetof(struct WordListEntry, Precedence));
     pCurrentOps->push_back(OP_IVAL);
     OpsPushInt(offset);
@@ -260,11 +265,11 @@ int InitNameVectors ()
     pCurrentOps->push_back(OP_RET);
 
     pCurrentOps = p_sem_defer_name;
-    // COMPILE-BC
-    strcpy(s, "COMPILE-BC");
+    // COMPILE-NAME-BC
+    strcpy(s, "COMPILE-NAME-BC");
     PUSH_CSTRING(s);
     CPP_find_name();
-    CPP_compile_bc();
+    CPP_compile_name_bc();
     pCurrentOps->push_back(OP_RET);
 
     pCurrentOps = pSaveOps;
@@ -281,7 +286,7 @@ int InitTranslationTable()
     // Construct byte code sequences and xt's for translation
     // This code is temporary working code; it needs factoring.
 
-    InitNameVectors();
+    InitNameTranslations();
 
     // REC-NUMBER translations for single cell
     strcpy(s, "LITERAL");

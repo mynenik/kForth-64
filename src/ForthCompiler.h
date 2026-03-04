@@ -73,7 +73,7 @@ public:
 WordListEntry* IsForthWord (char*);
 int  ForthCompiler (vector<byte>*, long int*);
 int  GetExecutionSemantics (WordListEntry*);
-int  InitNameVectors();
+int  InitNameTranslations();
 int  InitTranslationTable();
 void OutputForthByteCode (vector<byte>*);
 void SetForthInputStream (istream&);

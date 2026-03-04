@@ -120,7 +120,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad C_usec, CPP_alias, C_system, C_chdir    # 324--327
            .quad C_timeanddate, CPP_interpret, CPP_wordlist, CPP_forthwordlist # 328--331
            .quad CPP_getcurrent, CPP_setcurrent, CPP_getorder, CPP_setorder  # 332--335
-           .quad CPP_searchwordlist, CPP_definitions, CPP_vocabulary, CPP_compile_bc  # 336--339
+           .quad CPP_searchwordlist, CPP_definitions, CPP_vocabulary, CPP_compile_name_bc  # 336--339
            .quad CPP_only, CPP_also, CPP_order, CPP_previous                 # 340--343
            .quad CPP_forth, CPP_assembler, CPP_traverse_wordlist, CPP_name_to_string # 344--347
            .quad CPP_name_to_interpret, CPP_name_to_compile, CPP_defined, CPP_undefined  # 348--351
