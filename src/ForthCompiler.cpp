@@ -17,12 +17,17 @@
 //
 #include <iostream>
 #include <fstream>
-#include <string.h>
-#include <ctype.h>
-#include <stdlib.h>
+#include <sstream>
+#include <string>
 #include <vector>
 #include <stack>
 using namespace std;
+
+extern "C" {
+#include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
+}
 #include "fbc.h"
 #include "ForthCompiler.h"
 #include "VMerrors.h"
@@ -430,6 +435,7 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
   if (debug) cout << ">Compiler Sp: " << GlobalSp << " Rp: " << GlobalRp << endl;
 
   linecount = *pLc;
+  vector<byte>* pSaveOps = pCurrentOps;
   pCurrentOps = pOpCodes;
 
   int ecode = CPP_interpret();
@@ -447,6 +453,7 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
       *pOutStream << "<Compiler Sp: " << GlobalSp << " Rp: " << GlobalRp << endl;
     }
   *pLc = linecount;
+  pCurrentOps = pSaveOps;
   return ecode;
 }
 
