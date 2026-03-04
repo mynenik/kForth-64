@@ -3303,7 +3303,7 @@ int CPP_interpret ()
 	        TOS = xt;
 	      }
 	      UNDROP
-	      CPP_execute();
+	      ecode = CPP_execute();
  	      if (xt == (long int) p_sem_execute_up_to) {
 		pOpCodes->clear();
 	      }
@@ -3320,7 +3320,7 @@ int CPP_interpret ()
 		xt = (unsigned long int) *((unsigned long int*)TOS + State + 2);
 		TOS = xt;
 		UNDROP
-		CPP_execute();
+		ecode = CPP_execute();
 	      }
               else {
                 PUSH_ADDR( (unsigned long int) WordToken );
@@ -3332,13 +3332,12 @@ int CPP_interpret ()
 		  xt = (unsigned long int) *((unsigned long int*)TOS + State + 2);
 		  TOS = xt;
 		  UNDROP
-		  CPP_execute();
+		  ecode = CPP_execute();
                 }
                 else { 
 		  // rec-none
                   *pOutStream << endl << WordToken << endl;
                   ecode = E_V_UNDEFINED_WORD;
-                  return ecode;
 		} // end if
 	      } // end if
             } // end if ; end of recognizer sequence
@@ -3346,6 +3345,8 @@ int CPP_interpret ()
         } // end if (*pTIB ...
       } // end while
 // end of line interpreter
+
+      if (ecode) return ecode;
 
       // Execute remaining deferred ops
       if ((State == 0) && pOpCodes->size()) {
