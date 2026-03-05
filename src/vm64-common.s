@@ -124,31 +124,31 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad CPP_only, CPP_also, CPP_order, CPP_previous                 # 340--343
            .quad CPP_forth, CPP_assembler, CPP_traverse_wordlist, CPP_name_to_string # 344--347
            .quad CPP_name_to_interpret, CPP_name_to_compile, CPP_defined, CPP_undefined  # 348--351
-           .quad L_nop, L_nop, L_nop, CPP_myname       # 352--355
-           .quad L_nop, L_nop, C_used, L_vmthrow       # 356--359
-           .quad L_precision, L_setprecision, L_nop, CPP_fsdot   # 360--363
-           .quad L_nop, L_fpick, L_fexpm1, L_flnp1	    # 364--367
-           .quad CPP_uddotr, CPP_ddotr, L_f2drop, L_f2dup   # 368--371
-           .quad L_nop, L_nop, L_nop, L_nop                 # 372--375
-           .quad L_nop, L_nop, L_nop, L_nop                 # 376--379
-           .quad L_nop, L_fdepth, L_fpfetch, CPP_fpstore    # 380--383
-           .quad CPP_fdots, L_fdup, L_fdrop, L_fswap        # 384--387
-           .quad L_frot, L_fover, L_nop, L_nop              # 388--391
-           .quad L_nop, L_nop, L_nop, L_nop                 # 392--395
+           .quad L_nop, L_nop, L_nop, CPP_myname             # 352--355
+           .quad L_nop, L_nop, C_used, L_vmthrow             # 356--359
+           .quad L_precision, L_setprecision, L_nop, CPP_fsdot  # 360--363
+           .quad L_nop, L_fpick, L_fexpm1, L_flnp1	     # 364--367
+           .quad CPP_uddotr, CPP_ddotr, L_f2drop, L_f2dup    # 368--371
+           .quad L_nop, L_nop, L_nop, L_nop                  # 372--375
+           .quad L_nop, L_nop, L_nop, L_nop                  # 376--379
+           .quad L_nop, L_fdepth, L_fpfetch, CPP_fpstore     # 380--383
+           .quad CPP_fdots, L_fdup, L_fdrop, L_fswap         # 384--387
+           .quad L_frot, L_fover, L_nop, L_nop               # 388--391
+           .quad L_nop, L_nop, L_nop, L_nop                  # 392--395
            .quad CPP_find_name_in, CPP_find_name, L_nop, L_nop  # 396--399
            .quad L_bool_not, L_bool_and, L_bool_or, L_bool_xor  # 400--403 
            .quad L_boolean_query, L_uwfetch, L_ulfetch, L_slfetch  # 404--407
-           .quad L_lstore, L_nop, L_nop, L_nop              # 408--411
-           .quad L_nop, L_nop, L_nop, L_nop                 # 412--415
-           .quad L_nop, L_udivmod, L_uddivmod, L_nop        # 416--419
+           .quad L_lstore, L_nop, L_nop, L_nop               # 408--411
+           .quad L_nop, L_nop, L_nop, L_nop                  # 412--415
+           .quad L_nop, L_udivmod, L_uddivmod, L_nop         # 416--419
            .quad L_sfloats, L_sfloatplus, L_floats, L_floatplus # 420--423
-           .quad L_fplusstore, L_pi, L_fsquare, L_starplus  # 424--427
-           .quad L_nop, L_nop, L_fsl_mat_addr, CPP_rec_name # 428--431
-	   .quad C_rec_number, C_rec_float, L_nop, L_nop    # 432--435
-	   .quad L_nop, L_nop, CPP_translate_cell, L_nop    # 436--439
+           .quad L_fplusstore, L_pi, L_fsquare, L_starplus   # 424--427
+           .quad L_nop, L_nop, L_fsl_mat_addr, CPP_rec_name  # 428--431
+	   .quad CPP_rec_number, CPP_rec_float, L_nop, L_nop # 432--435
+	   .quad L_nop, CPP_translate_name, CPP_translate_cell, L_nop  # 436--439
 	   .quad CPP_translate_float, L_nop, CPP_translate_none, L_nop # 440--443
-	   .quad L_nop, L_nop, L_nop, L_nop                 # 444--447
-	   .quad CPP_name_to_execute, L_nop, L_nop, L_nop   # 448--451
+	   .quad L_nop, L_nop, L_nop, L_nop                  # 444--447
+	   .quad CPP_name_to_execute, L_nop, L_nop, L_nop    # 448--451
 .text
 	.align WSIZE
 .global JumpTable

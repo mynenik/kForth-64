@@ -79,6 +79,7 @@ void OutputForthByteCode (vector<byte>*);
 void SetForthInputStream (istream&);
 void SetForthOutputStream (ostream&);
 extern "C" {
+int CPP_interpret();
 int CPP_name_to_execute();
 int CPP_rec_name();
 int CPP_translate_none();

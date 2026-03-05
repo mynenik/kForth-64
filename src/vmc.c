@@ -598,35 +598,6 @@ return False.
 }
 
 /*----------------------------------------------------------*/
-/* REC-FLOAT ( c-addr u -- translation )  ( F: -- r ) or
- *           ( c-addr u -- translation ) ( F: -- )                */
-int C_rec_float ()
-{
-/*
-Check the string token to see if it is an LMI style floating point
-number; if so return True on the data stack and the fp number
-on the floating point stack; otherwise return False.
-*/
-    char *p;
-    long int b;
-    double r;
-    DROP
-    // u = TOS;
-    DROP
-    p = (char*) TOS;
-    b = IsFloat(p, &r);
-    if (b) {
-      // push converted fp onto fp stack
-      *((double *) GlobalFp) = r;
-      DEC_FSP
-      CPP_translate_float();
-    }
-    else {
-      CPP_translate_none();
-    }
-    return 0;
-}
-/*----------------------------------------------------------*/
 
 int isBaseDigit (int c)
 {
@@ -634,40 +605,6 @@ int isBaseDigit (int c)
 
    return ( (isdigit(u) && ((u - 48) < Base)) || 
 	    (isalpha(u) && (Base > 10) && ((u - 55) < Base)) );
-}
-/*---------------------------------------------------------*/
-/* REC-NUMBER ( c-addr u -- x translate )  or
- *            ( c-addr u -- translate-none )              */
-int C_rec_number ()
-{
-/* Recognize a single cell number */
-
-  unsigned long int unum, b = FALSE;
-  DROP
-  // unsigned long int u = TOS;
-  DROP
-  char *pStr = (char*) TOS;
-  char *endp;
-
-
-    if ((*pStr == '-') || isBaseDigit(*pStr)) {
-      ++pStr;
-      while (isBaseDigit(*pStr)) {
-	  ++pStr;
-      }
-      if (*pStr == 0) {
-        unum = strtoul((char*) TOS, &endp, Base);
-        b = TRUE;
-      }
-    }
-    if (b) {
-      PUSH_IVAL( unum )
-      CPP_translate_cell();
-    }
-    else {
-      CPP_translate_none();
-    }
-    return 0;
 }
 /*---------------------------------------------------------*/
 

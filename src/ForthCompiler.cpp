@@ -46,7 +46,7 @@ size_t NUMBER_OF_ROOT_WORDS =
 extern bool debug;
 
 // Provided by ForthVM.cpp
-
+extern void* GlobalFp;
 extern vector<char*> StringTable;
 extern SearchList SearchOrder;
 void ClearControlStacks();
@@ -72,14 +72,14 @@ extern "C" {
   int CPP_compilename();
   int CPP_compile_name_bc();
   int CPP_name_to_interpret();
+  int CPP_execute();
   int CPP_dots();
-  int CPP_interpret();
 
   // Provided by vmc.c
   char* strupr (char*);
   char* ExtractName(char*, char*);
+  int   isBaseDigit(char);
   int   IsFloat(char*, double*);
-  int   IsInt(char*, long int*);
   int   C_parsename();
 }
   
@@ -373,7 +373,8 @@ int CPP_name_to_execute()
     return 0;
 }
 
-// TRANSLATE-NONE ( -- addr )
+// TRANSLATE-NONE ( -- translate-none )
+// Return the translation token TRANSLATE-NONE
 int CPP_translate_none ()
 {
     for (int i = 0; i < 3; i++)
@@ -382,7 +383,18 @@ int CPP_translate_none ()
     return 0;
 }
 
-// TRANSLATE-CELL  ( -- addr )
+// TRANSLATE-NAME  ( -- translate-name )
+// Return the translation token TRANSLATE-NAME
+int CPP_translate_name ()
+{
+    for (int i=0; i < 3; i++)
+      _translate_name[i] = _translation_table[0][i];
+    PUSH_ADDR( (long int) _translate_name );
+    return 0;
+}
+
+// TRANSLATE-CELL  ( -- translate-cell )
+// Return the translation token TRANSLATE-CELL
 int CPP_translate_cell ()
 {
     for (int i=0; i < 3; i++)
@@ -391,7 +403,8 @@ int CPP_translate_cell ()
     return 0;
 }
 
-// TRANSLATE-FLOAT ( -- addr )
+// TRANSLATE-FLOAT ( -- translate-float )
+// Return the translation token TRANSLATE-FLOAT
 int CPP_translate_float ()
 {
     for (int i=0; i < 3; i++)
@@ -401,7 +414,10 @@ int CPP_translate_float ()
 }
 
 
-// REC-NAME  ( c-addr u -- translate_name | translate_none )
+// REC-NAME  ( c-addr u -- nt translate_name | translate_none )
+// Find the word name c-addr u in the search order. If found,
+// return the name token, nt, and the translation token
+// TRANSLATE-NAME; otherwise return TRANSLATE-NONE.
 int CPP_rec_name ()
 {
     CPP_find_name();  // Forth FIND-NAME
@@ -411,21 +427,215 @@ int CPP_rec_name ()
       UNDROP
       CPP_name_to_execute();
       DROP
-      _translate_name[0] = (byte**) TOS;  // postponing (null for now)
+      _translation_table[0][0] = (byte**) TOS;  // postponing (null for now)
       DROP
-      _translate_name[1] = (byte**) TOS;  // compiling
+      _translation_table[0][1] = (byte**) TOS;  // compiling
       DROP
-      _translate_name[2] = (byte**) TOS;  // interpreting
-					  //
+      _translation_table[0][2] = (byte**) TOS;  // interpreting
       PUSH_ADDR( nt )
-      PUSH_ADDR( (long int) _translate_name );
+      CPP_translate_name();
     }
     else {
       CPP_translate_none();
     }
-
     return 0;
 }
+
+
+// REC-NUMBER ( c-addr u -- x translate-cell )  or
+//            ( c-addr u -- translate-none )
+// Recognize a single cell number. If success, return
+// the number and the translation token TRANSLATE-CELL;
+// otherwise return TRANSLATE-NONE.
+int CPP_rec_number ()
+{
+  unsigned long int unum;
+  bool b = false;
+  DROP
+  // unsigned long int u = TOS;
+  DROP
+  char *pStr = (char*) TOS;
+  char *endp;
+
+
+    if ((*pStr == '-') || isBaseDigit(*pStr)) {
+      ++pStr;
+      while (isBaseDigit(*pStr)) {
+	  ++pStr;
+      }
+      if (*pStr == 0) {
+        unum = strtoul((char*) TOS, &endp, Base);
+        b = true;
+      }
+    }
+    if (b) {
+      PUSH_IVAL( unum )
+      CPP_translate_cell();
+    }
+    else {
+      CPP_translate_none();
+    }
+    return 0;
+}
+
+
+// REC-FLOAT ( c-addr u -- translate-float ) ( F: -- r ) or
+//           ( c-addr u -- translate-none )   ( F: -- )
+// Recognize the string as an LMI style floating point number;
+// if success, return the translation token TRANSLATE-NUMBER 
+// on the data stack and the fp number on the floating point
+// stack; otherwise return TRANSLATE-NONE.
+int CPP_rec_float ()
+{
+    char *p;
+    bool b;
+    double r;
+    DROP
+    // u = TOS;
+    DROP
+    p = (char*) TOS;
+    b = IsFloat(p, &r);
+    if (b) {
+      // push converted fp onto fp stack
+      *((double *) GlobalFp) = r;
+      DEC_FSP
+      CPP_translate_float();
+    }
+    else {
+      CPP_translate_none();
+    }
+    return 0;
+}
+
+
+// INTERPRET ( -- )
+// cf. Starting Forth, 2nd ed. pp 283--284.
+int CPP_interpret ()
+{
+//   Return value:
+//    0   no error
+//    other --- see ForthCompiler.h
+
+  int ecode = 0;
+  vector<byte>* pOpCodes = pCurrentOps;
+  long int xt;
+
+  while (true) {
+    // Read from input stream and parse
+    pInStream->getline(TIB, 255);
+    if (debug) (*pOutStream) << linecount << ": " << TIB << endl;
+
+    if (pInStream->fail()) {
+      if (State) {
+        ecode = E_V_END_OF_STREAM;  // end of stream before end of definition
+        break;
+      }
+      break;    // end of stream reached
+    }
+    ++linecount;
+
+// start of line interpreter:
+      pTIB = TIB;
+
+      while (*pTIB && (pTIB < (TIB + 255))) {
+        if (*pTIB == ' ' || *pTIB == '\t')
+          ++pTIB;
+        else {
+
+          int ulen;
+          char WordToken[256];
+
+          C_parsename();  // Forth PARSE-NAME
+          if (*pTIB == ' ' || *pTIB == '\t') ++pTIB; // go past next ws char
+          DROP
+          ulen = (int) TOS;
+          DROP
+          strncpy( (char*) WordToken, (char*) TOS, (size_t) ulen );
+
+          if (ulen) {  // parsed non-empty string
+            WordToken[ulen] = (char) 0;
+            strupr(WordToken);
+
+            PUSH_ADDR( (long int) WordToken );
+            PUSH_IVAL( (long int) ulen );
+
+	    // rec-forth : start of recognizer sequence
+	    //
+	    CPP_rec_name(); // REC-NAME
+            DROP
+	    if (TOS != (long int) _translate_none) {
+	      xt = (unsigned long int) *((unsigned long int*)TOS + State + 2);
+	      if (xt == (long int) p_sem_execute_up_to) {
+	        CPP_compile_name_bc();
+		pOpCodes->push_back(OP_RET);
+		TOS = (long int) pOpCodes;
+	      }
+	      else {
+	        TOS = xt;
+	      }
+	      UNDROP
+	      ecode = CPP_execute();
+ 	      if (xt == (long int) p_sem_execute_up_to) {
+		pOpCodes->clear();
+	      }
+	      if ((xt == (long int) p_sem_execute_up_to) ||
+		  (xt == (long int) p_sem_execute_name)) pOpCodes = pCurrentOps;
+
+	    }
+            else {
+              PUSH_ADDR( (unsigned long int) WordToken );
+              PUSH_IVAL( (long int) ulen );
+	      CPP_rec_number();  // ( caddr u -- ) REC-NUMBER
+	      DROP
+	      if (TOS != (long int) _translate_none) {
+		xt = (unsigned long int) *((unsigned long int*)TOS + State + 2);
+		TOS = xt;
+		UNDROP
+		ecode = CPP_execute();
+	      }
+              else {
+                PUSH_ADDR( (unsigned long int) WordToken );
+                PUSH_IVAL( (long int) ulen );
+	        // ( caddr u -- ) REC-FLOAT
+		CPP_rec_float();
+		DROP
+		if (TOS != (long int) _translate_none) {
+		  xt = (unsigned long int) *((unsigned long int*)TOS + State + 2);
+		  TOS = xt;
+		  UNDROP
+		  ecode = CPP_execute();
+                }
+                else { 
+		  // rec-none
+                  *pOutStream << endl << WordToken << endl;
+                  ecode = E_V_UNDEFINED_WORD;
+		} // end if
+	      } // end if
+            } // end if ; end of recognizer sequence
+          } // end if(ulen)
+        } // end if (*pTIB ...
+      } // end while
+// end of line interpreter
+
+      if (ecode) return ecode;
+
+      // Execute remaining deferred ops
+      if ((State == 0) && pOpCodes->size()) {
+        // Execute the current line in interpretation state
+        pOpCodes->push_back(OP_RET);
+        if (debug) OutputForthByteCode (pOpCodes);
+        xt = (unsigned long int) pOpCodes;
+        PUSH_ADDR( xt );
+        ecode = CPP_execute();
+        pOpCodes->clear();
+        if (ecode) break;
+      }
+
+    } // end while(TRUE)
+    return ecode;
+}
+// end of INTERPRET
+
 
 } // end extern "C"
 //----------------------------------------------------------------

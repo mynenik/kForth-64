@@ -153,7 +153,6 @@ int CPP_rpstore();
 #ifndef __NO_FPSTACK__
 int CPP_fpstore();
 #endif
-int CPP_interpret();
 int CPP_execute();
 }
 #endif
