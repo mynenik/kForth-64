@@ -131,6 +131,7 @@ vector<byte>* p_sem_execute_name;
 vector<byte>* p_sem_defer_name;
 vector<byte>* p_sem_compile_nd;
 vector<byte>* p_sem_compile_name;
+vector<byte>* p_sem_undefined;
 
 // stacks for keeping track of nested control structures
 
@@ -212,6 +213,7 @@ int InitNameTranslations ()
     p_sem_defer_name    = new vector<byte>;
     p_sem_compile_name  = new vector<byte>;
     p_sem_compile_nd    = new vector<byte>;
+    p_sem_undefined     = new vector<byte>;
 
     char s[128];
     long int xt, offset;
@@ -272,6 +274,15 @@ int InitNameTranslations ()
     CPP_compile_name_bc();
     pCurrentOps->push_back(OP_RET);
 
+    pCurrentOps = p_sem_undefined;
+    pCurrentOps->push_back(OP_IVAL);
+    OpsPushInt(-13);
+    strcpy(s, "VMTHROW");
+    PUSH_CSTRING(s);
+    CPP_find_name();
+    CPP_compile_name_bc();
+    pCurrentOps->push_back(OP_RET);
+    
     pCurrentOps = pSaveOps;
     return 0;
 }
@@ -288,7 +299,7 @@ int InitTranslationTable()
 
     InitNameTranslations();
 
-    // REC-NUMBER translations for single cell
+    // TRANSLATE-CELL
     strcpy(s, "LITERAL");
     PUSH_CSTRING(s);
     CPP_find_name();
@@ -299,7 +310,7 @@ int InitTranslationTable()
     _translation_table[1][1] = xt;   // State -1
     _translation_table[1][2] = xt;   // State  0
 
-    // REC-FLOAT translations
+    // TRANSLATE-FLOAT
     strcpy(s, "FLITERAL");
     PUSH_CSTRING(s);
     CPP_find_name();
@@ -309,6 +320,11 @@ int InitTranslationTable()
     _translation_table[3][0] = NULL; // Postponing
     _translation_table[3][1] = xt;   // State -1
     _translation_table[3][2] = xt;   // State  0
+
+    // TRANSLATE-NONE
+    _translation_table[4][0] = (byte**) p_sem_undefined;
+    _translation_table[4][1] = (byte**) p_sem_undefined;
+    _translation_table[4][2] = (byte**) p_sem_undefined;
 
     // Copy the first five rows of the translation table
     // to arrays for use by TRANSLATE-XXX words, for isolation
@@ -422,7 +438,7 @@ int CPP_rec_name ()
 {
     CPP_find_name();  // Forth FIND-NAME
     DROP
-    unsigned long int nt = (unsigned long int) TOS;
+    long int nt = (long int) TOS;
     if (nt) {
       UNDROP
       CPP_name_to_execute();
@@ -556,11 +572,9 @@ int CPP_interpret ()
             WordToken[ulen] = (char) 0;
             strupr(WordToken);
 
-            PUSH_ADDR( (long int) WordToken );
-            PUSH_IVAL( (long int) ulen );
-
 	    // rec-forth : start of recognizer sequence
 	    //
+            PUSH_CSTRING( WordToken );
 	    CPP_rec_name(); // REC-NAME
             DROP
 	    if (TOS != (long int) _translate_none) {
@@ -568,50 +582,39 @@ int CPP_interpret ()
 	      if (xt == (long int) p_sem_execute_up_to) {
 	        CPP_compile_name_bc();
 		pOpCodes->push_back(OP_RET);
-		TOS = (long int) pOpCodes;
+		xt = (long int) pOpCodes;
 	      }
-	      else {
-	        TOS = xt;
-	      }
-	      UNDROP
-	      ecode = CPP_execute();
- 	      if (xt == (long int) p_sem_execute_up_to) {
-		pOpCodes->clear();
-	      }
-	      if ((xt == (long int) p_sem_execute_up_to) ||
-		  (xt == (long int) p_sem_execute_name)) pOpCodes = pCurrentOps;
-
 	    }
             else {
-              PUSH_ADDR( (unsigned long int) WordToken );
-              PUSH_IVAL( (long int) ulen );
+              PUSH_CSTRING( WordToken );
 	      CPP_rec_number();  // ( caddr u -- ) REC-NUMBER
 	      DROP
 	      if (TOS != (long int) _translate_none) {
 		xt = (unsigned long int) *((unsigned long int*)TOS + State + 2);
-		TOS = xt;
-		UNDROP
-		ecode = CPP_execute();
 	      }
               else {
-                PUSH_ADDR( (unsigned long int) WordToken );
-                PUSH_IVAL( (long int) ulen );
+                PUSH_CSTRING( WordToken );
 	        // ( caddr u -- ) REC-FLOAT
 		CPP_rec_float();
 		DROP
 		if (TOS != (long int) _translate_none) {
 		  xt = (unsigned long int) *((unsigned long int*)TOS + State + 2);
-		  TOS = xt;
-		  UNDROP
-		  ecode = CPP_execute();
                 }
                 else { 
-		  // rec-none
-                  *pOutStream << endl << WordToken << endl;
-                  ecode = E_V_UNDEFINED_WORD;
+		  xt = (long int) *((long int*)TOS + State + 2);
 		} // end if
 	      } // end if
             } // end if ; end of recognizer sequence
+
+	    PUSH_ADDR( xt );
+	    ecode = CPP_execute();
+
+	    if (xt == (long int) pOpCodes) {
+	      pOpCodes->clear();
+	    }
+	    if ((xt == (long int) pOpCodes) ||
+		(xt == (long int) p_sem_execute_name)) pOpCodes = pCurrentOps;
+
           } // end if(ulen)
         } // end if (*pTIB ...
       } // end while
