@@ -408,7 +408,7 @@ int CPP_translate_cell ()
 int CPP_translate_float ()
 {
     for (int i=0; i < 3; i++)
-      _translate_cell[i] = _translation_table[3][i];
+      _translate_float[i] = _translation_table[3][i];
     PUSH_ADDR( (long int) _translate_float );
     return 0;
 }
