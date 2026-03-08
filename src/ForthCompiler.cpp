@@ -607,12 +607,6 @@ int CPP_interpret ()
             } // end if ; end of recognizer sequence
 
             xt = (long int) *((long int*)TOS + State + 2);
-#ifdef __FOO__
-if ((xt == (long int) p_sem_execute_name) || (xt == (long int) p_sem_execute_up_to)) {
-*pOutStream << "INTERPRET: WordToken = " << WordToken << "  pCurrentOps = " << pCurrentOps << endl;
-}
-#endif
-
 	    if (xt == (long int) p_sem_execute_up_to) {
 	      CPP_compile_name_bc();
 	      pCurrentOps->push_back(OP_RET);

@@ -1159,7 +1159,7 @@ int CPP_semicolon()
          PendingOps.pop();
       }
       else {
-         pCurrentOps->erase(pCurrentOps->begin(), pCurrentOps->end());
+	 pCurrentOps->clear();
       }
       State = FALSE;
     }
