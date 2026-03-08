@@ -3023,74 +3023,71 @@ int CPP_evaluate ()
 }
 
 // INCLUDED  ( c-addr u -- )
-//
+// Interpret the Forth statements in the file specified by
+// c-addr u
 // Forth 2012 
 int CPP_included()
 {
-  // include the filename given on the stack as a counted string
-  char filename[256];
-  DROP
-  long int nc = TOS;
-  DROP
-  char *cp = (char*) TOS;
+    char filename[256];
+    DROP
+    long int nc = TOS;
+    DROP
+    char *cp = (char*) TOS;
 
-  if ((nc < 0) || (nc > 255)) return E_V_OPEN_FILE;
+    if ((nc < 0) || (nc > 255)) return E_V_OPEN_FILE;
 
-  memcpy (filename, cp, nc);
-  filename[nc] = 0;
-  if (!strchr(filename, '.')) strcat(filename, ".4th");
+    memcpy (filename, cp, nc);
+    filename[nc] = 0;
+    if (!strchr(filename, '.')) strcat(filename, ".4th");
 
-  ifstream f(filename);
-  if (!f)
-    {
-      if (getenv(dir_env_var))
-	{
-	  char temp[256]; 
-	  strcpy(temp, getenv(dir_env_var));
-	  strcat(temp, "/");
-	  strcat(temp, filename);
-	  strcpy(filename, temp);
-	  f.clear();                // Clear the previous error.
-	  f.open(filename);
-	  if (f) 
-	    {
-	      *pOutStream << endl << filename << endl;
-	    }
-	}
+    ifstream f(filename);
+    if (!f) {
+      if (getenv(dir_env_var)) {
+	char temp[256]; 
+	strcpy(temp, getenv(dir_env_var));
+	strcat(temp, "/");
+	strcat(temp, filename);
+	strcpy(filename, temp);
+	f.clear();                // Clear the previous error.
+	f.open(filename);
+	if (f) {
+	  *pOutStream << endl << filename << endl;
+        }
+      }
     }
 
-  if (f.fail()) 
-    {
+    if (f.fail()) {
       *pOutStream << endl << filename << endl;
       return (E_V_OPEN_FILE);
     }
 
-  vector<byte> ops, *pOldOps;
-  int ecode;
+    vector<byte> ops, *pOldOps;
+    int ecode;
 	
-  istream* pTempIn = pInStream;  // save input stream ptr
-  SetForthInputStream(f);  // set the new input stream
-  long int oldlc = linecount; linecount = 0;
-  pOldOps = pCurrentOps;
-  ecode = ForthCompiler (&ops, &linecount);
-  f.close();
-  pInStream = pTempIn;  // restore the input stream
-  pCurrentOps = pOldOps; 
-  if (ecode) 
-    {
+    istream* pTempIn = pInStream;  // save input stream ptr
+    SetForthInputStream(f);  // set the new input stream
+    long int oldlc = linecount; linecount = 0;
+    pOldOps = pCurrentOps;
+    ecode = ForthCompiler (&ops, &linecount);
+    f.close();
+    pInStream = pTempIn;  // restore the input stream
+    pCurrentOps = pOldOps; 
+    if (ecode) {
       *pOutStream << filename << "  " ;
-      return (ecode);
     }
-  linecount = oldlc;
+    else {
+      linecount = oldlc;
 
-  // Execute the code immediately
-		      
-  long int *sp;
-  byte *tp;
-  ecode = ForthVM (&ops, &sp, &tp);
-  ops.clear();
-
-  return ecode;
+      // Execute remaining deferred code
+      // The following should not be needed. 
+      // It is taken care of by INTERPRET
+      //
+      // long int *sp;
+      // byte *tp;
+      // ecode = ForthVM (&ops, &sp, &tp);
+      // ops.clear();
+    }
+    return ecode;
 }
 
 // INCLUDE ( "name" -- )

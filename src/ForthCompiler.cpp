@@ -282,7 +282,14 @@ int InitNameTranslations ()
     CPP_find_name();
     CPP_compile_name_bc();
     pCurrentOps->push_back(OP_RET);
-    
+   
+    pCurrentOps = p_sem_execute_up_to;
+    pCurrentOps->push_back(OP_ADDR);
+    OpsPushInt( ((long int) &pCurrentOps) );
+    pCurrentOps->push_back(OP_AFETCH);
+    pCurrentOps->push_back(OP_EXECUTE);
+    pCurrentOps->push_back(OP_RET);
+
     pCurrentOps = pSaveOps;
     return 0;
 }
@@ -429,8 +436,17 @@ int CPP_translate_float ()
     return 0;
 }
 
+// REC-NONE  ( c-addr u -- translate-none )
+// drop the string and return TRANSLATE-NONE
+int CPP_rec_none()
+{
+    DROP
+    DROP
+    CPP_translate_none();
+    return 0;
+}
 
-// REC-NAME  ( c-addr u -- nt translate_name | translate_none )
+// REC-NAME  ( c-addr u -- nt translate-name | translate_none )
 // Find the word name c-addr u in the search order. If found,
 // return the name token, nt, and the translation token
 // TRANSLATE-NAME; otherwise return TRANSLATE-NONE.
@@ -535,7 +551,9 @@ int CPP_interpret ()
   int ecode = 0;
   vector<byte>* pOpCodes = pCurrentOps;
   long int xt;
-
+#ifdef __FOO__
+*pOutStream << "INTERPRET: pOpCodes = " << pOpCodes << endl;
+#endif
   while (true) {
     // Read from input stream and parse
     pInStream->getline(TIB, 255);
@@ -577,43 +595,36 @@ int CPP_interpret ()
             PUSH_CSTRING( WordToken );
 	    CPP_rec_name(); // REC-NAME
             DROP
-	    if (TOS != (long int) _translate_none) {
-	      xt = (unsigned long int) *((unsigned long int*)TOS + State + 2);
-	      if (xt == (long int) p_sem_execute_up_to) {
-	        CPP_compile_name_bc();
-		pOpCodes->push_back(OP_RET);
-		xt = (long int) pOpCodes;
-	      }
-	    }
-            else {
+	    if (TOS == (long int) _translate_none) {
               PUSH_CSTRING( WordToken );
 	      CPP_rec_number();  // ( caddr u -- ) REC-NUMBER
 	      DROP
-	      if (TOS != (long int) _translate_none) {
-		xt = (unsigned long int) *((unsigned long int*)TOS + State + 2);
-	      }
-              else {
+	      if (TOS == (long int) _translate_none) {
                 PUSH_CSTRING( WordToken );
-	        // ( caddr u -- ) REC-FLOAT
-		CPP_rec_float();
+	        CPP_rec_float();  // ( caddr u -- ) REC-FLOAT
 		DROP
-		if (TOS != (long int) _translate_none) {
-		  xt = (unsigned long int) *((unsigned long int*)TOS + State + 2);
-                }
-                else { 
-		  xt = (long int) *((long int*)TOS + State + 2);
-		} // end if
 	      } // end if
             } // end if ; end of recognizer sequence
 
+            xt = (long int) *((long int*)TOS + State + 2);
+#ifdef __FOO__
+if ((xt == (long int) p_sem_execute_name) || (xt == (long int) p_sem_execute_up_to)) {
+*pOutStream << "INTERPRET: WordToken = " << WordToken << "  pCurrentOps = " << pCurrentOps << endl;
+}
+#endif
+
+	    if (xt == (long int) p_sem_execute_up_to) {
+	      CPP_compile_name_bc();
+	      pCurrentOps->push_back(OP_RET);
+	    }
 	    PUSH_ADDR( xt );
 	    ecode = CPP_execute();
 
-	    if (xt == (long int) pOpCodes) {
+	    if (xt == (long int) p_sem_execute_up_to) {
 	      pOpCodes->clear();
 	    }
-	    if ((xt == (long int) pOpCodes) ||
-		(xt == (long int) p_sem_execute_name)) pOpCodes = pCurrentOps;
+	    if ((xt == (long int) p_sem_execute_up_to) ||
+	        (xt == (long int) p_sem_execute_name)) pOpCodes = pCurrentOps;
 
           } // end if(ulen)
         } // end if (*pTIB ...
@@ -653,7 +664,7 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
   if (debug) cout << ">Compiler Sp: " << GlobalSp << " Rp: " << GlobalRp << endl;
 
   linecount = *pLc;
-  vector<byte>* pSaveOps = pCurrentOps;
+//  vector<byte>* pSaveOps = pCurrentOps;
   pCurrentOps = pOpCodes;
 
   int ecode = CPP_interpret();
@@ -671,7 +682,7 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
       *pOutStream << "<Compiler Sp: " << GlobalSp << " Rp: " << GlobalRp << endl;
     }
   *pLc = linecount;
-  pCurrentOps = pSaveOps;
+//  pCurrentOps = pSaveOps;
   return ecode;
 }
 
