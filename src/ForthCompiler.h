@@ -19,13 +19,6 @@
 #define PRECEDENCE_IMMEDIATE    1
 #define PRECEDENCE_NON_DEFERRED 2
 
-// Execution Semantics ID
-#define ID_SEM_DEFER_NAME          0
-#define ID_SEM_EXECUTE_NAME        1
-#define ID_SEM_EXECUTE_UP_TO       2
-#define ID_SEM_COMPILE_NAME        3
-#define ID_SEM_COMPILE_ND          4
-
 #define TRUE -1
 #define FALSE 0
 

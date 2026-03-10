@@ -81,6 +81,7 @@ extern "C" {
   int   isBaseDigit(char);
   int   IsFloat(char*, double*);
   int   C_parsename();
+  int   C_numberquery();
 }
   
 // Provided by ForthVM.cpp
@@ -317,6 +318,17 @@ int InitTranslationTable()
     _translation_table[1][1] = xt;   // State -1
     _translation_table[1][2] = xt;   // State  0
 
+    // TRANSLATE-DCELL
+    strcpy(s, "2LITERAL");
+    PUSH_CSTRING(s);
+    CPP_find_name();
+    CPP_name_to_interpret();
+    DROP
+    xt = (byte**) TOS;
+    _translation_table[2][0] = NULL; // Postponing
+    _translation_table[2][1] = xt;   // State -1
+    _translation_table[2][2] = xt;   // State 0
+
     // TRANSLATE-FLOAT
     strcpy(s, "FLITERAL");
     PUSH_CSTRING(s);
@@ -426,6 +438,16 @@ int CPP_translate_cell ()
     return 0;
 }
 
+// TRANSLATE-DCELL ( -- translate-dcell )
+// Return the translation token TRANSLATE-DCELL
+int CPP_translate_dcell ()
+{
+    for (int i=0; i < 3; i++)
+      _translate_dcell[i] = _translation_table[2][i];
+    PUSH_ADDR( (long int) _translate_dcell );
+    return 0;
+}
+
 // TRANSLATE-FLOAT ( -- translate-float )
 // Return the translation token TRANSLATE-FLOAT
 int CPP_translate_float ()
@@ -481,32 +503,74 @@ int CPP_rec_name ()
 // otherwise return TRANSLATE-NONE.
 int CPP_rec_number ()
 {
-  unsigned long int unum;
-  bool b = false;
-  DROP
-  // unsigned long int u = TOS;
-  DROP
-  char *pStr = (char*) TOS;
-  char *endp;
+    unsigned long int unum;
+    bool b = false;
+    bool dcell = false;
+    DROP
+    unsigned int ulen = TOS;
+    DROP
+    char *pStr = (char*) TOS;
+    char *pStartConv = (char*) TOS;
+    char *endp;
+    char base_pfx_char = 0;
+    int  base_prev = Base;
 
+    if (strchr("#$%", *pStr)) {
+      switch (*pStr) {
+        case '%':
+	  Base = 2;
+	  break;
+        case '#':
+	  Base = 10;
+	  break;
+	case '$':
+	  Base = 16;
+	  break;
+      }
+      base_pfx_char = *pStr;
+      ++pStr; ++pStartConv;
+    }
 
+    int ucount = 0;
     if ((*pStr == '-') || isBaseDigit(*pStr)) {
       ++pStr;
-      while (isBaseDigit(*pStr)) {
-	  ++pStr;
+      while ((isBaseDigit(*pStr)) && (ucount < 130)) {
+	  ++pStr; ++ucount;
       }
-      if (*pStr == 0) {
-        unum = strtoul((char*) TOS, &endp, Base);
-        b = true;
+
+      // Check for double length : must have both trailing decimal point
+      // as last char, and base prefix char
+      if ((*pStr == '.') && (base_pfx_char != 0)) {
+	dcell = true;
+	++pStr;
       }
+
+      if (*pStr == 0) b = true;  // recognized a cell or double cell number
     }
+      
     if (b) {
-      PUSH_IVAL( unum )
-      CPP_translate_cell();
+      if (dcell) {
+	char s[136];
+	--pStr;
+        ulen = (int)(pStr - pStartConv);
+	strncpy(s+1, pStartConv, ulen);
+	*s = (char) ulen;
+	s[ulen+1] = 0;
+	PUSH_ADDR( (long int) s );
+	C_numberquery();
+	DROP
+	CPP_translate_dcell();
+      }
+      else {
+        unum = strtoul(pStartConv, &endp, Base);
+        PUSH_IVAL( unum )
+        CPP_translate_cell();
+      }
     }
     else {
       CPP_translate_none();
     }
+    Base = base_prev;
     return 0;
 }
 
