@@ -24,7 +24,13 @@
 
 s" ans-words" included
 s" ttester"   included
-\ include coretest.4th
+
+variable skipped-tests      0 skipped-tests !
+variable dbl-test-errors    0 dbl-test-errors !
+
+:noname  ( c-addr u -- | Keep a cumulative error count )
+  1 dbl-test-errors +! error1 ;  error-xt !
+
 decimal
 
 \ dnw, from core.4th
@@ -105,8 +111,8 @@ t{  0 -3 -1 -3 d< -> true }t
 t{ -1  3  0  3 d< -> false }t
 t{ -1 -3  0 -3 d< -> false }t
 
-comment Skipping D<> D> D>= D<=
-(
+comment Skipping tests: D<> D> D>= D<=
+0 [IF]
 t{ 0 0 0 0 d<> -> false }t
 t{ 0 0 1 0 d<> -> true }t
 t{ 0 1 0 0 d<> -> true }t
@@ -129,7 +135,9 @@ t{ 0 0 1 0 d<= -> true }t
 t{ 1 0 0 1 d<= -> true }t
 t{ 0 1 1 0 d<= -> false }t
 t{ -1 -1 0 0 d<= -> true }t
-)
+[THEN]
+
+19 skipped-tests +!
 
 \ Since the d-comparisons, the du-comparisons, and the d0-comparisons
 \ are generated from the same source, we only test the ANS words in
@@ -154,4 +162,7 @@ t{ 1 0 0 1 du< -> true }t
 t{ 0 1 1 0 du< -> false }t
 t{ -1 -1 0 0 du< -> false }t
 
+cr .( Error Count: ) dbl-test-errors ?
+cr .( Tests Skipped [see comments above]: ) skipped-tests ?
+cr .( End of Double Number word tests) cr
 
