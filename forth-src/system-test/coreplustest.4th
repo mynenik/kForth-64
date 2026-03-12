@@ -1,8 +1,8 @@
-\ coreplus.4th
-\ More tests on the the ANS Forth Core word set 
+\ Additional tests on the the ANS Forth Core word set
 
-\ This program is free software; you can redistribute it and/or
-\ modify it any way.
+\ This program was written by Gerry Jackson in 2007, with contributions from
+\ others where indicated, and is in the public domain - it can be distributed
+\ and/or modified in any way but please retain this notice.
 
 \ This program is distributed in the hope that it will be useful,
 \ but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -10,23 +10,19 @@
 
 \ The tests are not claimed to be comprehensive or correct 
 
-\ -----------------------------------------------------------------------------
-\ Version 0.2  6 March 2009 { and } replaced with T{ and }T
-\              Added extra RECURSE tests
-\         0.1  20 April 2007 Created
-
-\ -----------------------------------------------------------------------------
+\ ------------------------------------------------------------------------------
 \ The tests are based on John Hayes test program for the core word set
-\ and requires those files to have been loaded
-
+\
 \ This file provides some more tests on Core words where the original Hayes
 \ tests are thought to be incomplete
 
 \ Words tested in this file are:
-\     DO +LOOP RECURSE ELSE IMMEDIATE NONDEFERRED S"  FIND
-\     [number prefixes]
-\     [definition names]
-\     
+\     DO I +LOOP RECURSE ELSE >IN IMMEDIATE FIND IF...BEGIN...REPEAT ALLOT DOES>
+\ and
+\     Parsing behaviour
+\     Number prefixes # $ % and 'A' character input
+\     Definition names
+\     NONDEFERRED
 \ -----------------------------------------------------------------------------
 \ Assumptions and dependencies:
 \     - ans-words    (for kForth)
@@ -34,6 +30,12 @@
 \ -----------------------------------------------------------------------------
 include ans-words
 include ttester
+
+VARIABLE SKIPPED-TESTS     0 SKIPPED-TESTS !
+VARIABLE CORE-PLUS-ERRORS  0 CORE-PLUS-ERRORS !
+
+:noname  ( c-addr u -- | Keep a cumulative error count )
+  1 core-plus-errors +! error1 ;  error-xt !
 
 DECIMAL
 
@@ -73,28 +75,109 @@ T{ -20 31 -10 gd7 -> 31 21 11 1 -9 -19 6 }T
 T{ -20 29 -10 gd7 -> 29 19 9 -1 -11 5 }T
 
 \ ----------------------------------------------------------------------------
-Testing RECURSE with :NONAME
+COMMENT Skipping tests: DO +LOOP with large and small increments
+0 [IF]
+TESTING DO +LOOP with large and small increments
 
-T{ :NONAME ( n -- 0,1,..n ) DUP IF DUP >R 1- RECURSE R> THEN ;
-   CONSTANT rn1 -> }T
-T{ 0 rn1 EXECUTE -> 0 }T
-T{ 4 rn1 EXECUTE -> 0 1 2 3 4 }T
+\ Contributed by Andrew Haley
 
-:NONAME  ( n -- n1 )
-   1- DUP
-   CASE 0 OF EXIT ENDOF
-        1 OF 11 SWAP RECURSE ENDOF
-        2 OF 22 SWAP RECURSE ENDOF
-        3 OF 33 SWAP RECURSE ENDOF
-        DROP ABS RECURSE EXIT
-   endcase
-; CONSTANT rn2
+MAX-UINT 8 RSHIFT 1+ CONSTANT USTEP
+USTEP NEGATE CONSTANT -USTEP
+MAX-INT 7 RSHIFT 1+ CONSTANT STEP
+STEP NEGATE CONSTANT -STEP
 
-T{  1 rn2 EXECUTE -> 0 }T
-T{  2 rn2 EXECUTE -> 11 0 }T
-T{  4 rn2 EXECUTE -> 33 22 11 0 }T
-T{ 25 rn2 EXECUTE -> 33 22 11 0 }T
+VARIABLE BUMP
 
+T{ : GD8 BUMP ! DO 1+ BUMP @ +LOOP ; -> }T
+
+T{ 0 MAX-UINT 0 USTEP GD8 -> 256 }T
+T{ 0 0 MAX-UINT -USTEP GD8 -> 256 }T
+
+T{ 0 MAX-INT MIN-INT STEP GD8 -> 256 }T
+T{ 0 MIN-INT MAX-INT -STEP GD8 -> 256 }T
+
+\ Two's complement arithmetic, wraps around modulo wordsize
+\ Only tested if the Forth system does wrap around, use of conditional
+\ compilation deliberately avoided
+
+MAX-INT 1+ MIN-INT = CONSTANT +WRAP?
+MIN-INT 1- MAX-INT = CONSTANT -WRAP?
+MAX-UINT 1+ 0=       CONSTANT +UWRAP?
+0 1- MAX-UINT =      CONSTANT -UWRAP?
+
+: GD9  ( n limit start step f result -- )
+   >R IF GD8 ELSE 2DROP 2DROP R@ THEN -> R> }T
+;
+
+T{ 0 0 0  USTEP +UWRAP? 256 GD9
+T{ 0 0 0 -USTEP -UWRAP?   1 GD9
+T{ 0 MIN-INT MAX-INT  STEP +WRAP? 1 GD9
+T{ 0 MAX-INT MIN-INT -STEP -WRAP? 1 GD9
+[THEN]
+
+9 SKIPPED-TESTS +!
+\ ------------------------------------------------------------------------------
+COMMENT Skipping tests: DO +LOOP with maximum and minimum increments
+0 [IF]
+TESTING DO +LOOP with maximum and minimum increments
+
+: (-MI) MAX-INT DUP NEGATE + 0= IF MAX-INT NEGATE ELSE -32767 THEN ;
+(-MI) CONSTANT -MAX-INT
+
+T{ 0 1 0 MAX-INT GD8  -> 1 }T
+T{ 0 -MAX-INT NEGATE -MAX-INT OVER GD8  -> 2 }T
+
+T{ 0 MAX-INT  0 MAX-INT GD8  -> 1 }T
+T{ 0 MAX-INT  1 MAX-INT GD8  -> 1 }T
+T{ 0 MAX-INT -1 MAX-INT GD8  -> 2 }T
+T{ 0 MAX-INT DUP 1- MAX-INT GD8  -> 1 }T
+
+T{ 0 MIN-INT 1+   0 MIN-INT GD8  -> 1 }T
+T{ 0 MIN-INT 1+  -1 MIN-INT GD8  -> 1 }T
+T{ 0 MIN-INT 1+   1 MIN-INT GD8  -> 2 }T
+T{ 0 MIN-INT 1+ DUP MIN-INT GD8  -> 1 }T
+[THEN]
+
+10 SKIPPED-TESTS +!
+\ ------------------------------------------------------------------------------
+COMMENT Skipping tests: +LOOP setting I to an arbitrary value
+0 [IF]
+TESTING +LOOP setting I to an arbitrary value
+
+\ The specification for +LOOP permits the loop index I to be set to any value
+\ including a value outside the range given to the corresponding  DO.
+
+\ SET-I is a helper to set I in a DO ... +LOOP to a given value
+\ n2 is the value of I in a DO ... +LOOP
+\ n3 is a test value
+\ If n2=n3 then return n1-n2 else return 1
+: SET-I  ( n1 n2 n3 -- n1-n2 | 1 )
+   OVER = IF - ELSE 2DROP 1 THEN
+;
+
+: -SET-I ( n1 n2 n3 -- n1-n2 | -1 )
+   SET-I DUP 1 = IF NEGATE THEN
+;
+
+: PL1 20 1 DO I 18 I 3 SET-I +LOOP ;
+T{ PL1 -> 1 2 3 18 19 }T
+: PL2 20 1 DO I 20 I 2 SET-I +LOOP ;
+T{ PL2 -> 1 2 }T
+: PL3 20 5 DO I 19 I 2 SET-I DUP 1 = IF DROP 0 I 6 SET-I THEN +LOOP ;
+T{ PL3 -> 5 6 0 1 2 19 }T
+: PL4 20 1 DO I MAX-INT I 4 SET-I +LOOP ;
+T{ PL4 -> 1 2 3 4 }T
+: PL5 -20 -1 DO I -19 I -3 -SET-I +LOOP ;
+T{ PL5 -> -1 -2 -3 -19 -20 }T
+: PL6 -20 -1 DO I -21 I -4 -SET-I +LOOP ;
+T{ PL6 -> -1 -2 -3 -4 }T
+: PL7 -20 -1 DO I MIN-INT I -5 -SET-I +LOOP ;
+T{ PL7 -> -1 -2 -3 -4 -5 }T
+: PL8 -20 -5 DO I -20 I -2 -SET-I DUP -1 = IF DROP 0 I -6 -SET-I THEN +LOOP ;
+T{ PL8 -> -5 -6 0 -1 -2 -20 }T
+[THEN]
+
+8 SKIPPED-TESTS +!
 \ ------------------------------------------------------------------------------
 TESTING multiple RECURSEs in one colon definition
 
@@ -118,7 +201,7 @@ T{ 0 MELSE -> 2 4 }T
 T{ -1 MELSE -> 1 3 5 }T
 
 \ ------------------------------------------------------------------------------
-COMMENT Skipping tests of >IN
+COMMENT Skipping tests: manipulation of >IN in interpreter mode
 0 [IF]
 TESTING manipulation of >IN in interpreter mode
 
@@ -126,6 +209,7 @@ T{ 12345 DEPTH OVER 9 < 34 AND + 3 + >IN ! -> 12345 2345 345 45 5 }T
 T{ 14145 8115 ?DUP 0= 34 AND >IN +! TUCK MOD 14 >IN ! GCD CALCULATION -> 15 }T
 [THEN]
 
+2 SKIPPED-TESTS +!
 \ ------------------------------------------------------------------------------
 TESTING IMMEDIATE / NONDEFERRED with CONSTANT  VARIABLE and CREATE [ ... DOES> ]
 
@@ -145,7 +229,6 @@ T{ : IW9 CREATE 1 CELLS ALLOT? ! DOES> @ 2 + IMMEDIATE NONDEFERRED ; -> }T
 T{ 222 IW9 IW10 FIND-IW IW10 -> -1 }T   \ IW10 is not immediate
 T{ IW10 FIND-IW IW10 -> 224 1 }T        \ IW10 becomes immediate
 
-
 \ ------------------------------------------------------------------------------
 TESTING that IMMEDIATE doesn't toggle a flag
 
@@ -163,7 +246,7 @@ T{ : PB1 CR ." You should see 2345: "." 2345"( A comment) CR ; PB1 -> }T
 
 \ ------------------------------------------------------------------------------
 TESTING number prefixes # $ %
-COMMENT (skipping 'c' character input)
+COMMENT Skipping tests: 'c' character input
 \ Adapted from the Forth 200X Draft 14.5 document
 
 VARIABLE OLD-BASE
@@ -196,6 +279,7 @@ DECIMAL
 \ Check number prefixes in compile mode
 T{ : nmp  #8327 $-2cbe %011010111 ( ''') ; nmp -> 8327 -11454 215 ( 39) }T
 
+4 SKIPPED-TESTS +!
 \ ------------------------------------------------------------------------------
 TESTING definition names
 \ should support {1..31} graphical characters
@@ -224,6 +308,7 @@ T{ NON-EXISTENT-WORD FIND -> NON-EXISTENT-WORD 0 }T
 
 \ -----------------------------------------------------------------------------
 
-
+CR .( Error Count: ) CORE-PLUS-ERRORS ?
+CR .( Tests Skipped [see comments above]: ) SKIPPED-TESTS ?
 CR .( End of additional Core tests) CR
 
