@@ -53,10 +53,15 @@
 \      http://www.exploringbinary.com/incorrectly-rounded-conversions-in-visual-c-plus-plus/
 \      May 28, 2010.
 
-CR .( FPIO-TEST         V1.1      01 Dec     2010 )
+CR .( FPIO-TEST         V1.2      12 Mar     2026 )
 BASE @
 s" ans-words" included
 [undefined] T{ [if] s" ttester" included [then]
+
+variable fpio-test-errors  0 fpio-test-errors !
+
+:noname  ( c-addr u -- | Keep a cumulative error count )
+  1 fpio-test-errors +! error1 ;  error-xt !
 
 HEX
   4  constant  SINGLE_PREC
@@ -308,4 +313,8 @@ hex_t{  r8 2L@ -> 3ff00000 00000001 }t
 
 [THEN]
 BASE !
+
+CR .( Error Count: ) FPIO-TEST-ERRORS ? CR
+CR .( End of Core Extension word tests) CR
+
 

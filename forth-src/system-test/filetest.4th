@@ -53,6 +53,21 @@ s" strings.4th" included
 s" files.4th" included
 \ == end of kForth-specific preliminaries =
 
+VARIABLE SKIPPED-TESTS     0 SKIPPED-TESTS !
+VARIABLE FILE-TEST-ERRORS  0 FILE-TEST-ERRORS !
+
+:noname  ( c-addr u -- | Keep a cumulative error count )
+  1 file-test-errors +! error1 ;  error-xt !
+
+\ Utilities
+: S=  ( caddr1 u1 caddr2 u2 -- f )   \ f = TRUE if strings are equal
+    ROT OVER = 0= IF DROP 2DROP FALSE EXIT THEN
+    DUP 0= IF DROP 2DROP TRUE EXIT THEN
+    0 DO
+         OVER C@ OVER C@ = 0= IF 2DROP FALSE UNLOOP EXIT THEN
+         CHAR+ SWAP CHAR+
+      LOOP 2DROP TRUE
+;
 
 TESTING File Access word set
 
@@ -79,7 +94,6 @@ T{ line1 fid1 @ WRITE-LINE -> 0 }T
 T{ fid1 @ CLOSE-FILE -> 0 }T
 
 \ ------------------------------------------------------------------------------
-
 TESTING R/O FILE-POSITION (simple)  READ-LINE 
 
 200 CONSTANT bsize
@@ -92,8 +106,37 @@ T{ buf 100 fid1 @ READ-LINE ROT DUP #chars ! -> TRUE 0 line1 SWAP DROP }T
 T{ buf #chars @ line1 COMPARE -> 0 }T
 T{ fid1 @ CLOSE-FILE -> 0 }T
 
-\ ------------------------------------------------------------------------------
+\ Additional test contributed by Helmut Eller
+\ Test with buffer shorter than the line including zero length buffer.
+T{ FN1 R/O OPEN-FILE SWAP FID1 ! -> 0 }T
+T{ FID1 @ FILE-POSITION -> 0 0 0 }T
+T{ BUF 0 FID1 @ READ-LINE ROT DUP #CHARS ! -> TRUE 0 0 }T
+T{ BUF 3 FID1 @ READ-LINE ROT DUP #CHARS ! -> TRUE 0 3 }T
+T{ BUF #CHARS @ LINE1 DROP 3 S= -> TRUE }T
+T{ BUF 100 FID1 @ READ-LINE ROT DUP #CHARS ! -> TRUE 0 LINE1 NIP 3 - }T
+T{ BUF #CHARS @ LINE1 3 /STRING S= -> TRUE }T
+T{ FID1 @ CLOSE-FILE -> 0 }T
 
+\ Additional test contributed by Helmut Eller
+\ Test with buffer exactly as long as the line.
+T{ FN1 R/O OPEN-FILE SWAP FID1 ! -> 0 }T
+T{ FID1 @ FILE-POSITION -> 0 0 0 }T
+T{ BUF LINE1 NIP FID1 @ READ-LINE ROT DUP #CHARS ! -> TRUE 0 LINE1 NIP }T
+T{ BUF #CHARS @ LINE1 S= -> TRUE }T
+T{ FID1 @ CLOSE-FILE -> 0 }T
+
+\ ------------------------------------------------------------------------------
+TESTING S" in interpretation mode (compile mode tested in Core tests)
+
+: str1 s" abcdef" ;
+: str2 s" " ;
+: str3 s" ghi" ;
+
+T{ S" abcdef" str1 S= -> TRUE }T
+T{ S" " str2 S= -> TRUE }T
+T{ S" ghi"str3 S= -> TRUE }T
+
+\ ------------------------------------------------------------------------------
 TESTING R/W WRITE-FILE REPOSITION-FILE READ-FILE FILE-POSITION S"
 
 : line2 S" Line 2 blah blah blah" ;
@@ -122,7 +165,6 @@ T{ rl1 -> 0 FALSE 0 }T
 T{ fid1 @ CLOSE-FILE -> 0 }T
 
 \ ------------------------------------------------------------------------------
-
 TESTING BIN READ-FILE FILE-SIZE
 
 : cbuf buf bsize 0 FILL ;
@@ -147,13 +189,11 @@ T{ buf 10 fid2 @ READ-FILE -> 0 0 }T
 T{ fid2 @ CLOSE-FILE -> 0 }T
 
 \ ------------------------------------------------------------------------------
-
-COMMENT SKIPPING RESIZE-FILE tests
-( 
+COMMENT Skipping tests: RESIZE-FILE
+0 [IF] 
 TESTING RESIZE-FILE
-)
+
 T{ fn2 R/W BIN OPEN-FILE SWAP fid2 ! -> 0 }T
-(
 T{ 37 s>d fid2 @ RESIZE-FILE -> 0 }T
 T{ fid2 @ FILE-SIZE -> 37 s>d 0 }T
 T{ 0 s>d fid2 @ REPOSITION-FILE -> 0 }T
@@ -165,11 +205,11 @@ T{ fid2 @ FILE-SIZE -> 500 s>d 0 }T
 T{ 0 s>d fid2 @ REPOSITION-FILE -> 0 }T
 T{ cbuf buf 100 fid2 @ READ-FILE -> 100 0 }T
 T{ PAD 37 buf 37 COMPARE -> 0 }T
-)
 T{ fid2 @ CLOSE-FILE -> 0 }T
+[THEN]
 
+13 SKIPPED-TESTS +!
 \ ------------------------------------------------------------------------------
-
 TESTING DELETE-FILE
 
 T{ fn2 DELETE-FILE -> 0 }T
@@ -178,23 +218,22 @@ T{ fn2 DELETE-FILE 0= -> FALSE }T
 
 \ ------------------------------------------------------------------------------
 
-TESTING multi-line comments
+TESTING multi-line ( comments
 
 T{ ( 1 2 3
 4 5 6
 7 8 9 ) 11 22 33 -> 11 22 33 }T
 
 \ ------------------------------------------------------------------------------
-
-COMMENT SKIPPING SOURCE-ID test
-( ********************************************************
-TESTING SOURCE-ID \ can only test it does not return 0 or -1
+COMMENT Skipping tests: SOURCE-ID
+0 [IF]
+TESTING SOURCE-ID (can only test it does not return 0 or -1)
 
 T{ SOURCE-ID DUP -1 = SWAP 0= OR -> FALSE }T
-*********************************************************** )
+[THEN]
 
+1 SKIPPED-TESTS +!
 \ ------------------------------------------------------------------------------
-
 TESTING RENAME-FILE FLUSH-FILE
 
 : fn3 S" fatest3.txt" ;
@@ -203,9 +242,11 @@ TESTING RENAME-FILE FLUSH-FILE
 T{ fn3 DELETE-FILE DROP -> }T
 T{ fn1 fn3 RENAME-FILE 0= -> TRUE }T
 
-COMMENT SKIPPING FILE-STATUS tests
-\ T{ fn1 FILE-STATUS SWAP DROP 0= -> FALSE }T
-\ T{ fn3 FILE-STATUS SWAP DROP 0= -> TRUE }T  \ Return value is undefined
+COMMENT Skipping tests: FILE-STATUS
+0 [IF]
+T{ fn1 FILE-STATUS SWAP DROP 0= -> FALSE }T
+T{ fn3 FILE-STATUS SWAP DROP 0= -> TRUE }T  \ Return value is undefined
+[THEN]
 
 T{ fn3 R/W OPEN-FILE SWAP fid1 ! -> 0 }T
 T{ >end -> 0 }T
@@ -216,7 +257,10 @@ T{ fid1 @ CLOSE-FILE -> 0 }T
 \ Tidy the test folder
 T{ fn3 DELETE-FILE DROP -> }T
 
+2 SKIPPED-TESTS +!
 \ ------------------------------------------------------------------------------
 
+CR .( Error Count: ) FILE-TEST-ERRORS ? CR
+CR .( Tests Skipped [see comments above]: ) SKIPPED-TESTS ?
 CR .( End of File-Access word tests) CR
 

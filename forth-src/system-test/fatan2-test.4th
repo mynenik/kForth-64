@@ -171,5 +171,5 @@ t{ +Inf +Inf fatan2 ->  pi/4 }t
 t{ -Inf +Inf fatan2 -> -pi/4 }t
 
 verbose @ [IF]
-cr .( #ERRORS: ) #errors @ . cr
+cr .( Error Count: ) #errors @ . cr
 [THEN]

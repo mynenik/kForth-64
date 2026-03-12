@@ -30,6 +30,11 @@ include ans-words
 include struct-200x
 include ttester
 
+VARIABLE FACILITY-ERRORS   0 FACILITY-ERRORS !
+
+:noname  ( c-addr u -- | Keep a cumulative error count )
+  1 facility-errors +! error1 ;  error-xt !
+    
 TESTING Facility words
 
 DECIMAL
@@ -143,5 +148,5 @@ T{ S41 F44 F23  C@ -> 32 }T
 \ -----------------------------------------------------------------------------
 
 \ FACILITY-ERRORS SET-ERROR-COUNT
-
+CR .( Error Count: ) FACILITY-ERRORS ? CR
 CR .( End of Facility word tests) CR
