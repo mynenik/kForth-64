@@ -675,8 +675,13 @@ int CPP_interpret ()
 	      CPP_compile_name_bc();
 	      pCurrentOps->push_back(OP_RET);
 	    }
+
 	    PUSH_ADDR( xt );
 	    ecode = CPP_execute();
+	    if (ecode) {
+	      *pOutStream << endl << WordToken << endl;
+	      break;
+	    }
 
 	    if (xt == (long int) p_sem_execute_up_to) {
 	      pOpCodes->clear();
