@@ -735,14 +735,12 @@ L_rtloop:
 	jz L_rtunloop
 	mov  %rax, (%rbx)	# set loop counter to next value
 	mov  %rdx, %rbp		# set instruction ptr to start of loop
-#        mov  %r8, %rbx
         LDSP
 	xor  %rax, %rax
 	NEXT
 
 L_rtunloop:
 	UNLOOP
-        # mov %r8, %rbx
         LDSP
 	xor %rax, %rax
 	NEXT
@@ -751,45 +749,61 @@ L_rtplusloop:
 	push %rbp
 	movq $WSIZE, %rax
 	add %rax, %rbx
-	mov (%rbx), %rbp	# get loop increment 
+	movq (%rbx), %rbp	# get loop increment 
 	STSP
 	movq GlobalRp(%rip), %rbx
 	add %rax, %rbx		# get ip and save in rdx
 	mov (%rbx), %rdx
 	add %rax, %rbx
-	mov (%rbx), %rcx	# get terminal count in rcx
+	movq (%rbx), %rcx	# get terminal count in rcx
 	add %rax, %rbx
-	mov (%rbx), %rax	# get current loop index
-	add %rbp, %rax         # new loop index
+	movq (%rbx), %rax
+	mov %rax, %r8          # r8 = current loop index
+	add %rbp, %rax         # rax = next loop index
 	cmpq $0, %rbp           
-	jl plusloop1            # loop inc < 0?
+	jl plusloop_neg        # loop inc < 0?
+	je plusloop_cont
 
-     # positive loop increment
+        # positive loop increment
+	cmp %r8, %rcx
+	ja plusloop0a
+        # TC is below or equal to I, positive step
+	cmp %r8, %rax
+	ja plusloop_cont      # I+STEP is above I
+	# I+STEP has wrapped
 	cmp %rcx, %rax
-	jl plusloop2            # is new loop index < rcx?
-	add %rbp, %rcx
+	jae plusloop_exit     # I+STEP above or equal to TC
+	jmp plusloop_cont
+plusloop0a:
+	# I is below TC, positive step
+	cmp %r8, %rax
+	jb plusloop_exit
 	cmp %rcx, %rax
-	jge plusloop2            # is new index >= rcx + inc?
+	jb plusloop_cont     # continue if next I below TC
+plusloop_exit:
 	pop %rbp
         LDSP
 	xor %rax, %rax
 	UNLOOP
 	NEXT
 
-plusloop1:       # negative loop increment
-	dec %rcx
+plusloop_neg:       # negative loop increment
+	cmp %r8, %rcx
+	ja plusloop0b
+	# I is above TC, negative step
+	cmp %r8, %rax
+	ja plusloop_exit
 	cmp %rcx, %rax
-	jg plusloop2           # is new loop index > rcx-1?
-	add %rbp, %rcx
+	jae plusloop_cont     # is new loop index above or equal to TC
+	jmp plusloop_exit
+plusloop0b:
+	# TC is above I, negative step
+	cmp %r8, %rax
+	jb plusloop_cont  # continue wihile I+STEP is below TC
+	# I+STEP has wrapped
 	cmp %rcx, %rax
-	jle plusloop2           # is new index <= rcx + inc - 1?
-	pop %rbp
-        LDSP
-	xor %rax, %rax
-	UNLOOP
-	NEXT
-
-plusloop2:
+	jb plusloop_exit  # terminate if I+STEP is below TC
+plusloop_cont:
 	pop %rbp
 	mov %rax, (%rbx)
 	mov %rdx, %rbp

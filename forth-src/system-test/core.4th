@@ -545,7 +545,7 @@ TESTING HERE , @ ! CELL+ CELLS C, C@ C! CHARS 2@ 2! ALIGN ALIGNED +! ALLOT
 ********************************************************** )
 TESTING @ ! CELL+ CELLS C@ C! CHARS 2@ 2! +!
 
-COMMENT SKIPPING HERE , tests 
+COMMENT Skipping tests: HERE , 
 ( ********************************************************
 HERE 1 ALLOT
 HERE
@@ -597,7 +597,7 @@ CREATE 1STC 2 ALLOT     1 1STC C!
 { 4 2NDC C! -> }
 { 1STC C@ 2NDC C@ -> 3 4 }
 
-COMMENT SKIPPING ALIGN tests
+COMMENT Skipping tests: ALIGN
 ( ***************************************************
 ALIGN 1 ALLOT HERE ALIGN HERE 3 CELLS ALLOT
 CONSTANT A-ADDR  CONSTANT UA-ADDR
@@ -828,8 +828,7 @@ TESTING WORD
        >R SWAP >R = R> R> = ;
 { GS1 -> <TRUE> <TRUE> }
 )
-\ COMMENT SKIPPING  >IN tests
-COMMENT SKIPPING SOURCE >IN tests
+COMMENT Skipping tests: SOURCE >IN
 (
 VARIABLE SCANS
 : RESCAN?  -1 SCANS +! SCANS @ IF 0 >IN ! THEN ;

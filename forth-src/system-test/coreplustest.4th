@@ -31,6 +31,10 @@
 include ans-words
 include ttester
 
+0 INVERT                        CONSTANT MAX-UINT
+0 INVERT 1 RSHIFT               CONSTANT MAX-INT
+0 INVERT 1 RSHIFT INVERT        CONSTANT MIN-INT
+
 VARIABLE SKIPPED-TESTS     0 SKIPPED-TESTS !
 VARIABLE CORE-PLUS-ERRORS  0 CORE-PLUS-ERRORS !
 
@@ -75,8 +79,7 @@ T{ -20 31 -10 gd7 -> 31 21 11 1 -9 -19 6 }T
 T{ -20 29 -10 gd7 -> 29 19 9 -1 -11 5 }T
 
 \ ----------------------------------------------------------------------------
-COMMENT Skipping tests: DO +LOOP with large and small increments
-0 [IF]
+\ COMMENT Skipping tests: DO +LOOP with large and small increments
 TESTING DO +LOOP with large and small increments
 
 \ Contributed by Andrew Haley
@@ -113,12 +116,8 @@ T{ 0 0 0  USTEP +UWRAP? 256 GD9
 T{ 0 0 0 -USTEP -UWRAP?   1 GD9
 T{ 0 MIN-INT MAX-INT  STEP +WRAP? 1 GD9
 T{ 0 MAX-INT MIN-INT -STEP -WRAP? 1 GD9
-[THEN]
 
-9 SKIPPED-TESTS +!
 \ ------------------------------------------------------------------------------
-COMMENT Skipping tests: DO +LOOP with maximum and minimum increments
-0 [IF]
 TESTING DO +LOOP with maximum and minimum increments
 
 : (-MI) MAX-INT DUP NEGATE + 0= IF MAX-INT NEGATE ELSE -32767 THEN ;
@@ -136,12 +135,8 @@ T{ 0 MIN-INT 1+   0 MIN-INT GD8  -> 1 }T
 T{ 0 MIN-INT 1+  -1 MIN-INT GD8  -> 1 }T
 T{ 0 MIN-INT 1+   1 MIN-INT GD8  -> 2 }T
 T{ 0 MIN-INT 1+ DUP MIN-INT GD8  -> 1 }T
-[THEN]
 
-10 SKIPPED-TESTS +!
 \ ------------------------------------------------------------------------------
-COMMENT Skipping tests: +LOOP setting I to an arbitrary value
-0 [IF]
 TESTING +LOOP setting I to an arbitrary value
 
 \ The specification for +LOOP permits the loop index I to be set to any value
@@ -175,9 +170,7 @@ T{ PL6 -> -1 -2 -3 -4 }T
 T{ PL7 -> -1 -2 -3 -4 -5 }T
 : PL8 -20 -5 DO I -20 I -2 -SET-I DUP -1 = IF DROP 0 I -6 -SET-I THEN +LOOP ;
 T{ PL8 -> -5 -6 0 -1 -2 -20 }T
-[THEN]
 
-8 SKIPPED-TESTS +!
 \ ------------------------------------------------------------------------------
 TESTING multiple RECURSEs in one colon definition
 
@@ -308,7 +301,7 @@ T{ NON-EXISTENT-WORD FIND -> NON-EXISTENT-WORD 0 }T
 
 \ -----------------------------------------------------------------------------
 
-CR .( Error Count: ) CORE-PLUS-ERRORS ?
+CR .( Error Count: ) CORE-PLUS-ERRORS ? CR
 CR .( Tests Skipped [see comments above]: ) SKIPPED-TESTS ?
 CR .( End of additional Core tests) CR
 

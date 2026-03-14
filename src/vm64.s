@@ -1068,35 +1068,52 @@ L_rtplusloop:
 	add  %rax, %rbx
 	movq (%rbx), %rcx	# get terminal count in rcx
 	add  %rax, %rbx
-	movq (%rbx), %rax	# get current loop index
-	add  %rbp, %rax         # new loop index
+	movq (%rbx), %rax	
+	mov  %rax, %r8          # r8 = current loop index
+	add  %rbp, %rax         # rax = next loop index
 	cmpq $0, %rbp           
-	jl plusloop1            # loop inc < 0?
+	jl plusloop_neg         # loop inc < 0?
+	je plusloop_cont
 
-     # positive loop increment
+        # positive loop increment
+	cmp %r8,  %rcx 
+	ja plusloop0a
+        # TC is below or equal to I, positive step
+	cmp %r8, %rax
+	ja plusloop_cont   # I+STEP above I
+	# I+STEP has wrapped
+        cmp %rcx, %rax
+	jae plusloop_exit  # I+STEP above or equal to TC
+        jmp plusloop_cont   
+plusloop0a:                  
+	# I is below TC, positive step
+	cmp %r8, %rax
+	jb plusloop_exit
 	cmp %rcx, %rax
-	jl plusloop2            # is new loop index < rcx?
-	add %rbp, %rcx
-	cmp %rcx, %rax
-	jge plusloop2            # is new index >= rcx + inc?
+	jb plusloop_cont     # continue if next I below TC
+plusloop_exit: 
 	pop %rbp
 	xor %rax, %rax
 	UNLOOP
 	NEXT
 
-plusloop1:       # negative loop increment
-	dec %rcx
+plusloop_neg:       # negative loop increment
+	cmp %r8, %rcx
+	ja plusloop0b
+	# I is above TC, negative step
+	cmp %r8, %rax
+	ja plusloop_exit
 	cmp %rcx, %rax
-	jg plusloop2           # is new loop index > rcx-1?
-	add %rbp, %rcx
+	jae plusloop_cont           # is new loop index U>= rcx?
+	jmp plusloop_exit
+plusloop0b:
+	# TC is above I, negative step
+	cmp %r8, %rax
+	jb plusloop_cont   # continue while I+STEP is below TC
+	# I+STEP has wrapped
 	cmp %rcx, %rax
-	jle plusloop2           # is new index <= rcx + inc - 1?
-	pop %rbp
-	xor %rax, %rax
-	UNLOOP
-	NEXT
-
-plusloop2:
+	jb plusloop_exit   # terminate if I+STEP is below TC
+plusloop_cont:
 	pop %rbp
 	mov %rax, (%rbx)
 	mov %rdx, %rbp
