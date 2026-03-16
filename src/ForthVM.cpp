@@ -1250,7 +1250,7 @@ int CPP_compilename ()
 int CPP_postpone ()
 {
     char token[128];
-
+    int ecode = 0;
     pTIB = ExtractName (pTIB, token);
     strupr(token);
     WordListEntry* pWord = SearchOrder.LocateWord(token);
@@ -1270,7 +1270,10 @@ int CPP_postpone ()
 	  pNewWord->Precedence |= PRECEDENCE_NON_DEFERRED;
       }
     }
-    return 0;  
+    else
+      ecode = E_V_UNDEFINED_WORD;
+
+    return ecode;  
 }
 
 
