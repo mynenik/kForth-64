@@ -262,7 +262,6 @@ byte ForthTypeStack[STACK_SIZE];             // the value type stack
 byte ForthReturnTypeStack[RETURN_STACK_SIZE];// the return value type stack
 #endif
 
-
 bool FileOutput = FALSE;
 vector<byte> tempOps;          // temporary opcode vector for [ and ]
 //---------------------------------------------------------------
@@ -412,6 +411,7 @@ int NullSystemVars ()
 }
 //--------------------------------------------------------------- 
 
+#ifndef __NO_FPSTACK__
 int InitFpStack ()
 {
 // Allocate the Floating Point stack and set the relevant
@@ -423,6 +423,7 @@ int InitFpStack ()
     GlobalFp = BottomOfFpStack;
     return 0;
 }
+#endif
 
 int OpenForth ()
 {
@@ -688,8 +689,11 @@ if (debug)  {
 
   if ((ecode == E_V_STK_UNDERFLOW) ||
       (ecode == E_V_RET_STK_UNDERFLOW) || 
-      (ecode == E_V_RET_STK_CORRUPT) ||
-      (ecode == E_V_FP_STK_UNDERFLOW))
+      (ecode == E_V_RET_STK_CORRUPT)
+#ifndef __NO_FPSTACK__
+      || (ecode == E_V_FP_STK_UNDERFLOW)
+#endif
+     )
   {
       L_abort();
   }
@@ -1066,7 +1070,7 @@ int CPP_noname()
 }
 
 // : (colon)  ( "name" -- )
-// Parse name and create a named definition
+// Parse name and create a definition for name
 // Forth 2012 Core Wordset 6.1.0450
 int CPP_colon()
 {
@@ -1163,11 +1167,10 @@ int CPP_semicolon()
       }
       State = FALSE;
     }
-  else
-    {
+    else {
       ecode = E_V_END_OF_DEF;
     }
-  return ecode;
+    return ecode;
 }
 
 // COMPILE, ( xt -- )
@@ -1437,10 +1440,6 @@ int CPP_udotr ()
   nfield = TOS;
   DROP
 
-  // km, 2023-12-14
-  // The following commented line is not consistent with the Forth standard.
-  // if (nfield <= 0) return 0;  // don't print anything if field width <= 0
-
   unsigned long int u, utemp, uscale;
   u = TOS;
   ndig = 1;
@@ -1599,11 +1598,19 @@ int CPP_ddotr ()
 // Forth-2012 Floating Point Extensions Wordset 12.6.2.1427
 int CPP_fdot ()
 {
+#ifndef __NO_FPSTACK__
   INC_FSP
   if (GlobalFp > BottomOfFpStack)
     return E_V_FP_STK_UNDERFLOW;
+#else
+  DROP
+  DROP
+  if (GlobalSp > BottomOfStack)
+    return E_V_STK_UNDERFLOW;
+#endif
   else
     {
+#ifndef __NO_FPSTACK__
       switch( FpSize ) {
         case 4:
 	  *pOutStream << *((float*) GlobalFp) << ' ';
@@ -1615,6 +1622,11 @@ int CPP_fdot ()
 	  *pOutStream << "qfloat" << ' ';
 	  break;
       }
+#else
+      DEC_DSP
+      *pOutStream << *((double*) GlobalSp) << ' ';
+      INC_DSP
+#endif
       (*pOutStream).flush();
     }
   return 0;
@@ -1625,16 +1637,29 @@ int CPP_fdot ()
 // Forth-2012 Floating Point Extensions Wordset 12.6.2.1613
 int CPP_fsdot ()
 {
-
+#ifndef __NO_FPSTACK__
   INC_FSP
   if (GlobalFp > BottomOfFpStack)
     return E_V_FP_STK_UNDERFLOW;
+#else
+  DROP
+  DROP
+  if (GlobalSp > BottomOfStack)
+    return E_V_STK_UNDERFLOW;
+#endif
   else
     {
       ios_base::fmtflags origFlags = cout.flags();
       int origPrec = cout.precision();
-      *pOutStream << setprecision(Precision-1) << scientific << 
-		*((double*) GlobalFp) << ' ';
+#ifndef __NO_FPSTACK__
+      *pOutStream << setprecision(Precision-1) << scientific <<
+                *((double*) GlobalFp) << ' ';
+#else
+      DEC_DSP
+      *pOutStream << setprecision(Precision-1) << scientific <<
+                *((double*) GlobalSp) << ' ';
+      INC_DSP
+#endif
       (*pOutStream).flush();
       cout.flags(origFlags);
       cout.precision(origPrec);
@@ -1695,6 +1720,7 @@ int CPP_dots ()
   return 0;
 }
 
+#ifndef __NO_FPSTACK__
 // F.S ( F: i*r -- i*r )
 int CPP_fdots ()
 {
@@ -1739,6 +1765,7 @@ int CPP_fdots ()
    *pOutStream << endl;
    return 0;
 }
+#endif
 
 // ' (tick) ( "name" -- xt )
 // Find "name" and return its execution token. If not found, throw exception.
@@ -2249,8 +2276,14 @@ int CPP_fconstant ()
   WordListEntry* pWord = *(pCompilationWL->end() - 1);
   pWord->WordCode = OP_FVAL;
   pWord->Pfa = new double[1];
+#ifndef __NO_FPSTACK__
   INC_FSP
   *((double*) (pWord->Pfa)) = *((double*) GlobalFp);
+#else
+  DROP
+  *((double*) (pWord->Pfa)) = *((double*)GlobalSp);
+  DROP
+#endif
   byte *bp = new byte[WSIZE+3];
   pWord->Cfa = bp;
   bp[0] = OP_ADDR;
@@ -2453,6 +2486,7 @@ int CPP_sliteral ()
 }
 //-------------------------------------------------------------------
 
+#ifndef __NO_FPSTACK__
 int CPP_fliteral ()
 {
   // stack: ( F: r -- | place fp in compiled opcodes )
@@ -2463,6 +2497,13 @@ int CPP_fliteral ()
   OpsPushDouble(d);
   return 0;
 }
+#else
+int CPP_fliteral ()
+{
+  // stack: ( r -- | place fp in compiled opcodes )
+  return( CPP_twoliteral ());
+}
+#endif
 //-------------------------------------------------------------------
 
 int CPP_cquote ()
@@ -3187,6 +3228,7 @@ int CPP_rpstore()
     return 0;
 }
 
+#ifndef __NO_FPSTACK__
 // FP! (fpstore) ( a -- )
 // Set the floating point stack point to address a; throw
 // exception if 'a' is outside of the stack space
@@ -3203,6 +3245,7 @@ int CPP_fpstore()
     GlobalFp = p;  // == fixme ==> ensure FpSize alignment
     return 0;
 }
+#endif
 
 // EXECUTE ( xt -- )
 //

@@ -43,12 +43,14 @@ vmc.c
 
 //  Provided by ForthVM.cpp
 extern long int* GlobalSp;
-extern void* GlobalFp;
 extern byte* GlobalIp;
 extern long int* GlobalRp;
 extern long int* BottomOfStack;
 extern long int* BottomOfReturnStack;
+#ifndef __NO_FPSTACK__
+extern void* GlobalFp;
 extern long int FpSize;
+#endif
 #ifndef __FAST__
 extern byte* GlobalTp;
 extern byte* GlobalRtp;
@@ -56,9 +58,6 @@ extern byte* BottomOfTypeStack;
 extern byte* BottomOfReturnTypeStack;
 #endif
 extern int CPP_bye();
-extern int CPP_translate_cell();
-extern int CPP_translate_float();
-extern int CPP_translate_none();
 
 // Provided by vmxx-common.s
 extern long int Base;
@@ -168,35 +167,41 @@ double powA(double x, double y) /* return x ^ y (exponentiation) */
     return ldexp(xy, ey);
 } 
 
-/* now in vmxx-common.s
-int C_fpow ()
-{
-	pf = (double*)((byte*) GlobalFp + FpSize);
-	f = *pf;
-	++pf;
-	*pf = powA (*pf, f);
-	INC_FSP
-	return 0;
-}
-*/
-
 int C_fmin ()
 {
+#ifndef __NO_FPSTACK__
 	pf = (double*)((byte*) GlobalFp + FpSize);
+#else
+        pf = (double*)(GlobalSp + 1);
+#endif
 	f = *pf;
 	++pf;
 	if (f < *pf) *pf = f;
+#ifndef __NO_FPSTACK__
 	INC_FSP
+#else
+        GlobalSp += 2;
+        INC2_DTSP
+#endif
 	return 0;
 }
 
 int C_fmax ()
 {
+#ifndef __NO_FPSTACK__
 	pf = (double*)((byte*) GlobalFp + FpSize);
+#else
+        pf = (double*)(GlobalSp + 1);
+#endif
 	f = *pf;
 	++pf;
 	if (f > *pf) *pf = f;
+#ifndef __NO_FPSTACK__
 	INC_FSP
+#else
+        GlobalSp += 2;
+        INC2_DTSP
+#endif
 	return 0;
 }
 
@@ -290,18 +295,18 @@ int C_write ()
 // word, FLUSH-FILE (Forth 94/Forth 2012)
 int C_fsync ()
 {
-  /* stack: ( fd -- ior )  */
   int fd;
   DROP
   fd = TOS;
   PUSH_IVAL( fsync(fd) )
   return 0;
 }
-  
 
+// IOCTL ( fd request addr -- err )
+// System device control function
+// Non-standard
 int C_ioctl ()
 {
-  /* stack: ( fd request addr -- err | device control function ) */
   int fd, request;
   char* argp;
 
@@ -521,7 +526,7 @@ int C_accept ()
   return 0;
 }
 /*----------------------------------------------------------*/
-
+#ifndef _WIN32_
 char* strupr (char* p)
 {
 /* convert string to upper case  */
@@ -529,6 +534,7 @@ char* strupr (char* p)
   while (*cp) {*cp = toupper(*cp); ++cp;}
   return p;
 }
+#endif
 
 char* ExtractName (char* str, char* name)
 {
@@ -554,6 +560,7 @@ at the end. Return a pointer to the next position in str.
     *pName = 0;
     return pStr;
 }
+/*----------------------------------------------------------*/
 
 int IsFloat (char* token, double* p)
 {
@@ -596,7 +603,6 @@ return False.
 
     return b;
 }
-
 /*----------------------------------------------------------*/
 
 int isBaseDigit (int c)
@@ -668,8 +674,8 @@ int C_parse ()
 }
 
 // PARSE-NAME  ( "<spaces>name<space>" -- c-addr u )
-// Skip leading whitespace and parse name delimited by
-// whitespace character; return string address and count.
+// Skip leading spaces and parse name delimited by space;
+//   return string address and count.
 // Forth 2012 Core Extensions wordset 6.2.2020
 int C_parsename ()
 {
@@ -924,8 +930,16 @@ int C_tofloat ()
     
 
   if (b) {
+#ifndef __NO_FPSTACK__
       *((double*)(GlobalFp)) = f;
       DEC_FSP
+#else
+      DEC_DSP
+      *((double*)(GlobalSp)) = f;
+      DEC_DSP
+      STD_IVAL
+      STD_IVAL
+#endif
   }
   PUSH_IVAL(b)
   return 0;
@@ -1116,10 +1130,11 @@ void set_start_time ()
   gettimeofday (&ForthStartTime, NULL);
 }
 
+// MS@ ( -- umsec )
+// Return milliseconds elapsed since start of Forth
+// Non-standard word
 int C_msfetch ()
 {
-  /* stack: ( -- msec | return msec elapsed since start of Forth ) */
-  
   struct timeval tv;
   gettimeofday (&tv, NULL);
   TOS = (tv.tv_sec - ForthStartTime.tv_sec)*1000 + 
@@ -1129,10 +1144,11 @@ int C_msfetch ()
   return 0;
 }
 
+// US2@ ( -- ud )
+// Return microseconds elapsed since start of Forth
+// Non-standard word
 int C_us2fetch ()
 {
-  /* stack: ( -- ud | return microseconds elapsed since start of Forth ) */
-  
   struct timeval tv;
   gettimeofday (&tv, NULL);
   unsigned long long int usec;

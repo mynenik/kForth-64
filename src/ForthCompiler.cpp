@@ -46,7 +46,9 @@ size_t NUMBER_OF_ROOT_WORDS =
 extern bool debug;
 
 // Provided by ForthVM.cpp
+#ifndef __NO_FPSTACK__
 extern void* GlobalFp;
+#endif
 extern vector<char*> StringTable;
 extern SearchList SearchOrder;
 void ClearControlStacks();
@@ -592,9 +594,18 @@ int CPP_rec_float ()
     p = (char*) TOS;
     b = IsFloat(p, &r);
     if (b) {
+#ifndef __NO_FPSTACK__
       // push converted fp onto fp stack
       *((double *) GlobalFp) = r;
       DEC_FSP
+#else
+     // push converted fp onto data stack
+      DEC_DSP
+      *((double*)(GlobalSp)) = r;
+      DEC_DSP
+      STD_IVAL
+      STD_IVAL
+#endif
       CPP_translate_float();
     }
     else {
