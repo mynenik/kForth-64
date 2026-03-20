@@ -2,7 +2,7 @@
 //
 // The assembler portion of kForth 64-bit Virtual Machine
 //
-// Copyright (c) 1998--2025 Krishna Myneni,
+// Copyright (c) 1998--2026 Krishna Myneni,
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU 
@@ -749,60 +749,58 @@ L_rtplusloop:
 	push %rbp
 	movq $WSIZE, %rax
 	add %rax, %rbx
-	movq (%rbx), %rbp	# get loop increment 
+	movq (%rbx), %r8  # r8 = loop increment 
 	STSP
 	movq GlobalRp(%rip), %rbx
-	add %rax, %rbx		# get ip and save in rdx
-	mov (%rbx), %rdx
 	add %rax, %rbx
-	movq (%rbx), %rcx	# get terminal count in rcx
+	movq (%rbx), %rdx # rdx = ip to start of loop
+	add %rax, %rbx
+	movq (%rbx), %rcx # rcx = terminal count
 	add %rax, %rbx
 	movq (%rbx), %rax
-	mov %rax, %r8          # r8 = current loop index
-	add %rbp, %rax         # rax = next loop index
-	cmpq $0, %rbp           
-	jl plusloop_neg        # loop inc < 0?
+	mov %rax, %rdi    # rdi = current loop index
+	add %r8, %rax     # rax = next loop index
+	cmpq $0, %r8           
+	jl plusloop_neg   # loop inc < 0?
 	je plusloop_cont
-
         # positive loop increment
-	cmp %r8, %rcx
+	cmp %rdi, %rcx
 	ja plusloop0a
-        # TC is below or equal to I, positive step
-	cmp %r8, %rax
-	ja plusloop_cont      # I+STEP is above I
+        # TC is below or equal to I
+	cmp %rdi, %rax
+	ja plusloop_cont  # while I+STEP above I
 	# I+STEP has wrapped
 	cmp %rcx, %rax
-	jae plusloop_exit     # I+STEP above or equal to TC
-	jmp plusloop_cont
+	jb plusloop_cont  # while I+STEP below TC
+	jmp plusloop_exit
 plusloop0a:
-	# I is below TC, positive step
-	cmp %r8, %rax
+	# I is below TC
+	cmp %rdi, %rax
 	jb plusloop_exit
 	cmp %rcx, %rax
-	jb plusloop_cont     # continue if next I below TC
+	jb plusloop_cont  # while I+STEP below TC
 plusloop_exit:
 	pop %rbp
         LDSP
 	xor %rax, %rax
 	UNLOOP
 	NEXT
-
 plusloop_neg:       # negative loop increment
-	cmp %r8, %rcx
+	cmp %rdi, %rcx
 	ja plusloop0b
-	# I is above TC, negative step
-	cmp %r8, %rax
+	# I is above TC
+	cmp %rdi, %rax
 	ja plusloop_exit
 	cmp %rcx, %rax
-	jae plusloop_cont     # is new loop index above or equal to TC
+	jae plusloop_cont # while I+STEP above or equal to TC
 	jmp plusloop_exit
 plusloop0b:
-	# TC is above I, negative step
-	cmp %r8, %rax
-	jb plusloop_cont  # continue wihile I+STEP is below TC
+	# TC is above I
+	cmp %rdi, %rax
+	jb plusloop_cont  # while I+STEP below TC
 	# I+STEP has wrapped
 	cmp %rcx, %rax
-	jb plusloop_exit  # terminate if I+STEP is below TC
+	jb plusloop_exit  # terminate if I+STEP below TC
 plusloop_cont:
 	pop %rbp
 	mov %rax, (%rbx)
