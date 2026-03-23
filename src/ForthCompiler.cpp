@@ -79,7 +79,6 @@ extern "C" {
 
   // Provided by vmc.c
   char* strupr (char*);
-  char* ExtractName(char*, char*);
   int   isBaseDigit(char);
   int   IsFloat(char*, double*);
   int   C_parsename();
