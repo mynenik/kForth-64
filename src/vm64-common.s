@@ -138,7 +138,7 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
            .quad CPP_find_name_in, CPP_find_name, L_nop, L_nop  # 396--399
            .quad L_bool_not, L_bool_and, L_bool_or, L_bool_xor  # 400--403 
            .quad L_boolean_query, L_uwfetch, L_ulfetch, L_slfetch  # 404--407
-           .quad L_lstore, L_nop, L_nop, L_nop               # 408--411
+           .quad L_lstore, C_toin, L_nop, L_nop              # 408--411
            .quad L_nop, L_nop, L_nop, L_nop                  # 412--415
            .quad L_nop, L_udivmod, L_uddivmod, L_nop         # 416--419
            .quad L_sfloats, L_sfloatplus, L_floats, L_floatplus # 420--423
@@ -989,6 +989,7 @@ L_backslash:
 	.comm State, WSIZE,WSIZE
 	.comm Precision, WSIZE,WSIZE
 	.comm FpSize, WSIZE,WSIZE
+	.comm TIB_Offset, WSIZE, WSIZE
 	.comm pTIB, WSIZE,WSIZE
 	.comm TIB, 256,1
 	.comm WordBuf, 256,1

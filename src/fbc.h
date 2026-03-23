@@ -420,7 +420,7 @@
 #define OP_ULFETCH              406
 #define OP_SLFETCH              407
 #define OP_LSTORE               408
-
+#define OP_TOIN                 409
 #define OP_DIV_FLOORED          410
 #define OP_MOD_FLOORED          411
 #define OP_SLASHMOD_FLOORED     412

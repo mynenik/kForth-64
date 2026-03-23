@@ -72,6 +72,7 @@ WordTemplate ForthWords[] =
     { "CREATE",    OP_CREATE,       NONDEFERRED },
     { "DOES>",     OP_DOES,         0 },
     { ">BODY",     OP_TOBODY,       0 },
+    { ">IN",       OP_TOIN,         0 },
     { "SYNONYM",   OP_SYNONYM,      NONDEFERRED },
     { "ALIAS",     OP_ALIAS,        NONDEFERRED },
     { "FORGET",    OP_FORGET,       NONDEFERRED },

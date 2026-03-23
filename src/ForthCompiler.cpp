@@ -626,9 +626,7 @@ int CPP_interpret ()
   int ecode = 0;
   vector<byte>* pOpCodes = pCurrentOps;
   long int xt;
-#ifdef __FOO__
-*pOutStream << "INTERPRET: pOpCodes = " << pOpCodes << endl;
-#endif
+  
   while (true) {
     // Read from input stream and parse
     pInStream->getline(TIB, 255);
@@ -645,63 +643,56 @@ int CPP_interpret ()
 
 // start of line interpreter:
       pTIB = TIB;
-
       while (*pTIB && (pTIB < (TIB + 255))) {
-        if (*pTIB == ' ' || *pTIB == '\t')
-          ++pTIB;
-        else {
+        int ulen;
+        char WordToken[256];
 
-          int ulen;
-          char WordToken[256];
+        C_parsename();  // Forth PARSE-NAME
+        DROP
+        ulen = (int) TOS;
+        DROP
+        strncpy( (char*) WordToken, (char*) TOS, (size_t) ulen );
 
-          C_parsename();  // Forth PARSE-NAME
-          if (*pTIB == ' ' || *pTIB == '\t') ++pTIB; // go past next ws char
+        if (ulen) {  // parsed non-empty string
+          WordToken[ulen] = (char) 0;
+          strupr(WordToken);
+
+	  // rec-forth : start of recognizer sequence
+	  //
+          PUSH_CSTRING( WordToken );
+	  CPP_rec_name(); // REC-NAME
           DROP
-          ulen = (int) TOS;
-          DROP
-          strncpy( (char*) WordToken, (char*) TOS, (size_t) ulen );
-
-          if (ulen) {  // parsed non-empty string
-            WordToken[ulen] = (char) 0;
-            strupr(WordToken);
-
-	    // rec-forth : start of recognizer sequence
-	    //
+	  if (TOS == (long int) _translate_none) {
             PUSH_CSTRING( WordToken );
-	    CPP_rec_name(); // REC-NAME
-            DROP
+	    CPP_rec_number();  // ( caddr u -- ) REC-NUMBER
+	    DROP
 	    if (TOS == (long int) _translate_none) {
               PUSH_CSTRING( WordToken );
-	      CPP_rec_number();  // ( caddr u -- ) REC-NUMBER
+	      CPP_rec_float();  // ( caddr u -- ) REC-FLOAT
 	      DROP
-	      if (TOS == (long int) _translate_none) {
-                PUSH_CSTRING( WordToken );
-	        CPP_rec_float();  // ( caddr u -- ) REC-FLOAT
-		DROP
-	      } // end if
-            } // end if ; end of recognizer sequence
+	    } // end if
+          } // end if ; end of recognizer sequence
 
-            xt = (long int) *((long int*)TOS + State + 2);
-	    if (xt == (long int) p_sem_execute_up_to) {
-	      CPP_compile_name_bc();
-	      pCurrentOps->push_back(OP_RET);
-	    }
+          xt = (long int) *((long int*)TOS + State + 2);
+	  if (xt == (long int) p_sem_execute_up_to) {
+	    CPP_compile_name_bc();
+	    pCurrentOps->push_back(OP_RET);
+	  }
 
-	    PUSH_ADDR( xt );
-	    ecode = CPP_execute();
-	    if (ecode) {
-	      *pOutStream << endl << WordToken << endl;
-	      break;
-	    }
+	  PUSH_ADDR( xt );
+	  ecode = CPP_execute();
+	  if (ecode) {
+	    *pOutStream << endl << WordToken << endl;
+	    break;
+	  }
 
-	    if (xt == (long int) p_sem_execute_up_to) {
-	      pOpCodes->clear();
-	    }
-	    if ((xt == (long int) p_sem_execute_up_to) ||
-	        (xt == (long int) p_sem_execute_name)) pOpCodes = pCurrentOps;
+	  if (xt == (long int) p_sem_execute_up_to) {
+	    pOpCodes->clear();
+	  }
+	  if ((xt == (long int) p_sem_execute_up_to) ||
+	      (xt == (long int) p_sem_execute_name)) pOpCodes = pCurrentOps;
 
-          } // end if(ulen)
-        } // end if (*pTIB ...
+        } // end if(ulen)
       } // end while
 // end of line interpreter
 
@@ -738,7 +729,6 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
   if (debug) cout << ">Compiler Sp: " << GlobalSp << " Rp: " << GlobalRp << endl;
 
   linecount = *pLc;
-//  vector<byte>* pSaveOps = pCurrentOps;
   pCurrentOps = pOpCodes;
 
   int ecode = CPP_interpret();
@@ -756,7 +746,6 @@ int ForthCompiler (vector<byte>* pOpCodes, long int* pLc)
       *pOutStream << "<Compiler Sp: " << GlobalSp << " Rp: " << GlobalRp << endl;
     }
   *pLc = linecount;
-//  pCurrentOps = pSaveOps;
   return ecode;
 }
 

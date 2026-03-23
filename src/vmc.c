@@ -63,6 +63,7 @@ extern int CPP_bye();
 extern long int Base;
 extern long int State;
 extern char* pTIB;
+extern long int TIB_Offset;
 extern long int NumberCount;
 extern long int JumpTable[];
 extern char WordBuf[];
@@ -613,11 +614,25 @@ int isBaseDigit (int c)
 	    (isalpha(u) && (Base > 10) && ((u - 55) < Base)) );
 }
 /*---------------------------------------------------------*/
+// >IN ( -- addr )
+// Return an address containing the offset in characters
+// from the start of the input buffer to the start of the
+// parse area.
+// Forth-94/2012 CORE 6.1.0560
+int C_toin ()
+{
+   TIB_Offset = (long int)(pTIB - (char*)TIB);
+   PUSH_ADDR( (long int) &TIB_Offset);
+   return 0;
+}
 
+// WORD ( char "<chars>ccc<char>" -- ^str )
+// Skip leading delimiters char and parse the characters
+// delimited by char. Return the address of the counted
+// string containing the parsed characters.
+// Forth-94/2012 CORE 6.1.2450 
 int C_word ()
 {
-  /* stack: ( n -- ^str | parse next word in input stream )
-     n is the delimiting character and ^str is a counted string. */
   DROP
   char delim = TOS;
   char *dp = WordBuf + 1;
@@ -691,6 +706,7 @@ int C_parsename ()
   }
   PUSH_ADDR((long int) cp)
   PUSH_IVAL(count)
+  if (*pTIB && strchr(delim, *pTIB)) ++pTIB;
   return 0;
 }
 
