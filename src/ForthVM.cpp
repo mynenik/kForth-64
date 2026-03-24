@@ -69,7 +69,6 @@ extern "C" {
   void  save_term(void);
   void  restore_term(void);
   char* strupr (char*);
-  char* ExtractName(char*, char*);
   int   isBaseDigit(int);
   int   C_bracketsharp(void);
   int   C_sharps(void);
@@ -2418,32 +2417,41 @@ int CPP_bye ()
   return 0;
 }
 //--------------------------------------------------------------------
-
+// >FILE ( "<spaces>filename<space>" -- )
+// Redirect output to file
+// Non-standard word
 int CPP_tofile ()
 {
-  int ecode = 0;
-  char filename[256];
-  *filename = 0;
+    int ecode = 0;
+    char filename[256], s[256];
 
-  pTIB = ExtractName (pTIB, filename);
-  if (*filename == 0) {
+    *filename = 0;
+    C_parsename(); // PARSE-NAME
+    DROP
+    int nc = ((int) TOS) < 256 ? TOS : 255 ;
+    DROP
+    strncpy(filename, (char*) TOS, nc);
+    filename[nc] = 0;
+
+    if (*filename == 0) {
       strcpy (filename, DEFAULT_OUTPUT_FILENAME);
       // cout << "Output redirected to " << filename << '\n';
-  }
-  ofstream *pFile = new ofstream (filename);
-  if (! pFile->fail()) {
+    }
+    ofstream *pFile = new ofstream (filename);
+    if (! pFile->fail()) {
       if (FileOutput) { 
 	  (*((ofstream*) pOutStream)).close();  // close current file output stream
 	  delete pOutStream;
       } 
       pOutStream = pFile;
       FileOutput = TRUE;
-  }
-  else {
+    }
+    else {
       // *pOutStream << "Failed to open output file stream.\n";
       ecode = E_V_OPEN_FILE;
-  }
-  return ecode;  
+    }
+
+    return ecode;  
 }
 //--------------------------------------------------------------------
 
@@ -3154,15 +3162,6 @@ int CPP_included()
     }
     else {
       linecount = oldlc;
-
-      // Execute remaining deferred code
-      // The following should not be needed. 
-      // It is taken care of by INTERPRET
-      //
-      // long int *sp;
-      // byte *tp;
-      // ecode = ForthVM (&ops, &sp, &tp);
-      // ops.clear();
     }
     return ecode;
 }
@@ -3171,25 +3170,30 @@ int CPP_included()
 //
 int CPP_include()
 {
-    char WordToken[256], s[256];
-    int ecode;
-
-    pTIB = ExtractName (pTIB, WordToken);
+    int ecode = 0;
+    char filename[256], s[256];
+    C_parsename(); // PARSE-NAME
+    DROP
+    int nc = ((int) TOS) < 256 ? TOS : 255 ;
+    DROP
+    strncpy(filename, (char*) TOS, nc);
+    filename[nc] = 0;
+ 
     strcpy (s, pTIB);  // save remaining part of input line in TIB
 
-    PUSH_CSTRING( ((char*) WordToken) )
+    PUSH_CSTRING( ((char*) filename) )
     ecode = CPP_included();
     if (ecode) return(ecode);
 
     strcpy(TIB, s);  // restore TIB with remaining input line
     pTIB = TIB;      // restore ptr
     
-    return 0;
+    return ecode;
 }
 
-// SOURCE ( )
-//
-// Forth 2012
+// SOURCE ( -- c-addr u )
+// Return address and number of characters in the input buffer.
+// Forth 2012, 6.1.2216
 int CPP_source()
 {
     PUSH_CSTRING( TIB )
