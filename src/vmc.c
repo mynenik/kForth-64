@@ -537,30 +537,6 @@ char* strupr (char* p)
 }
 #endif
 
-char* ExtractName (char* str, char* name)
-{
-/*
-Starting at ptr str, extract the non delimiter text into
-a buffer starting at name with null terminator appended
-at the end. Return a pointer to the next position in str.
-*/
-
-    const char* delim = "\n\r\t ";
-    char *pStr = str, *pName = name;
-
-    if (*pStr)
-      {
-	while (strchr(delim, *pStr)) ++pStr;
-	while (*pStr && (strchr(delim, *pStr) == NULL))
-	  {
-	    *pName = *pStr;
-	    ++pName;
-	    ++pStr;
-	  }
-      }
-    *pName = 0;
-    return pStr;
-}
 /*----------------------------------------------------------*/
 
 int IsFloat (char* token, double* p)
