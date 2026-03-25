@@ -398,7 +398,12 @@ int CPP_name_to_execute()
         xt = (long int) p_sem_execute_name; // execute xt for name
         break;
       case NONDEFERRED:
-        xt = (long int) p_sem_compile_nd; // compile a nondeferred word;
+	if (pNewWord) {
+          xt = (long int) p_sem_compile_nd; // compile a nondeferred word;
+	}
+	else {
+	  xt = (long int) p_sem_compile_name; // for :NONAME defn.
+	}
         break;                            // make new def nondeferred
     }
     PUSH_ADDR( xt )

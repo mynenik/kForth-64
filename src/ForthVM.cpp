@@ -2349,18 +2349,21 @@ int CPP_brackettick ()
   if (e) return e; else return CPP_literal();  
 }
 //-------------------------------------------------------------------
-// experimental non-standard word MY-NAME
+// MY-NAME ( -- nt )
+// return the nt of the open named definition;
+// if nt = 0 e.g. :NONAME definition, throw an error.
+// experimental non-standard word
 int CPP_myname()
 {
-  int e = 0;
+    int ecode = 0;
 
-  if (pNewWord) {
-    PUSH_ADDR( ((long int) pNewWord) )
-  }
-  else
-    e = E_V_INVALID_NAMEARG;
+    if (pNewWord) {
+      PUSH_ADDR( ((long int) pNewWord) )
+    }
+    else
+      ecode = E_V_INVALID_NAMEARG;
 
-  return e;
+    return ecode;
 }
 
 //-------------------------------------------------------------------
@@ -2546,60 +2549,60 @@ int CPP_fliteral ()
 }
 #endif
 //-------------------------------------------------------------------
-
+// C" compilation: ( "text<quote>" -- )  
+//    run-time:    ( -- ^str )
+// Compile a counted string into the current opcode vector
+// Non-standard: works in both State 0 or -1 
 int CPP_cquote ()
 {
-  // compilation stack: ( -- | compile a counted string into the string table )
-  // runtime stack: ( -- ^str | place address of counted string on stack )
-
-  char* begin_string = pTIB;
-  char* end_string = strchr(begin_string, '"');
-  if (end_string == NULL)
-    {
-      return E_V_NO_EOS;
+    int ecode = 0;
+    char* begin_string = pTIB;
+    char* end_string = strchr(begin_string, '"');
+    if (end_string) {
+      pTIB = end_string + 1;
+      int nc = (int) (end_string - begin_string);
+      char* str = new char[nc + 2];
+      *((byte*)str) = (byte) nc;
+      strncpy(str+1, begin_string, nc);
+      str[nc+1] = '\0';
+      StringTable.push_back(str);
+      pCurrentOps->push_back(OP_ADDR);
+      OpsPushInt((long int) str);
     }
-  pTIB = end_string + 1;
-  int nc = (int) (end_string - begin_string);
-  char* str = new char[nc + 2];
-  *((byte*)str) = (byte) nc;
-  strncpy(str+1, begin_string, nc);
-  str[nc+1] = '\0';
-  StringTable.push_back(str);
-  pCurrentOps->push_back(OP_ADDR);
-  OpsPushInt((long int) str);
+    else
+      ecode = E_V_NO_EOS;
 
-  return 0;
+    return ecode;
 }
 //-------------------------------------------------------------------
-
+// S" compilation: ( "text" -- ), runtime: ( -- c-addr u )
+// Compile a string into the current opcode vector
+// in State 0 or -1
+// Forth-2012, 6.1.2165
 int CPP_squote ()
 {
-  // compilation stack: ( -- | compile a string into the string table )
-  // runtime stack: ( -- a count )
-
-  int e = CPP_cquote();
-  if (e) return e;
-  char* s = *(StringTable.end() - 1);
-  long int v = (byte) s[0];
-  pCurrentOps->push_back(OP_INC);
-  pCurrentOps->push_back(OP_IVAL);
-  OpsPushInt(v);
-
-  return 0;
+    int ecode = CPP_cquote();
+    if (ecode == 0) {
+      char* s = *(StringTable.end() - 1);
+      long int v = (byte) s[0];
+      pCurrentOps->push_back(OP_INC);
+      pCurrentOps->push_back(OP_IVAL);
+      OpsPushInt(v);
+    }
+    return ecode;
 }
 //-------------------------------------------------------------------
-
+// ."  ( "text" -- )
+// Display a string delimited by quote from the input stream
+// Forth-94/2012, 6.1.0190
 int CPP_dotquote ()
 {
-  // stack: ( -- | display a string delimited by quote from the input stream)
-
-  int e = CPP_cquote();
-  if (e) return e;
-
-  pCurrentOps->push_back(OP_COUNT);
-  pCurrentOps->push_back(OP_TYPE);
-
-  return 0;
+    int ecode = CPP_cquote();
+    if (ecode == 0 ) {
+      pCurrentOps->push_back(OP_COUNT);
+      pCurrentOps->push_back(OP_TYPE);
+    }
+    return ecode;
 }
 //------------------------------------------------------------------
 

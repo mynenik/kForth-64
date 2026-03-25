@@ -144,8 +144,8 @@ CREATE  in_pad 256 ALLOT
 CREATE formula-string 256 ALLOT
 0 ptr formula-ptr
 
-[defined] >IN [IF]
-
+\ [defined] >IN [IF]
+0 [IF]
 \ Get character from input stream. From Wil Baden's opg .
 : get-char      ( -- char | 0 for EOL | negative for EOF )
     SOURCE      ( -- start_of_input #chars)

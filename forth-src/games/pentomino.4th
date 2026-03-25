@@ -181,9 +181,7 @@ create pats
     char x c,                           \ 13 is manually placed 'x'
 )
 
-: ctable ( ... n -- ) dup >r create ?allot dup r> + 1-
-    ?do	 i c! -1 +loop ;
-  
+
 bl  bl                          \ -1 is boundary, 0 is empty
 char f  char i  char l  char n 
 char p  char t  char u  char v 
