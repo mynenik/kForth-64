@@ -3113,7 +3113,7 @@ int CPP_evaluate ()
 // INCLUDED  ( c-addr u -- )
 // Interpret the Forth statements in the file specified by
 // c-addr u
-// Forth 2012 
+// Forth-94/2012 11.6.1.1718  File 
 int CPP_included()
 {
     char filename[256];
@@ -3170,7 +3170,10 @@ int CPP_included()
 }
 
 // INCLUDE ( "name" -- )
-//
+// Skip leading white space and parse name delimited by a
+// white space character. Push the address and length of
+// name on the stack and perform the function of INCLUDED.
+// Forth 94/2012 11.6.2.1714  File Ext
 int CPP_include()
 {
     int ecode = 0;
@@ -3186,11 +3189,10 @@ int CPP_include()
 
     PUSH_CSTRING( ((char*) filename) )
     ecode = CPP_included();
-    if (ecode) return(ecode);
-
-    strcpy(TIB, s);  // restore TIB with remaining input line
-    pTIB = TIB;      // restore ptr
-    
+    if (ecode == 0) {
+      strcpy(TIB, s);  // restore TIB with remaining input line
+      pTIB = TIB;      // restore ptr
+    }
     return ecode;
 }
 

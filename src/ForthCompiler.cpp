@@ -400,7 +400,7 @@ int CPP_name_to_execute()
       case NONDEFERRED:
 	// compile a nondeferred word
 	if (pNewWord) {
-          xt = (long int) p_sem_compile_nd; // new def inherits nodeferred
+          xt = (long int) p_sem_compile_nd; // new def inherits nondeferred
 	}
 	else {
 	  xt = (long int) p_sem_compile_name; // :NONAME has no inheritance
