@@ -179,51 +179,42 @@ CR .( Backpropagation     Version 2.15-2 )
 \		    BACK-PROPAGATION DATASTRUCTS
 \
 \  FC:	Dave Parker, DDJ October '89		
-\  LC:      Marcel Hendrix, November 18 1989		
-\  LC:      November 22nd, fixed scaling bug		
+\  LC:  Marcel Hendrix, November 18 1989		
+\  LC:    November 22nd, fixed scaling bug		
 \  LC:    November 25th, IT WORKS! Removed SFP	
-\  LC:      June 20th, 1991 for tForth, MHX		
+\  LC:    June 20th, 1991 for tForth, MHX		
 \							
 \ ************************************************** 
 
 \ -- General Utility *******************************************
 
-\	It was VERY DIFFICULT to find the right combination of the
-\	scale factor "1" and the proper way to round-off results. If 
-\	this is done incorrectly, the network will not converge, but 
-\	perform limit-cycling, especially when weights and/or inputs 
-\	are low.
+\  It was VERY DIFFICULT to find the right combination of the
+\  scale factor "1" and the proper way to round-off results. If 
+\  this is done incorrectly, the network will not converge, but 
+\  perform limit-cycling, especially when weights and/or inputs 
+\  are low.
 
 
 \ ================== kForth requires ========================
-
 27 CONSTANT ESC
 25 CONSTANT L/SCR
 
-: @+ ( a -- a' u ) DUP CELL+ SWAP @ ;
-: CELL- ( a -- a2 ) 1 CELLS - ; 
+: @+     ( a -- a' u ) DUP CELL+ SWAP @ ;
+: CELL-  ( a -- a2 ) 1 CELLS - ; 
 : []CELL ( u a -- a2 ) SWAP CELLS + ;
-: ARRAY ( u -- ) CREATE CELLS ALLOT 
-	DOES>  ( index -- value )  []CELL @ ;
-: 'OF ( -- a ) ' >BODY STATE @ IF POSTPONE LITERAL THEN ; IMMEDIATE
+: ARRAY  ( u -- ) 
+    CREATE CELLS ALLOT 
+    DOES>  ( index -- value )  []CELL @ ;
+: 'OF ( -- a ) 
+     ' >BODY STATE @ IF POSTPONE LITERAL THEN ; IMMEDIATE
 : =: CREATE 1 CELLS ?ALLOT ! DOES> a@ ;
+: F1+ 1.0e0 F+ ;
 
-\ Pseudo-random number generation
-variable last-rn
-time&date 2drop 2drop drop last-rn !  \ seed the rng
-
-: lcrng ( -- n ) last-rn @ 31415928 * 2171828 + 31415927 mod dup last-rn ! ;
-
-: next_ran ( -- n | random number from 0 to 255 )
-	0 8 0 do 1 lshift lcrng 1 and or loop ;
-
-: choose ( n -- n' | arbitrarily choose a number between 0 and n-1)
- 	dup next_ran * 255 / swap 1- min ;
+: choose ( u1 -- u2 ) ['] random2p choose-xtrand ;
 
 : >INVERSE< ;
+
 \ ================== end of kForth requires =================
-
-
 
 ( ****	Change "1" for different input range ********************** )
 
@@ -284,28 +275,35 @@ MaxExp Zoom * 	constant +maxix		\ -- ABS(maximum index)
 
 +maxix 2* 1+ table sigval
 	
-\ "1" #2048 <> [IF] CR .( SIGMOID invalid!) QUIT
-\ [THEN]
+"1" #2048 <> [IF] 
+CR .( SIGMOID invalid!) QUIT
+[THEN]
 
 : SIGMOID  \ <x*"1"> -- <1/(1+exp(-x))>
-	"1" Zoom / 
-	/
-	-maxix MAX  +maxix MIN
-	+maxix + CELLS sigval + @ ;
+    "1" Zoom / 
+    /
+    -maxix MAX  +maxix MIN
+    +maxix + CELLS sigval + @ ;
 
-
+0 [IF]
 \ SIGMOID
 \
 \ If you have floating point, you can use it to build the sigmoid function
 
-
 "1" S>F FCONSTANT "fone"	
 
-: FSIGMOID      "fone"			\ <dx*"1"> --- <1/(1+exp(-x))>
-		2SWAP
-		DNEGATE D>F 
-		"fone" F/ FEXP 1e F+ ( F1+) F/
-		FROUND>S ; 		\ 0.."1"
+[DEFINED] FDEPTH [IF]
+: FSIGMOID  \ <dx*"1"> --- <1/(1+exp(-x))>
+    "fone" DNEGATE D>F
+    "fone" F/ FEXP 1e F1+ F/
+    FROUND>S ;
+[ELSE]
+\ integrated stack version
+: FSIGMOID  \ <dx*"1"> --- <1/(1+exp(-x))> 
+    "fone" 2SWAP DNEGATE D>F 
+    "fone" F/ FEXP F1+ F/
+    FROUND>S ; 		\ 0.."1"
+[THEN]
 
 : !table
    +maxix -maxix DO 
@@ -313,19 +311,20 @@ MaxExp Zoom * 	constant +maxix		\ -- ABS(maximum index)
      I -maxix MAX  +maxix MIN
      +maxix + CELLS sigval + !
    LOOP ; 
+[THEN]
 
 \ !table  ( no need to rebuild the table using FSIGMOID )
 
 \ -- Scaled division, using round-off (can't do without!)
 
-: DSCALE	( d -- d/"1")
-	DUP >R DABS 		
-	"1" UM/MOD
-	SWAP "0.5" >= IF 1+ THEN
-	R> 0< IF NEGATE THEN ;
+: DSCALE  ( d -- d/"1")
+    DUP >R DABS 		
+    "1" UM/MOD
+    SWAP "0.5" >= IF 1+ THEN
+    R> 0< IF NEGATE THEN ;
 
-: *SCALE	( n1 n --- n1*n/"1")
-	M* DSCALE ;	
+: *SCALE  ( n1 n --- n1*n/"1")
+    M* DSCALE ;	
 
 
 \ SIGMOID' is the derivative of the Weber-Fechner activation function
@@ -338,10 +337,10 @@ MaxExp Zoom * 	constant +maxix		\ -- ABS(maximum index)
 
 \ -- Data: <error> <output> <#weights> <w11> <w12>....<wij>
 
-: SIGMOID'	( addr --- out*[1-out]*err)
-	2@ SWAP			
-	"1" OVER - *SCALE 
-	*SCALE ;
+: SIGMOID'  ( addr --- out*[1-out]*err)
+    2@ SWAP			
+    "1" OVER - *SCALE 
+    *SCALE ;
 
 
 \ F-4TH compatibility
@@ -376,67 +375,81 @@ One 0 'HiddenOutputs []CELL !	\ -- Initialize dummy
 : >BIT ( input -- bit ) 
    0> IF One ELSE Zero THEN ;
 
-\ -- In case you forgot: 0 ROLL does nothing, 1 ROLL is SWAP, 
-\      2 ROLL is ROT etc.
+\ -- 0 ROLL does nothing, 1 ROLL is SWAP, 2 ROLL is ROT etc.
 
 : sensor,	( ni .. n -- )
-	Sensors 2+ CELLS ?ALLOT
-	/inputs OVER ! CELL+	\ Note: danger if stack overflows!
-	One OVER !		\ dummy, enables inverted outputs.
-	1  Sensors ?DO  CELL+ I ROLL >BIT OVER ! -1 +LOOP DROP ;
+    Sensors 2+ CELLS ?ALLOT
+    /inputs OVER ! CELL+	\ Note: danger if stack overflows!
+    One OVER !		\ dummy, enables inverted outputs.
+    1 Sensors ?DO
+      CELL+ I ROLL 
+      >BIT OVER ! 
+      -1 
+    +LOOP
+    DROP ;
 
 : output,
-	/outputs 1+ CELLS ?ALLOT	
-	/outputs OVER !     	
-	1  /outputs DO  CELL+ I ROLL >BIT OVER ! -1 +LOOP DROP ;
+    /outputs 1+ CELLS ?ALLOT	
+    /outputs OVER !     	
+    1  /outputs DO  
+      CELL+ I ROLL 
+      >BIT OVER ! 
+      -1 
+    +LOOP 
+    DROP ;
 
 
-DEFER DO-IT!		\ -- This word will start the application
-DEFER SHOW-NET		\ -- Display I/O patterns in text format.
+DEFER DO-IT!	\ -- This word will start the application
+DEFER SHOW-NET	\ -- Display I/O patterns in text format.
 
 
-\ -- Noise Module **********************************************
+\ -- Noise Module
 
-DEFER POLLUTE		\ -- Selectively pollute input vectors.
+DEFER POLLUTE	\ -- Selectively pollute input vectors.
 
 19 VALUE Noise
- 0 VALUE ?noise
+FALSE VALUE ?noise
 
-: doNoisy	
-	Noise CHOOSE		\ <0|1> --- <probably the same>
-	0= IF "1" 1-  XOR	\ once in a Noise times
-	THEN ;		  	\ INCORRECT if "1" <> power-of-2
+: doNoisy	\ <0|1> --- <probably the same>
+    Noise CHOOSE
+    0= IF 
+      "1" 1-  XOR  \ once in a Noise times
+    THEN ;	   \ INCORRECT if "1" <> power-of-2
 		
-: Noisy	['] doNoisy IS POLLUTE 
-	TRUE  TO ?noise ; 
+: Noisy	
+    ['] doNoisy IS POLLUTE 
+    TRUE  TO ?noise ; 
 
 : NOOP ;
 
 : Clean	
-	['] NOOP IS POLLUTE 
-	FALSE TO ?noise ;
+    ['] NOOP IS POLLUTE 
+    FALSE TO ?noise ;
 
 Clean
 
-\ -- End Noise Module ******************************************
+\ -- End Noise Module
 
 
 : FILL-inputs  	( 'inputpattern -- )
-	CELL+ 			
-	/inputs 0 ?DO  @+ POLLUTE I 'InputValues []CELL ! LOOP DROP ;
+    CELL+ 			
+    /inputs 0 ?DO 
+      @+ POLLUTE 
+      I 'InputValues []CELL ! 
+    LOOP 
+    DROP ;
 
 
 : FILL-outputs	( 'outputpattern -- )
-	CELL+ 			
-	'DesiredOutputs /outputs CELLS MOVE ;
+    CELL+ 			
+    'DesiredOutputs /outputs CELLS MOVE ;
 
 
 \ Neuron and Layer Defining Words
 \
-\
-\	-- A neuron should have error/output/weightcount fields and a 
-\	-- WeightsArea. Sort of like an OOP:
-\	-- Data: <error> <output> <#weights> <w11> <w12>....<wij>
+\  -- A neuron should have error/output/weightcount fields and a 
+\  -- WeightsArea. Sort of like an OOP:
+\  -- Data: <error> <output> <#weights> <w11> <w12>....<wij>
 \
 
 0 VALUE %action			\ -- Dispatches messages
@@ -444,88 +457,98 @@ Clean
 : EXCITE      0 TO %action ;	\ -- Neuron fires
 : TRIMWEIGHTS 1 TO %action ;	\ -- Neuron adjusts its weights
 : ZEROWEIGHTS 2 TO %action ;	\ -- Neuron randomly fills its weights
-: DELTA	     3 TO %action ;	\ -- Neuron computes Wab*Opj'*error
+: DELTA	      3 TO %action ;	\ -- Neuron computes Wab*Opj'*error
 : NEWERROR    4 TO %action ;	\ -- Set a Neuron's error field
 : 'WEIGHTS    5 TO %action ;	\ -- Address of a Neuron's WeightArea
-: CELL	     6 TO %action ;	\ -- Neuron's pfa
+: CELL        6 TO %action ;	\ -- Neuron's pfa
  
 2VARIABLE excitement
 VARIABLE S
 VARIABLE T
 
-: (XTC)		0 S>D excitement 2! 	\ <'input> <addr> --- <n>
-		0 OVER !  		\ clear error field
-		2 CELLS + @+ SWAP S !	\ 'weights and #weights
-					\ == Update(Backward) ==
-		0 ?DO @+		\ Get input value
-		      I S a@ []CELL @	\ Get weight
-		      M* excitement 2@
-		      D+ excitement 2!
-		LOOP DROP		\ remove 'input
+: (XTC)	
+    0 S>D excitement 2!
+    0 OVER !  		\ clear error field
+    2 CELLS + @+ SWAP S !	\ 'weights and #weights
+				\ == Update(Backward) ==
+    0 ?DO 
+      @+		\ Get input value
+      I S a@ []CELL @	\ Get weight
+      M* excitement 2@
+      D+ excitement 2!
+    LOOP 
+    DROP		\ remove 'input
 		excitement 2@ DSCALE 	\ result is factor "1" too high
 		SIGMOID 		\ square-off sum
 		DUP S a@ 2 CELLS - ! ; 	\ update output field and leave result.
 
 
-: (ADJ)		DUP 3 CELLS + T !	\ <'input> <size> <addr> --- <>
-		SIGMOID'		\ output*(1-output)*error..
-		LearningRate 100 */ S !	\ ..times learning rate
-		T a@ CELL- @		\ #weights
-		0 ?DO @+ S @ *SCALE	\ times input value
-		      I T a@ []CELL +!	\ increment weight
-		 LOOP 
-		DROP ;
+: (ADJ)  \ <'input> <size> <addr> --- <>
+    DUP 3 CELLS + T ! 
+    SIGMOID'                 \ output*(1-output)*error..
+    LearningRate 100 */ S !  \ ..times learning rate
+    T a@ CELL- @             \ #weights
+    0 ?DO
+      @+ S @ *SCALE	\ times input value
+      I T a@ []CELL +!	\ increment weight
+    LOOP
+    DROP ;
 
 
-: (CLEAR)	2 CELLS + @+  		\ <addr> --- <>
-		0 ?DO [ "0.5" 4 / 1+ ] LITERAL CHOOSE 
-		      [ "0.5" 8 /    ] LITERAL - 
-		      OVER I CELLS + ! 
-		 LOOP DROP ;
+: (CLEAR)  \ <addr> --- <>
+    2 CELLS + @+  
+    0 ?DO 
+      [ "0.5" 4 / 1+ ] LITERAL CHOOSE 
+      [ "0.5" 8 /    ] LITERAL - 
+      OVER I CELLS + ! 
+    LOOP
+    DROP ;
 
 
-: (DELTA)	SWAP 3 +		\ <ix> <addr> --- <double_delta>
-		 OVER []CELL @		\ get weight ("1"^2  too high)
-		SWAP SIGMOID' M* ;	\ (output)(1-output)*error*weight
+: (DELTA)   \ <ix> <addr> --- <double_delta>
+    SWAP 3 +
+    OVER []CELL @	\ get weight ("1"^2  too high)
+    SWAP SIGMOID' M* ;	\ (output)(1-output)*error*weight
 
 
 
 \ -- Data: <error> <output> <#weights> <w11> <w12>....<wij>
 
-: LAYER	CREATE	
-(
-	    2DUP 		  	\ <#neurons> <inputwidth> --- <>
-	    3 + CELLS DUP ,		\ size of neuron structure in bytes
-	    * ALLOCATE ?ALLOCATE DUP , 	\ #neurons, inputwidth, address
-)
-	    2DUP 3 + CELLS DUP >R	\ n w n w3cells 
-	    * 2 CELLS + ?ALLOT		\ n w a
-	    R> OVER !			\ n w a
-	    CELL+ DUP CELL+ OVER !	   
-	    CELL+			\ #neurons, inputwidth, address
-	    -ROT S ! 			\ init length fields
-	    0 ?DO  S @ 3 + CELLS  I *  
-		   2 CELLS + OVER + 
-		   S @ SWAP !
-	     LOOP
-	    One SWAP CELL+ !		\ Set output of (possibly dummy) to "1"
-	DOES>	
-	    DUP @ 			\ <ix> <'{size,addr}> --- <?>
-	    SWAP CELL+ a@ SWAP		
-	    ROT * +  			\ <ix> <addr> <size> --- <addr>
-	    %action 0 TO %action
-	    CASE
-		 0  OF  (XTC)     ENDOF	  ( excite )
-		 1  OF  (ADJ)     ENDOF	  ( trimweights )
-		 2  OF  (CLEAR)   ENDOF   ( zeroweights )
-		 3  OF  (DELTA)   ENDOF   ( delta )
-		 4  OF  !         ENDOF   ( newerror )
-		 5  OF  3 CELLS + ENDOF   ( 'weights )
-		 6  OF 		  ENDOF   ( cell )
-		 DUP ABORT" Invalid Layer Command"
-	    ENDCASE ;
-
-
+: LAYER	
+    CREATE
+[ 0 ] [IF]	
+    2DUP 		  	\ <#neurons> <inputwidth> --- <>
+    3 + CELLS DUP ,		\ size of neuron structure in bytes
+    * ALLOCATE ?ALLOCATE DUP , 	\ #neurons, inputwidth, address
+[ELSE]
+    2DUP 3 + CELLS DUP >R	\ n w n w3cells 
+    * 2 CELLS + ?ALLOT		\ n w a
+    R> OVER !			\ n w a
+    CELL+ DUP CELL+ OVER !	   
+    CELL+			\ #neurons, inputwidth, address
+[THEN]
+    -ROT S ! 			\ init length fields
+    0 ?DO  
+      S @ 3 + CELLS  I *  
+      2 CELLS + OVER + 
+      S @ SWAP !
+    LOOP
+    One SWAP CELL+ !		\ Set output of (possibly dummy) to "1"
+    DOES>	
+      DUP @ 			\ <ix> <'{size,addr}> --- <?>
+      SWAP CELL+ a@ SWAP		
+      ROT * +  			\ <ix> <addr> <size> --- <addr>
+      %action 0 TO %action
+      CASE
+        0  OF  (XTC)     ENDOF	  ( excite )
+        1  OF  (ADJ)     ENDOF	  ( trimweights )
+        2  OF  (CLEAR)   ENDOF   ( zeroweights )
+        3  OF  (DELTA)   ENDOF   ( delta )
+        4  OF  !         ENDOF   ( newerror )
+        5  OF  3 CELLS + ENDOF   ( 'weights )
+        6  OF 		  ENDOF   ( cell )
+        DUP ABORT" Invalid Layer Command"
+      ENDCASE ;
 
 
 \ Examples:
@@ -537,55 +560,52 @@ VARIABLE T
 * )
 
 
+\  ****	Define the layers.
 
-\  ****	Define the layers. ******************************************
+/hidden  ( #neurons ) /inputs ( inputs ) LAYER Hiddenlayer
+/outputs ( #neurons ) /hidden ( inputs ) LAYER Outputlayer
 
-	/hidden  ( #neurons ) /inputs ( inputs ) LAYER Hiddenlayer
-	/outputs ( #neurons ) /hidden ( inputs ) LAYER Outputlayer
-
-			 ( * End of Structures * ) 		
-
+( * End of Structures * ) 		
 
 
-: Update(Forward)			\ <'inputvector> --- <>
-	FILL-inputs
+: Update(Forward)   \ <'inputvector> --- <>
+    FILL-inputs
 
-	/hidden 
-	1 ?DO
-	    'InputValues EXCITE I Hiddenlayer  
-	    I 'HiddenOutputs []CELL !
-	 LOOP
+    /hidden 1 ?DO
+      'InputValues EXCITE 
+      I Hiddenlayer  
+      I 'HiddenOutputs []CELL !
+    LOOP
  
-	One 0 'HiddenOutputs []CELL !
-	/outputs 
-	0 ?DO
- 	    'HiddenOutputs EXCITE I Outputlayer  
-	    I 'ActualOutputs []CELL !
-	 LOOP ;
+    One 0 'HiddenOutputs []CELL !
 
-: Update(Backward)			\ <'outputvector> --- <>
-	FILL-outputs
-	/outputs
-	0 ?DO
-	      I DesiredOutputs I ActualOutputs -  
-	      NEWERROR I Outputlayer
-	 LOOP
-	/hidden
-	1 ?DO 0 S>D
-	      /outputs 
-	      0 ?DO
-		   J DELTA I Outputlayer  D+
-	       LOOP
-	      DSCALE NEWERROR I Hiddenlayer
-	 LOOP 
-	/outputs
-	0 ?DO
-		'HiddenOutputs TRIMWEIGHTS I Outputlayer
-	 LOOP
-	/hidden 
-	1 ?DO
-		'InputValues TRIMWEIGHTS I Hiddenlayer
-	 LOOP ;
+    /outputs 0 ?DO
+      'HiddenOutputs EXCITE 
+      I Outputlayer  
+      I 'ActualOutputs []CELL !
+    LOOP ;
+
+: Update(Backward)  \ <'outputvector> --- <>
+    FILL-outputs
+    /outputs 0 ?DO
+      I DesiredOutputs I ActualOutputs - NEWERROR 
+      I Outputlayer
+    LOOP
+    /hidden 1 ?DO 
+      #0.
+      /outputs 0 ?DO
+        J DELTA I Outputlayer  D+
+      LOOP
+      DSCALE NEWERROR I Hiddenlayer
+    LOOP 
+    /outputs 0 ?DO
+      'HiddenOutputs TRIMWEIGHTS 
+      I Outputlayer
+    LOOP
+    /hidden 1 ?DO
+      'InputValues TRIMWEIGHTS 
+      I Hiddenlayer
+    LOOP ;
 
 ( *
   An output is considered 'on'  when it is >= One-Criteria
@@ -598,24 +618,29 @@ VARIABLE T
 * )
 
 
-\ ?DEF HighlyAccurate [IF] "1" #30 /		( not encouraged )
-\		    [ELSE] "1" #20 /		( works best )
-\		    [THEN] =: Criteria
+[DEFINED] HighlyAccurate [IF]
+"1" #30 /  ( not encouraged )
+[ELSE] 
+"1" #20 /  ( works best )
+[THEN]
+VALUE Criteria
 
-20 VALUE Criteria
-
-: DIFFERENCES				\  <> --- <#errors>
-		0 /outputs
-		0 ?DO	I DesiredOutputs  I ActualOutputs 
-			OVER One = IF        - Criteria >
-			 	   ELSE SWAP - Criteria >
-				   THEN
-			1 AND +
-		 LOOP ;
+: DIFFERENCES	\  <> --- <#errors>
+    0 /outputs
+    0 ?DO
+      I DesiredOutputs  
+      I ActualOutputs 
+      OVER One = IF 
+        - Criteria >
+      ELSE 
+        SWAP - Criteria >
+      THEN
+      1 AND +
+    LOOP ;
  
 0 VALUE #Items
 
-CREATE	Items	256  2 CELLS  *  ALLOT
+CREATE  Items  256  2 CELLS  *  ALLOT
 
 : ClearLayers ( -- )
     /outputs 0 ?DO  
@@ -648,28 +673,31 @@ CREATE	Items	256  2 CELLS  *  ALLOT
     |error| 0= ;
 
 
-		 ( * Formatting and Querying * ) 
+( * Formatting and Querying * ) 
 
 
 : .BIT					    	\ <n> --- <>		
     "0.5" >= 1 AND [CHAR] 0 + EMIT ;
 
-: .OUTPUTBIT	DUP				\ <n> --- <%error>
-		Zero Criteria + 
-		One  Criteria -
-		WITHIN DUP >R
-		IF >INVERSE< THEN		\ INVERSE if NOT sure about it.
-		DUP "0.5" >= IF    One - ABS  100  One */ SWAP [CHAR] 1
-		             ELSE Zero - ABS  100 Zero */ SWAP [CHAR] 0 
-		             THEN EMIT
-		R> IF >INVERSE< THEN ;
+: .OUTPUTBIT	
+    DUP				\ <n> --- <%error>
+    Zero Criteria + 
+    One  Criteria -
+    WITHIN DUP >R
+    IF >INVERSE< THEN		\ INVERSE if NOT sure about it.
+    DUP "0.5" >= IF    
+      One - ABS  100  One */ SWAP [CHAR] 1
+    ELSE Zero - ABS  100 Zero */ SWAP [CHAR] 0 
+    THEN EMIT
+    R> IF >INVERSE< THEN ;
 
 
-: PRINT		1000 "1" */ 			\ <n> --- <>
-		S>D  DUP >R DABS
-		<#  # # # [CHAR] . HOLD # 
-		R> 0< IF  [CHAR] - ELSE BL  THEN HOLD
-		#>  TYPE SPACE ;
+: PRINT   \ <n> --- <>
+    1000 "1" */ 
+    S>D  DUP >R DABS
+    <#  # # # [CHAR] . HOLD # 
+    R> 0< IF [CHAR] - ELSE BL THEN 
+    HOLD #>  TYPE SPACE ;
 
 
 22 VALUE itMAX		
@@ -687,18 +715,28 @@ CREATE	Items	256  2 CELLS  *  ALLOT
 : HiddenRANGE	/hidden  hiMAX MIN  hiMIN ;
 
 
-: .STATUS	CR
-		ItemRANGE
-		  ?DO   Items I 2 CELLS * + 
-		        DUP CELL+ a@ SWAP a@ 
-			FILL-outputs Update(Forward)
-			InputRANGE  DO  I InputValues .BIT
-	 			  LOOP  SPACE [CHAR] | EMIT SPACE
-			OutputRANGE DO  I ActualOutputs PRINT
-			 	  LOOP  [CHAR] | EMIT SPACE
-			OutputRANGE DO  I DesiredOutputs .BIT
-				  LOOP  CR
-		 LOOP ; 
+: .STATUS
+    CR
+    ItemRANGE ?DO 
+      Items I 2 CELLS * + 
+      DUP CELL+ a@ SWAP a@ 
+      FILL-outputs Update(Forward)
+
+      InputRANGE  DO 
+        I InputValues .BIT
+      LOOP  
+      SPACE [CHAR] | EMIT SPACE
+
+      OutputRANGE DO 
+        I ActualOutputs PRINT
+      LOOP  
+      [CHAR] | EMIT SPACE
+
+      OutputRANGE DO 
+        I DesiredOutputs .BIT
+      LOOP  
+      CR
+    LOOP ; 
 
 
 TRUE  VALUE ?display
@@ -706,43 +744,41 @@ FALSE VALUE ?status
 0     VALUE ?dot
 3     VALUE RefreshRate
 
-
-: .STATUS?	?dot RefreshRate MOD 0=
-		?dot 1+ TO ?dot 
-		?status AND ?display AND
-		IF .STATUS THEN ;
+: .STATUS?
+    ?dot RefreshRate MOD 0=
+    ?dot 1+ TO ?dot 
+    ?status AND ?display AND
+    IF .STATUS THEN ;
 
 : CONTAINS				\ 3 -rd CELL of Hiddenlayer CONTAINS
 					\ <addr> --- <>  Diagnostic tool
-		CR ." error | output | #weights | Weights " CR
-		@+      5 .R 3 SPACES
-		@+      6 .R 3 SPACES
-		@+ DUP >R 6 .R 5 SPACES
-		R> 0 ?DO  @+ 6 .R SPACE  LOOP DROP ; 
-
+    CR ." error | output | #weights | Weights " CR
+    @+      5 .R 3 SPACES
+    @+      6 .R 3 SPACES
+    @+ DUP >R 6 .R 5 SPACES
+    R> 0 ?DO  @+ 6 .R SPACE  LOOP DROP ; 
 
 : DEC. ( n -- ) . ;
 
-: .PARAMETERS				\ <n> --- <n+1>
-		?noise IF 
-		  >INVERSE<
-		  ." Corruptions : 1 in " Noise DEC. 5 SPACES
-		  >INVERSE<
-		THEN ;
+: .PARAMETERS  \ <n> --- <n+1>
+    ?noise IF 
+      ." Corruptions : 1 in " Noise . 5 SPACES
+    THEN ;
 
-: WHATIF?				\ <'inputvector> --- <>
-		Update(Forward)		\ assume InputValues set.
-		SHOW-NET .PARAMETERS ;
+: WHATIF?  \ <'inputvector> --- <>
+    Update(Forward)  \ assume InputValues set.
+    SHOW-NET 
+    .PARAMETERS ;
 
-: REACT WHATIF? ;		\ <'inputvector> --- <>
+: REACT WHATIF? ;  \ <'inputvector> --- <>
 
-: .HEADER	?display 0= IF EXIT THEN
-		PAGE ( HOME) 
-		?status  0= IF CR EXIT THEN
-		>INVERSE<
-		  ." Input | Output | Target  (LearningRate = " 
-		  LearningRate 4 .R [CHAR] ) EMIT  
-		>INVERSE< CR CR ;
+: .HEADER	
+    ?display 0= IF EXIT THEN
+    PAGE ( HOME) 
+    ?status  0= IF CR EXIT THEN
+    ." Input | Output | Target  (LearningRate = " 
+    LearningRate 4 .R [CHAR] ) EMIT  
+    CR CR ;
 
 : .WEIGHTS ( -- )	
     cr ." --- Hidden Layer Weights ---" cr 
@@ -752,7 +788,8 @@ FALSE VALUE ?status
       /inputs ipMAX > IF ."  ..." THEN
     LOOP		 
     cr
-	/hidden hiMAX > IF ."  :      :      :" THEN
+
+    /hidden hiMAX > IF ."  :      :      :" THEN
     cr ." --- Output Layer Weights ---" cr
     OutputRANGE DO
       cr I 'WEIGHTS Outputlayer  
@@ -792,7 +829,7 @@ FALSE VALUE ?status
     .STATUS? .WEIGHTS? ;
 
 
-		 ( * Words to BUILD the net * )
+( * Words to BUILD the net * )
 
 
 variable attempts
@@ -807,9 +844,9 @@ variable attempts
     LOOP
     ?display IF  0 L/SCR 5 - AT-XY  ELSE  CR  THEN
     attempts @ Retries = IF
-	  ." Problems..." CR FALSE
-	ELSE TRUE THEN ;
-
+      ." Problems..." CR FALSE
+    ELSE TRUE 
+    THEN ;
 
 
 0 VALUE ?converged
@@ -820,20 +857,22 @@ variable attempts
      learned-all? IF
        ?converged 1+ TO ?converged
      ELSE   
-	    0 TO ?converged LEAVE
+       0 TO ?converged LEAVE
      THEN
    LOOP 
    ?converged 4 = ;
 
 
 : drill  ( -- )		
-   ?display IF  PAGE  
-   ELSE ." .. working .. " CR
+   ?display IF 
+     PAGE  
+   ELSE 
+     ." .. working .. " CR
    THEN  
    BEGIN
      exam-ok? 0=
-	WHILE	ClearLayers
-	REPEAT	;
+   WHILE  ClearLayers
+   REPEAT	;
 
 	
 ( * End of Source * ) 

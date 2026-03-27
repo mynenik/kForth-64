@@ -58,5 +58,10 @@ variable seed
     random2 255 and  8 lshift or
     random2 255 and or ;
 
+-1 constant MAX-UINT
+\ Return a uniformly-distributed random number between 
+\ 0 and u using the execution token for a PRNG.
+: choose-xtrand ( u1 xtrand -- urand )
+    execute um* MAX-UINT um/mod nip ;
 
 base !
