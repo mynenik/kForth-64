@@ -16,6 +16,7 @@
  *             :   VOCABULARY and sufficient dictionary space.
  *             : Sep 26, 2022, km; remove dependency on specific implementation
  *             :   of PTR; use POSTPONE instead of EVALUATE.
+ *             : Apr  4, 2026, km; replace "bl word count" with PARSE-NAME
  * )
 
 \ version 1.1a, 2003-04-15
@@ -202,10 +203,10 @@ a list member.
 	>R count $>atom$ R> cons ;
 
 : quote-atom$ ( "name" -- hndl )	\ Lisp "quote-atom-string"
-	bl word count $>atom$ ;
+	parse-name $>atom$ ;
 
 : (quote-number)  ( "numstr" -- list )     \ literal number-atoms go
-        bl word count  >d? drop d>s  0 cons ;  \ into the list space with cdr=0
+        parse-name  >d? drop d>s  0 cons ;  \ into the list space with cdr=0
        
 : $>hndl ( caddr u -- hndl )
 	2dup >d? 
@@ -217,11 +218,11 @@ a list member.
 	  $>atom$ then ;
   
 : quote-atom    ( "str" -- hndl )       \ LISP  "quote-atom"
-        bl word count $>hndl ;
+        parse-name $>hndl ;
 
 : (quote-dot)   ( -- hndl )
         quote-atom  
-        bl word drop \ consume the trailing ')'
+        parse-name 2drop \ consume the trailing ')'
 ;
 
 : car ( list -- ^value )                        \ LISP  "car"
@@ -559,7 +560,7 @@ nil ptr temp-list
 	false to  ]?
 	nil
 	begin
-	  bl word count dup   \ list c-addr u u 
+	  parse-name dup   \ list c-addr u u 
 	  if  over c@
 	    case		\ list c-addr u char
 	      [char] (  of  2drop recurse swap cons false  endof
@@ -586,7 +587,7 @@ nil ptr temp-list
 
 
 : quote ( "str" -- list|^val )            \ LISP  "quote"
-        bl word count dup
+        parse-name dup
 	IF  over c@
           CASE 
 	    [char] (  of  2drop quote-list  endof
