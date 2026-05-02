@@ -296,11 +296,11 @@
 	STFSP
 	fcompl (%rbx)
 	fnstsw %ax
-	andb $65, %ah
+	andb $69, %ah
 	\logic \arg, %ah
 	movq $0, %rax
 	\set %al
-	negq %rax
+	neg  %rax
         mov  %rcx, %rbx   # restore DSP
 	movq %rax, (%rbx)
 	DEC_DSP
@@ -2961,31 +2961,60 @@ L_fne:
 	FREL_DYADIC xorb $64 setnz
         STSP
 	NEXT
+
 L_feq:
         LDSP
-	FREL_DYADIC andb $64 setnz
+	FREL_DYADIC xorb $64 setz
         STSP
 	NEXT
+
 L_flt:
         LDSP
 	FREL_DYADIC andb $65 setz
         STSP
 	NEXT
+
 L_fgt:
         LDSP
-	FREL_DYADIC andb $1 setnz
+	FREL_DYADIC xorb $1 setz
         STSP
-	NEXT	
+	NEXT
+
 L_fle:
         LDSP
-	FREL_DYADIC xorb $1 setnz
+	FREL_DYADIC andb $5 setz
         STSP
 	NEXT
+
 L_fge:
         LDSP
-	FREL_DYADIC andb $65 setnz
-        STSP
+        mov  %rbx, %rcx  # save DSP
+	LDFSP
+	add %rax, %rbx
+	fldl (%rbx)
+	add %rax, %rbx
+	STFSP
+	fcompl (%rbx)
+	fnstsw %ax
+	andb $69, %ah
+	jz fge_false
+	cmpb $69, %ah
+	jz fge_false
+	xor %rax, %rax
+	movb $1, %al
+	jmp fge_cont
+fge_false:
+	xor %rax, %rax
+fge_cont:
+	neg  %rax
+        mov  %rcx, %rbx   # restore DSP
+	mov  %rax, (%rbx)
+	DEC_DSP
+	STD_IVAL
+	xor  %rax, %rax
+	STSP
 	NEXT
+
 L_fzeroeq:
 	LDFSP
 	add %rax, %rbx
