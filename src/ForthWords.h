@@ -224,7 +224,7 @@ WordTemplate ForthWords[] =
     { "VMTHROW",   OP_VMTHROW,      0 },
     { "USLEEP",    OP_USLEEP,       0 },
     { "EXECUTE-BC", OP_EXECUTE_BC,  0 },
-    { "EXECUTE",   OP_EXECUTE,      0 },
+    { "EXECUTE",   OP_EXECUTE,      NONDEFERRED },
     { "CALL",      OP_CALL,         0 },
     { "SYSTEM",    OP_SYSTEM,       0 },
 #ifndef _WIN32_
