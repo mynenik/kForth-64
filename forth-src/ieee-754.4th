@@ -56,7 +56,7 @@
 \ are not part of the proposals in Ref. 1.
 \
 \ K. Myneni, 2020-08-20
-\ Revs. 2020-08-27, 2022-08-02, 2026-02-08
+\ Revs. 2020-08-27, 2022-08-02, 2026-02-08, 2026-08-04
 \
 \ References:
 \ 1. David N. Williams, Proposal Drafts for Optional IEEE 754
@@ -66,6 +66,12 @@
 BASE @
 DECIMAL
 0e fconstant F=ZERO
+ 1023 constant DP_EXPONENT_BIAS
+ 2046 constant DP_EXPONENT_MAX_NORM   \ max exponent for normalized numbers
+    1 constant DP_EXPONENT_MIN_NORM   \ min exponent for normalized numbers
+
+1 cells 4 = constant 32-bit?
+1 cells 8 = constant 64-bit?
 HEX
 
 
@@ -77,14 +83,27 @@ HEX
 \   2  fraction out of range
 fvariable temp
 
+32-bit? [IF]
 : MAKE-IEEE-DFLOAT ( signbit udfraction uexp -- r nerror )
     dup 800 u< invert IF 2drop 2drop F=ZERO 1 EXIT THEN
-    14 lshift 3 pick 1F lshift or >r
-    dup 100000 u< invert IF 
+    14 lshift 
+    3 pick 1F lshift or >r
+    2dup 0 100000  du< invert IF 
       r> 2drop 2drop F=ZERO 2 EXIT 
     THEN
     r> or [ temp 4 + ] literal L! temp L!
     drop temp df@ 0 ;
+[ELSE]
+: MAKE-IEEE-DFLOAT ( signbit udfraction uexp -- r nerror )
+    dup 800 u< invert IF 2drop 2drop F=ZERO 1 EXIT THEN
+    34 lshift 
+    3 pick 3F lshift or >r    \ set sign bit   
+    2dup $10000000000000. du< invert IF
+      r> 2drop 2drop F=ZERO 2 EXIT
+    THEN drop 
+    r> or temp !
+    drop temp df@ 0 ;
+[THEN]
 
 : FSIGNBIT ( F: r -- ) ( -- minus? )
     temp df! [ temp 4 + ] literal UL@ 80000000 and 0<> ;
@@ -92,14 +111,23 @@ fvariable temp
 : FEXPONENT ( F: r -- ) ( -- u )
     temp df! [ temp 4 + ] literal UL@ 14 rshift 7FF and ;
 
+32-bit? [IF]
 : FFRACTION ( F: r -- ) ( -- ud )
     temp df! temp UL@  [ temp 4 + ] literal UL@ 000FFFFF and ;
-
+[ELSE]
+: FFRACTION ( F: r -- ) ( -- ud)
+    temp df! temp @ 000FFFFFFFFFFFFF and 0 ;
+[THEN]
+    
 : FINITE?  ( F: r -- ) ( -- [normal|subnormal]? ) fexponent 7FF <> ;
 
-: FNORMAL? ( F: r -- ) ( -- normal? )  fexponent 0<> ;
+: FNORMAL? ( F: r -- ) ( -- normal? )
+    fdup  
+    fexponent 1 DP_EXPONENT_MAX_NORM 1+ within >r
+    F0= r> or ;
 
-: FSUBNORMAL? ( F: r -- ) ( -- subnormal? )  fexponent 0= ;
+: FSUBNORMAL? ( F: r -- ) ( -- subnormal? ) 
+    fdup ffraction D0= invert >r fexponent 0= r> and ;
 
 : FINFINITE? ( F: r -- ) ( -- [+/-]Inf? )
    finite? invert ; 
@@ -119,7 +147,7 @@ fvariable temp
 FINVALID FDIVBYZERO or FOVERFLOW or FUNDERFLOW or FINEXACT or  
 constant ALL-FEXCEPTS
 
-1 cells 4 = [IF]
+32-bit? [IF]
 
 [DEFINED] getFPUstatusX86 [IF]
 
@@ -176,3 +204,66 @@ true  1 0 7FF make-ieee-dfloat 0= [IF] fconstant -NAN [ELSE] fdrop [THEN]
 
 
 BASE !
+
+[DEFINED] test-code? [IF]
+test-code? [IF]
+[UNDEFINED] T{ [IF] include ttester [THEN]
+
+BASE @
+DECIMAL
+fvariable r1
+fvariable r2
+-4.450147717014402272114819593418263951869639092703291296e-308 FCONSTANT DFLOAT_MIN
+ 1.797693134862315708145274237317043567980705675258449966e+308 FCONSTANT DFLOAT_MAX
+
+TESTING FSIGNBIT FFRACTION FEXPONENT
+DECIMAL
+t{  0.0e0   FSIGNBIT  -> false }t
+t{ -0.0e0   FSIGNBIT  -> true  }t
+t{  1.0e-3  FSIGNBIT  -> false }t
+t{ -1.0e+3  FSIGNBIT  -> true  }t
+t{ +INF     FSIGNBIT  -> false }t
+t{ -INF     FSIGNBIT  -> true  }t
+t{ DFLOAT_MIN  FSIGNBIT  -> true  }t
+t{ DFLOAT_MAX  FSIGNBIT  -> false }t
+
+t{  0.0e0   FFRACTION  -> 0 S>D }t
+t{ -0.0e0   FFRACTION  -> 0 S>D }t
+t{  1.0e0   FFRACTION  -> 0 S>D }t
+t{ -1.0e0   FFRACTION  -> 0 S>D }t
+
+HEX
+64-bit? [IF]
+t{ DFLOAT_MIN  FFRACTION  ->  FFFFFFFFFFFFF S>D }t
+t{ DFLOAT_MAX  FFRACTION  ->  FFFFFFFFFFFFF S>D }t
+[ELSE]
+t{ DFLOAT_MIN  FFRACTION  ->  FFFFFFFF FFFFF }t
+t{ DFLOAT_MAX  FFRACTION  ->  FFFFFFFF FFFFF }t
+[THEN]
+
+DECIMAL
+t{ 0.0e0   FEXPONENT  ->  0 }t
+t{ 1.0e-1  FEXPONENT  DP_EXPONENT_BIAS -  ->  -4  }t
+t{ DFLOAT_MIN  FEXPONENT  ->  DP_EXPONENT_MIN_NORM }t
+t{ DFLOAT_MAX  FEXPONENT  ->  DP_EXPONENT_MAX_NORM }t 
+
+TESTING MAKE-IEEE-DFLOAT
+HEX
+64-bit? [IF]
+t{ 1 FFFFFFFFFFFFF 0   1 MAKE-IEEE-DFLOAT -> DFLOAT_MIN 0 rx}t
+t{ 0 FFFFFFFFFFFFF 0 7FE MAKE-IEEE-DFLOAT -> DFLOAT_MAX 0 rx}t
+t{ 1.508e1 r1 df! -> }t
+t{ r1 df@ fsignbit r1 df@ ffraction r1 df@ fexponent MAKE-IEEE-DFLOAT -> 1.508e1 0 rx}t
+[ELSE]
+t{ 1 FFFFFFFF FFFFF    1 MAKE-IEEE-DFLOAT -> DFLOAT_MIN 0 rx}t
+t{ 0 FFFFFFFF FFFFF  7FE MAKE-IEEE-DFLOAT -> DFLOAT_MAX 0 rx}t
+[THEN]
+DECIMAL
+t{ 1.508e1 r1 df! -> }t
+t{ r1 df@ fsignbit r1 df@ ffraction r1 df@ fexponent MAKE-IEEE-DFLOAT -> 1.508e1 0 rx}t
+BASE !
+
+[THEN]
+[THEN]
+
+
