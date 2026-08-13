@@ -95,8 +95,11 @@
 \ Revisions:
 \ 2024-07-26 km, ported to kForth module, added Glossary, 
 \   revised comments, added test code, revised defn of BIG 
-\
-CR .( BIG               V1.1           26 July      2026  LFZ )
+\ 2024-08-12 km, increased size of buffer BIG_STRING from 256 chars
+\   to the constant BIG_STRING_MAX_CHARS which currently has the value
+\   16384. Revised <BIG# and #BIG> to use BIG_STRING_MAX_CHARS constant.
+
+CR .( BIG               V1.2           12 August    2026  LFZ, KM)
 BEGIN-MODULE
 BASE @  DECIMAL             \ Housekeeping
 
@@ -476,15 +479,15 @@ big_digit_pointer big_dividend
 \ The words <big# through big#s and big. are adapted from
 \ descriptions of their pictured numeric output string counterparts
 \ in "All About Forth" 2nd ed by Glen Haydon.  Used with permission.
-
-CREATE big_string 256 CHARS ALLOT
+16384 constant BIG_STRING_MAX_CHARS
+CREATE big_string BIG_STRING_MAX_CHARS CHARS ALLOT
 
 VARIABLE bighld
 
 \ "less big number sign"
 \ Initialize the big number pictured numeric output area
 : <big# ( --) 
-  big_string 256 CHARS + bighld ! ;  \ Haydon p 67
+  big_string BIG_STRING_MAX_CHARS CHARS + bighld ! ;  \ Haydon p 67
 
 \ Append character c to the beginning of the big pictured 
 \ numeric output string
@@ -495,7 +498,7 @@ VARIABLE bighld
 \ End big number pictured output conversion
 : #big> ( addr1 -- addr2 +n) 
   DROP  bighld a@            \ Start of string
-  big_string 256 CHARS +     \ One past end of string
+  big_string BIG_STRING_MAX_CHARS CHARS +     \ One past end of string
   OVER - 1 CHARS / ;         \ Length of string
 
 \ "big number-sign"
