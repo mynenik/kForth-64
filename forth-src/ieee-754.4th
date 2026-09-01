@@ -56,7 +56,7 @@
 \ are not part of the proposals in Ref. 1.
 \
 \ K. Myneni, 2020-08-20
-\ Revs. 2020-08-27, 2022-08-02, 2026-02-08, 2026-08-04
+\ Revs. 2020-08-27, 2022-08-02, 2026-02-08, 2026-08-04, 2026-09-01
 \
 \ References:
 \ 1. David N. Williams, Proposal Drafts for Optional IEEE 754
@@ -119,7 +119,8 @@ fvariable temp
     temp df! temp @ 000FFFFFFFFFFFFF and 0 ;
 [THEN]
     
-: FINITE?  ( F: r -- ) ( -- [normal|subnormal]? ) fexponent 7FF <> ;
+: FINITE?  ( F: r -- ) ( -- [normal|subnormal]? ) 
+    fexponent 7FF <> ;
 
 : FNORMAL? ( F: r -- ) ( -- normal? )
     fdup  
@@ -130,10 +131,18 @@ fvariable temp
     fdup ffraction D0= invert >r fexponent 0= r> and ;
 
 : FINFINITE? ( F: r -- ) ( -- [+/-]Inf? )
-   finite? invert ; 
+    fdup fexponent 7FF = >r ffraction D0= r> and ; 
 
 : FNAN? ( F: r -- ) ( -- nan? ) 
-   fdup FEXPONENT 7FF = >r FFRACTION D0= invert r> and ; 
+    fdup fexponent 7FF = >r ffraction D0= invert r> and ; 
+
+: FCOPYSIGN ( F: r1 r2 -- r3 )
+    fswap FSIGNBIT >r temp df!
+    [ temp 4 + ] literal UL@
+    r> IF  80000000 or  ELSE  7fffffff and  THEN
+    [ temp 4 + ] literal L!
+    temp df@
+;
 
 
 \ Exception bits in fpu status word
@@ -166,9 +175,6 @@ constant ALL-FEXCEPTS
 ;
 
 : FDISABLE ( excepts -- )
-;
-
-: FCOPYSIGN ( F: r1 r2 -- r3 )
 ;
 
 : FNEARBYINT ( F: r1 -- r2 )
@@ -213,8 +219,8 @@ BASE @
 DECIMAL
 fvariable r1
 fvariable r2
--4.450147717014402272114819593418263951869639092703291296e-308 FCONSTANT DFLOAT_MIN
- 1.797693134862315708145274237317043567980705675258449966e+308 FCONSTANT DFLOAT_MAX
+-4.4501477170144022e-308 FCONSTANT DFLOAT_MIN
+ 1.7976931348623157e+308 FCONSTANT DFLOAT_MAX
 
 TESTING FSIGNBIT FFRACTION FEXPONENT
 DECIMAL
@@ -259,6 +265,61 @@ t{ 0 FFFFFFFF FFFFF  7FE MAKE-IEEE-DFLOAT -> DFLOAT_MAX 0 rx}t
 DECIMAL
 t{ 1.508e1 r1 df! -> }t
 t{ r1 df@ fsignbit r1 df@ ffraction r1 df@ fexponent MAKE-IEEE-DFLOAT -> 1.508e1 0 rx}t
+
+TESTING FINITE? FINFINITE? FNAN?
+t{ +NAN    finite?  -> false }t
+t{ -NAN    finite?  -> false }t
+t{ +INF    finite?  -> false }t
+t{ -INF    finite?  -> false }t
+
+t{ 0.0e0   finite?  -> true }t
+t{ -0.0e0  finite?  -> true }t
+t{ DFLOAT_MIN  finite?  -> true }t
+t{ DFLOAT_MAX  finite?  -> true }t
+pad 8 erase
+1 pad ! 
+t{ pad f@  finite?  -> true  }t
+
+t{ +INF    finfinite?  -> true }t
+t{ -INF    finfinite?  -> true }t
+t{ +NAN    finfinite?  -> false }t
+t{ -NAN    finfinite?  -> false }t
+t{ DFLOAT_MAX  finfinite? -> false }t
+t{ DFLOAT_MIN  finfinite? -> false }t
+t{ -0.0e0      finfinite? -> false }t
+
+t{ +NAN    fnan?  -> true }t
+t{ -NAN    fnan?  -> true }t
+t{ +INF    fnan?  -> false }t
+t{ -INF    fnan?  -> false }t
+t{ DFLOAT_MAX  fnan?  -> false }t
+t{ DFLOAT_MIN  fnan?  -> false }t
+
+TESTING FNORMAL? FSUBNORMAL?
+t{ DFLOAT_MIN  fnormal?  ->  true }t
+t{ DFLOAT_MAX  fnormal?  ->  true }t
+t{  0.0e0      fnormal?  ->  true }t
+t{ -0.0e0      fnormal?  ->  true }t
+t{ +INF        fnormal?  ->  false }t
+t{ -INF        fnormal?  ->  false }t
+t{ +NAN        fnormal?  ->  false }t
+t{ -NAN        fnormal?  ->  false }t
+t{ pad df@     fnormal?  ->  false }t
+
+t{ DFLOAT_MIN  fsubnormal?  ->  false }t
+t{ DFLOAT_MAX  fsubnormal?  ->  false }t
+t{ +INF        fsubnormal?  ->  false }t
+t{ -INF        fsubnormal?  ->  false }t
+t{ +NAN        fsubnormal?  ->  false }t
+t{ -NAN        fsubnormal?  ->  false }t
+t{ pad df@     fsubnormal?  ->  true }t
+
+TESTING FCOPYSIGN
+t{ -1.0e0  2.0e0  fcopysign -> -2.0e0 }t
+t{  1.0e0  2.0e0  fcopysign ->  2.0e0 }t
+t{  1.0e0 -2.0e0  fcopysign ->  2.0e0 }t
+t{ -1.0e0 -2.0e0  fcopysign -> -2.0e0 }t
+
 BASE !
 
 [THEN]
