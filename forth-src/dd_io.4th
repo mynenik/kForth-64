@@ -29,11 +29,14 @@
 \
 \  GLOSSARY:
 \
+\    >DD   ( caddr u -- ) ( F: -- x xx)   convert string to dd#
 \    DD>$  ( F: x xx -- ) ( -- caddr u )  convert dd# to string
-\    DDFS. ( F: x xx -- )                 output the dd#
+\    DDFS. ( F: x xx -- )                 output the dd# in special format
 \
+\ Revisions:
+\   2026-09-07 dxf;  bug-fixes for DDOUT_DIGITS  DD>$ INITIALIZE
+\                    ADJUST-EXPONENT >DD
 \ Notes:
-\
 \  1. DD>$ has been modified to use PRECISION setting.
 \
 \ Requires:
@@ -120,7 +123,7 @@ fp-stack? [IF]
 
 \ Convert a double double to a string
 
-create ddout_digits 128 allot
+create ddout_digits 32 CELLS allot
 fp-stack? [IF]
 : dd>$ ( F: x xx -- ) ( -- caddr u )
     FOVER   F0=  IF  dddrop s" 0.0 DD 0"  EXIT  THEN   \ handle 0
@@ -134,15 +137,15 @@ fp-stack? [IF]
     BL       HOLD    \ append dd
     PRECISION 1- 0 ?DO
       peelDigit
-      ddout_digits PRECISION 1- + I - c!
+      ddout_digits PRECISION 1- I - CELLS + !
       shiftBy10
-    LOOP  peelDigit ddout_digits c!
-    PRECISION 1- 0 ?DO
-      ddout_digits I + c@
+    LOOP  peelDigit ddout_digits !
+    ddout_digits  PRECISION 1- 0 ?DO
+      DUP CELL+  SWAP @
+      DUP 0< IF ( fix-up) 10 +  OVER  -1 SWAP +!  THEN
       S>D   #  2DROP
     LOOP
-    [char] .  HOLD
-    ddout_digits PRECISION 1- + c@ S>D  #  2DROP
+    [char] .  HOLD  ( a) @ S>D  #  2DROP
     ROT  IF  [char] -  ELSE  [char] +  THEN   HOLD
     #> f2drop
 ;
@@ -159,16 +162,16 @@ fp-stack? [IF]
     BL       HOLD  2>R >R   \ append dd
     PRECISION 1- 0 ?DO 
       peelDigit
-      ddout_digits PRECISION 1- + I - c!
+      ddout_digits PRECISION 1- I - CELLS + !
       shiftBy10   
-    LOOP  peelDigit ddout_digits c!
+    LOOP  peelDigit ddout_digits !
     R> 2R> 
-    PRECISION 1- 0 ?DO
-      ddout_digits I + c@ 
+    ddout_digits  PRECISION 1- 0 ?DO
+      DUP CELL+  SWAP @
+      DUP 0< IF ( fix-up) 10 +  OVER  -1 SWAP +!  THEN
       S>D   #  2DROP
     LOOP
-    [char] .  HOLD  
-    ddout_digits PRECISION 1- + c@ S>D  #  2DROP
+    [char] .  HOLD  ( a) @ S>D  #  2DROP
     ROT  IF  [char] -  ELSE  [char] +  THEN   HOLD
     #> 2>R f2drop 2R>
 ;
@@ -215,8 +218,6 @@ fp-stack? [IF]
 
 \ : ends->count   ( end beg -- c-adr u)  TUCK  -  1+  ;
 
-\ needs vector1.f      ( include)
-\ needs fsm2.f         ( include)
 
 
 30 CONSTANT  MaxPlaces
@@ -268,11 +269,6 @@ CREATE hi#  MaxPlaces  CHARS ALLOT
         DUP  C@  DUP  digit?  SWAP  dp?  OR  \ digit|dp are legal
             0=  ABORT" Bad exponent"         \ anything else n.g.
 
-\        end C@  dDeE?  -1  AND  ( DUP  >R)
-\                end +  TO  end  \ advance past dDeE
-\        end C@  dDeE?  -1  AND  ( DUP)  end +           ( -- p end')
-\            ( SWAP  R>  OR  0=  ABORT" Bad exponent" )  \ no dDeE !
-
 ;
 
 
@@ -308,18 +304,6 @@ CREATE hi#  MaxPlaces  CHARS ALLOT
 : err2   TRUE  ABORT" One dp to a customer!"  ;
 
 
-FALSE [IF]
-3 wide  fsm:  <<hi/lo>>     ( c col# --)
-\ input       other   |    digit      |      dp    |
-\ state  -------------------------------------------
-  ( 0)   ||  err1 >2  || +hi     >0   ||  DROP >1
-  ( 1)   ||  err1 >2  || +hi|lo  >1   ||  err2 >3
-  ( 2)   ( abnormal termination w/ error1 )
-  ( 3)   ( abnormal termination w/ error2 )
-;fsm
-[THEN]
-
-\ FALSE [IF]
 0 VALUE  (state)        : >state  TO  (state)  ;
 
 : <<hi/lo>>     ( c col# --)
@@ -333,7 +317,6 @@ FALSE [IF]
         5   OF  err2   3 >state     ENDOF
     endcase
 ;
-\ [THEN]
 
 : leadingSign   ( end beg -- sgn end beg')
     DUP C@  [CHAR] -  OVER =    ( end beg c f1)
@@ -344,6 +327,7 @@ FALSE [IF]
 : initialize
     hi#  init_buffer            \ buffers
     lo#  init_buffer
+    lo#  [CHAR] 0  +char        \ required for >FLOAT
     lo#  [CHAR] .  +char
     0 TO pre_dp   0 TO post_dp  \ counts
     0 >state  ( <<hi/lo>>)         \ fsm
@@ -362,13 +346,23 @@ FALSE [IF]
     1e0  exactmul
 ;
 
+fp-stack? [IF]
 : adjustExponent    ( pwr)  ( f: |y+yy| -- |x+xx|)
     pre_dp  +               ( p+n1)
     pre_dp post_dp +        ( p+n1 n1+n2)
     MaxPlaces 2/  MIN  -    ( p'=p+n1-MIN[n1+n2,MaxP/2] )
     dd10  dd^n  dd*
 ;
+[ELSE]
+: adjustExponent    ( pwr)  ( f: |y+yy| -- |x+xx|)
+    pre_dp  +               ( p+n1)
+    pre_dp post_dp +        ( p+n1 n1+n2)
+    MaxPlaces 2/  MIN  -    ( p'=p+n1-MIN[n1+n2,MaxP/2] )
+    >R  dd10  R> dd^n  dd*
+;
+[THEN]
 
+fp-stack? [IF]
 : >dd   ( c-addr u -- )  ( f: -- x xx)
     OVER  +   1-  SWAP          ( end beg)  \ $ends
     initialize                  ( end beg)
@@ -379,34 +373,47 @@ FALSE [IF]
     ( s p)  adjustExponent      ( s)
     IF  ddnegate  THEN          \ adjust sign
 ;
+[ELSE]
+: >dd   ( c-addr u -- )  ( f: -- x xx)
+    OVER  +   1-  SWAP          ( end beg)  \ $ends
+    initialize                  ( end beg)
+    leadingSign                 ( sgn end beg')
+    TUCK  do_exponent   ROT     ( sgn pwr end' beg')
+    >(hi/lo)                    \ digits -> hi/lo buffers
+    2>R
+    hi#  buf->dd    lo#  buf->dd    dd+     ( f: |y+yy|)
+    R> ( p)  adjustExponent
+    R> ( s)  IF  ddnegate  THEN          \ adjust sign
+;
+[THEN]
 
 
 false [IF]
 
 cr .( Examples: ) cr
 
-s" -11.1112222233333444445555566666dd-45" >dd cr ddfs.
+.( 1 ) s" -11.1112222233333444445555566666dd-45" >dd ddfs. cr
 cr .( -1.1111222223333344444555556666603 dd -44  ok )
 
-s" +-11.1112222233333444445555566666dd-45" >dd cr ddfs.
+.( 2 ) s" +-11.1112222233333444445555566666dd-45" >dd ddfs. cr
 cr .( Error: >dd Non-digit in significand! )
 
-s" +11.1112222.233333444445555566666dd-45" >dd cr ddfs.
+.( 3 ) s" +11.1112222.233333444445555566666dd-45" >dd ddfs. cr
 cr .( Error: >dd One dp to a customer! )
 
-s" +11.1112222233333444445555566666dd+45" >dd cr ddfs.
+.( 4 ) s" +11.1112222233333444445555566666dd+45" >dd ddfs. cr
 cr .( +1.1111222223333344444555556666604 dd 46  ok )
 
-s" +11.1112222233333444445555566666" >dd cr ddfs.
+.( 5 ) s" +11.1112222233333444445555566666" >dd ddfs. cr
 cr .( +0.0000000000000000000000000000000 dd 0  ok  <- Must have exponent field)
 
-s" +11.1112222233333444445555566666dd" >dd cr ddfs.
+.( 6 ) s" +11.1112222233333444445555566666dd" >dd ddfs. cr
 cr .( +1.1111222223333344444555556666603 dd 1  ok )
 
-s" +11.1112222233333444445555566666D" >dd cr ddfs.
+.( 7 ) s" +11.1112222233333444445555566666D" >dd ddfs. cr
 cr .( +1.1111222223333344444555556666603 dd 1  ok )
 
-s" 1111122.222333D" >dd cr ddfs.
+.( 8 ) s" 1111122.222333D" >dd ddfs. cr
 cr .( +1.1111222223330000000000000000000 dd 6  ok )
 
 [THEN]
