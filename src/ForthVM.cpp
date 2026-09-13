@@ -75,6 +75,7 @@ extern "C" {
   int   C_sharpbracket(void);
   int   C_word(void);
   int   C_parsename(void);
+  int   C_represent(void);
 
   // vm functions provided by vm.s/vm-fast.s
 
@@ -121,6 +122,7 @@ extern "C" {
   char WordBuf[256];
   char TIB[256];
   char NumberBuf[256];
+  char fsBuf[1024];  // FS. output buffer
 }
 extern "C" long int JumpTable[];
 extern "C" void dump_return_stack(void); 
@@ -1652,33 +1654,97 @@ int CPP_fdot ()
 // Forth-2012 Floating Point Extensions Wordset 12.6.2.1613
 int CPP_fsdot ()
 {
+  double d;
 #ifndef __NO_FPSTACK__
   INC_FSP
   if (GlobalFp > BottomOfFpStack)
     return E_V_FP_STK_UNDERFLOW;
+  d = *((double*) GlobalFp);
+  DEC_FSP 
 #else
   DROP
   DROP
   if (GlobalSp > BottomOfStack)
     return E_V_STK_UNDERFLOW;
+  else {
+    UNDROP
+    d = *((double *) GlobalSp);
+    UNDROP
+  } 
 #endif
-  else
-    {
-      ios_base::fmtflags origFlags = cout.flags();
-      int origPrec = cout.precision();
-#ifndef __NO_FPSTACK__
-      *pOutStream << setprecision(Precision-1) << scientific <<
-                *((double*) GlobalFp) << ' ';
-#else
-      DEC_DSP
-      *pOutStream << setprecision(Precision-1) << scientific <<
-                *((double*) GlobalSp) << ' ';
-      INC_DSP
-#endif
-      (*pOutStream).flush();
-      cout.flags(origFlags);
-      cout.precision(origPrec);
+  char *sig;  // buffer for significand
+  int  sig_len;
+  unsigned long int d_lo, d_hi;
+  long int b2, sign, dec_exp;
+  d_lo = *((unsigned long int *) &d);
+  d_hi = *(((unsigned long int *) &d) + 1);
+  sig_len = Precision + 1;
+  sig = new char[sig_len];  // allocate buffer for significand
+  PUSH_ADDR( ((long int) sig) )
+  PUSH_IVAL( Precision )
+
+  C_represent();  // r c-addr u -- dec_exp sign b2
+
+  DROP
+  b2 = TOS;
+  DROP
+  sign = TOS;
+  DROP
+  dec_exp = TOS;
+
+  sig_len = strlen(sig);
+
+  char *p_fs = fsBuf;
+  char *p_sig = sig;
+
+  if (b2 == 0) {
+    if (dec_exp == 9999) {
+      // NAN or INF ?
+      *p_fs++ = sign ? '-' : '+' ;  // +/-inf or +/-nan
+      long int exp2b = ((d_hi >> 0x14) & 0x7ff);
+      if ( (exp2b == 0x7ff) && (d_lo == 0) && ((d_hi & 0xfffff) == 0) )
+        strcpy(p_fs, "inf");
+      else
+        strcpy(p_fs, "nan");
+      p_fs += 3;
     }
+    else {
+      *pOutStream << "Floating Point Conversion Error!" << endl;
+      return 0;
+    }
+  }
+  else {
+// *pOutStream << "significand = " << sig << " decexp = " << decexp << " sign = " << sign << endl;     
+    char s_exp[5];  // buffer for ascii decimal exponent
+    long int s_exp_len, dec_fs_exp, dec_places;
+    if (sign) *p_fs++ = '-';
+    *p_fs++ = *p_sig++; *p_fs++ = '.';
+    dec_places = sig_len - 1;  // #digits after decimal point
+    strncpy(p_fs, p_sig, dec_places);
+    p_fs += dec_places;
+    *p_fs++ = 'e';
+    dec_fs_exp = dec_exp - 1;
+    *p_fs++ = (dec_fs_exp < 0) ? '-' : '+' ;
+    dec_fs_exp = abs(dec_fs_exp);
+    if (dec_fs_exp < 100)
+      sprintf(s_exp, "%02d", dec_fs_exp);
+    else
+      sprintf(s_exp, "%d", dec_fs_exp);
+    s_exp_len = strlen(s_exp);
+    strncpy(p_fs, s_exp, s_exp_len);
+    p_fs += s_exp_len;
+  }
+  *p_fs = '\0';
+  *pOutStream << fsBuf << ' ';
+  pOutStream->flush();
+  delete [] sig;
+
+//  ios_base::fmtflags origFlags = cout.flags();
+//  int origPrec = cout.precision();
+//  *pOutStream << setprecision(Precision-1) << scientific << d << ' ';
+//  pOutStream->flush();
+//  cout.flags(origFlags);
+// cout.precision(origPrec);
   return 0;
 }
 

@@ -49,6 +49,7 @@ extern long int* BottomOfStack;
 extern long int* BottomOfReturnStack;
 #ifndef __NO_FPSTACK__
 extern void* GlobalFp;
+extern void* BottomOfFpStack;
 extern long int FpSize;
 #endif
 #ifndef __FAST__
@@ -58,6 +59,15 @@ extern byte* BottomOfTypeStack;
 extern byte* BottomOfReturnTypeStack;
 #endif
 extern int CPP_bye();
+
+// Provided by dtoa.c
+extern char* dtoa(double, int, int, int*, int*, char**);
+
+#ifdef _WIN32_
+// Provided by dtoa.c
+extern double strtod(const char *s, char **se);
+// Provided by s_sincos.c: C_fsin(), C_fcos()
+#endif
 
 // Provided by vmxx-common.s
 extern long int Base;
@@ -937,6 +947,62 @@ int C_tofloat ()
   return 0;
 }
 /*-------------------------------------------------------------*/
+/* REPRESENT ( r c-addr u -- n b1 b2 )
+ * 12.6.1.2143
+ * At c-addr, place the character-string external representation
+ * of the significand of the floating point number r. Return the
+ * decimal base exponent as n, the sign as b1 and valid result
+ * flag as b2. The significand is rounded to u digits.
+ */
+int C_represent ()
+{
+  unsigned long int udig;
+  char *s;    // buffer for IEEE double precision significand   
+  char *rv;   // return string ptr
+  char *rve;  // return string end ptr
+  char *p_rv, *p_s;
+  int i, mode, dec_exp, sign, rv_len, tr_zeros, b2;
+  double d;
+  DROP
+  udig = (unsigned long int) TOS; // u
+  DROP
+  CHK_ADDR
+  s = (char *) TOS; // c-addr
+#ifndef __NO_FPSTACK__
+  INC_FSP
+  if (GlobalFp > BottomOfFpStack)
+    return E_V_FP_STK_UNDERFLOW;
+  d = *((double*) GlobalFp);
+#else
+  DROP
+  d = *((double*) GlobalSp);  // r
+  DROP
+#endif
+  mode = 2;  // dtoa() mode 2
+  p_s = s;
+  rv = dtoa(d, mode, udig, &dec_exp, &sign, &rve);
+  if (sign) sign = TRUE;
+  if ((rv == NULL) || (dec_exp == 9999)) {
+    b2 = FALSE;  // conversion failed
+  }
+  else {
+    rv_len = strlen(rv);
+    strncpy(p_s, rv, rv_len);
+    p_s += rv_len;
+    // Append trailing zeros if needed
+    if (rv_len < udig) {
+      tr_zeros = udig - rv_len;
+      for (i = 0; i < tr_zeros; i++) *p_s++ = '0';
+    }
+    b2 = TRUE;   // conversion succeeded
+  }
+  *p_s = '\0';
+  PUSH_IVAL( dec_exp )   // n
+  PUSH_IVAL( sign )
+  PUSH_IVAL( b2 )
+  return 0;
+}
+/*----------------------------------------------------------*/
 
 int C_numberquery ()
 {

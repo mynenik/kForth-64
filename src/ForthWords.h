@@ -276,6 +276,7 @@ WordTemplate ForthWords[] =
     { "D.R",       OP_DDOTR,        0 },
     { "UD.",       OP_UDDOT,        0 },
     { "UD.R",      OP_UDDOTR,       0 },
+    { "REPRESENT", OP_REPRESENT,    0 },
     { "F.",        OP_FDOT,         0 },
     { "FS.",       OP_FSDOT,        0 },
     { ".\x22",     OP_DOTQUOTE,     IMMEDIATE },
