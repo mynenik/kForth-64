@@ -7,7 +7,7 @@ vmc.c
   <krishna.myneni@ccreweb.org>
 
   This software is provided under the terms of the GNU
-  Affero General Public License (AGPL), v3.0 or later.
+  General Public License (GPL), v3.0 or later.
 
 */
 
@@ -91,14 +91,19 @@ int L_quit();
 int L_abort();
 int vm(byte*);
 
-int IsFloat(char*, double*);
+// struct timeval ForthStartTime;
+#ifdef _WIN32_
+unsigned long int ForthStartTime;
+#else
 struct timeval ForthStartTime;
 struct termios tios0;
-struct mallinfo ForthStartMem;
+#endif
 double* pf;
 double f;
 char temp_str[256];
 char key_query_char = 0;
+int IsFloat(char*, double*);
+struct mallinfo ForthStartMem;
 
 /*  signal dispatch table  */
 

@@ -7,7 +7,7 @@
 //   <krishna.myneni@ccreweb.org>
 //
 // This software is provided under the terms of the GNU
-// Affero General Public License, (AGPL), v3.0 or later.
+// General Public License, (GPL), v3.0 or later.
 
 const char* dir_env_var=DIR_ENV_VAR;
 
@@ -1709,14 +1709,15 @@ int CPP_fsdot ()
       p_fs += 3;
     }
     else {
-      *pOutStream << "Floating Point Conversion Error!" << endl;
-      return 0;
+      p_fs = fsBuf;
+      strcpy(p_fs, "** FPCONV ERROR");
+      p_fs += 15;
     }
   }
   else {
 // *pOutStream << "significand = " << sig << " decexp = " << decexp << " sign = " << sign << endl;     
     char s_exp[5];  // buffer for ascii decimal exponent
-    long int s_exp_len, dec_fs_exp, dec_places;
+    int s_exp_len, dec_fs_exp, dec_places;
     if (sign) *p_fs++ = '-';
     *p_fs++ = *p_sig++; *p_fs++ = '.';
     dec_places = sig_len - 1;  // #digits after decimal point

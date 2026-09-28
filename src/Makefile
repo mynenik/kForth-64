@@ -5,7 +5,7 @@
 #   <krishna.myneni@ccreweb.org>
 #
 # This software is provided under the terms of the GNU 
-# Affero General Public License (AGPL), v3.0 or later.
+# General Public License (GPL), v3.0 or later.
 #
 # Possible invocations:
 #
@@ -25,7 +25,7 @@
 # Invoke "make debug" if you want to create an executable
 # that contains debugging information for the GNU debugger (gdb).
 
-VERSION = 0.8.4
+VERSION = 0.8.5
 DEF_DIR_VAR=KFORTH_DIR
 BUILD_DATE=`date +%F`
 DEBUG = 
