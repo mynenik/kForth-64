@@ -526,6 +526,10 @@ L_setprecision:
         DROP
         STSP
         mov (%rbx), %rcx
+        cmp $0, %rcx
+        jz E_invalid_arg
+        cmp $768, %rcx
+        ja E_invalid_arg
         mov %rcx, Precision(%rip)
         NEXT
 

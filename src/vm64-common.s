@@ -23,6 +23,7 @@
 
 .equ E_DIV_ZERO,          -10
 .equ E_ARG_TYPE_MISMATCH, -12
+.equ E_INVALID_ARG,       -24
 .equ E_QUIT,              -56
 .equ E_NOT_ADDR,          -256
 .equ E_RET_STK_CORRUPT,   -258
@@ -503,8 +504,12 @@ E_div_overflow:
 	ret
 
 E_arg_type_mismatch:
-        mov $E_ARG_TYPE_MISMATCH, %eax
+        mov $E_ARG_TYPE_MISMATCH, %rax
         ret
+
+E_invalid_arg:
+        mov $E_INVALID_ARG, %rax
+	ret
 
 L_cputest:
 	ret
