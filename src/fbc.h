@@ -6,7 +6,7 @@
 //    <krishna.myneni@ccreweb.org>
 //
 //  This software is provided under the terms of the GNU
-//  Affero General Public License (AGPL), v3.0 or later.
+//  General Public License (GPL), v3.0 or later.
 //
 
 #ifndef __FORTHBYTECODES_H__
@@ -465,5 +465,9 @@
 #define OP_VALLOC               450
 #define OP_VFREE                451
 #define OP_VPROTECT             452
+
+// Additional words for all versions
+#define OP_FDOT_STR             460
+#define OP_FSDOT_STR            461
 
 #endif

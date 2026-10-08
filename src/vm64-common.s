@@ -150,6 +150,9 @@ JumpTable: .quad L_false, L_true, L_cells, L_cellplus # 0 -- 3
 	   .quad CPP_translate_float, L_nop, CPP_translate_none, L_nop # 440--443
 	   .quad L_nop, L_nop, L_nop, L_nop                  # 444--447
 	   .quad CPP_name_to_execute, L_nop, L_nop, L_nop    # 448--451
+           .quad L_nop, L_nop, L_nop, L_nop                  # 452--455
+           .quad L_nop, L_nop, L_nop, L_nop                  # 456--459
+           .quad L_nop, CPP_fsdot_str, L_nop, L_nop          # 460--463
 .text
 	.align WSIZE
 .global JumpTable

@@ -1649,10 +1649,11 @@ int CPP_fdot ()
   return 0;
 }
 
-// FS.  ( F: r -- )
-// Print floating point number in scientific notation.
-// Forth-2012 Floating Point Extensions Wordset 12.6.2.1613
-int CPP_fsdot ()
+// (FS.) ( F: r -- ) ( -- caddr u )
+// Output the floating point number in scientific notation
+// to a string.
+// Non-standard
+int CPP_fsdot_str()
 {
   double d;
 #ifndef __NO_FPSTACK__
@@ -1673,10 +1674,8 @@ int CPP_fsdot ()
   } 
 #endif
   char *sig;  // buffer for significand
-  unsigned long int d_lo, d_hi;
+  unsigned int d_lo, d_hi;
   long int b2, sign, dec_exp;
-  d_lo = *((unsigned long int *) &d);
-  d_hi = *(((unsigned long int *) &d) + 1);
   sig = new char[Precision];  // allocate buffer for significand
   PUSH_ADDR( ((long int) sig) )
   PUSH_IVAL( Precision )
@@ -1694,24 +1693,13 @@ int CPP_fsdot ()
   char *p_sig = sig;
 
   if (b2 == 0) {
-    if (dec_exp == 9999) {
-      // NAN or INF ?
-      *p_fs++ = sign ? '-' : '+' ;  // +/-inf or +/-nan
-      long int exp2b = ((d_hi >> 0x14) & 0x7ff);
-      if ( (exp2b == 0x7ff) && (d_lo == 0) && ((d_hi & 0xfffff) == 0) )
-        strcpy(p_fs, "inf");
-      else
-        strcpy(p_fs, "nan");
-      p_fs += 3;
-    }
-    else {
-      p_fs = fsBuf;
-      strcpy(p_fs, "** FPCONV ERROR");
-      p_fs += 15;
-    }
+    // For failure, the sig buffer contains one of
+    // inf  nan  ERR
+    // Attach sign for inf only
+    if (*p_sig == 'i') *p_fs++ = sign ? '-' : '+' ; 
+    strncpy(p_fs, sig, 3); p_fs += 3;
   }
   else {
-// *pOutStream << "significand = " << sig << " decexp = " << decexp << " sign = " << sign << endl;     
     char s_exp[8];  // buffer for ascii decimal exponent
     int s_exp_len, dec_fs_exp, dec_places;
     if (sign) *p_fs++ = '-';
@@ -1732,16 +1720,24 @@ int CPP_fsdot ()
     p_fs += s_exp_len;
   }
   *p_fs = '\0';
-  *pOutStream << fsBuf << ' ';
-  pOutStream->flush();
+  PUSH_ADDR( ((long int) fsBuf) )
+  PUSH_IVAL( (strlen(fsBuf)) ) 
   delete [] sig;
+  return 0;
+}
 
-//  ios_base::fmtflags origFlags = cout.flags();
-//  int origPrec = cout.precision();
-//  *pOutStream << setprecision(Precision-1) << scientific << d << ' ';
-//  pOutStream->flush();
-//  cout.flags(origFlags);
-// cout.precision(origPrec);
+// FS.  ( F: r -- )
+// Print floating point number in scientific notation.
+// Forth-2012 Floating Point Extensions Wordset 12.6.2.1613
+int CPP_fsdot ()
+{
+  CPP_fsdot_str();
+  DROP
+  DROP
+  CHK_ADDR
+  char *s = (char*)(TOS);
+  *pOutStream << s << ' ';
+  pOutStream->flush();
   return 0;
 }
 

@@ -6,7 +6,7 @@
 //   <krishna.myneni@ccreweb.org> 
 //
 // This software is provided under the terms of the GNU
-// Affero General Public License (AGPL), v3.0 or later.
+// General Public License (GPL), v3.0 or later.
 //
 
 // The minimum search-order set of words
@@ -278,6 +278,7 @@ WordTemplate ForthWords[] =
     { "UD.R",      OP_UDDOTR,       0 },
     { "REPRESENT", OP_REPRESENT,    0 },
     { "F.",        OP_FDOT,         0 },
+    { "(FS.)",     OP_FSDOT_STR,    0 },
     { "FS.",       OP_FSDOT,        0 },
     { ".\x22",     OP_DOTQUOTE,     IMMEDIATE },
     { ".S",        OP_DOTS,         0 },
