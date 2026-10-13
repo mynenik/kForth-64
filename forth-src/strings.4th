@@ -2,7 +2,7 @@
 \
 \ String utility words for kForth
 \
-\ Copyright (c) 1999--2025 Krishna Myneni
+\ Copyright (c) 1999--2026 Krishna Myneni
 \
 \ This software is provided under the terms of the
 \ GNU General Public License.
@@ -52,8 +52,13 @@
 \ 	D>STRING    ( d -- ^str )
 \
 \  Floating point number to scientific and fixed point string conversion
-\ 	F>STRING    ( n -- ^str ) ( F: r -- ) | ( r n -- ^str )
-\ 	F>FPSTR     ( n -- a u )  ( F: r -- ) | ( r n -- a u )
+\       GET-FSIGN   ( -- bsign )  ( F: r -- r ) | ( r -- r bsign )  
+\  * 	F>STRING    ( n -- ^str ) ( F: r -- )   | ( r n -- ^str )
+\       F>FPSTR     ( n -- a u )  ( F: r -- )   | ( r n -- a u )
+\       (FS.N)      ( n -- a u ) ( F: r -- ) | ( r n -- a u )
+\
+\  * F>STRING is deprecated, use (FS.N) to obtain a caddr u string
+\    in the circular buffer.
 \
 \  Counted string to floating point number conversion
 \ 	STRING>F    ( ^str -- )   ( F: -- r ) | ( ^str -- r )
@@ -64,7 +69,6 @@
 \  String parsing and conversion to multiple floating point values
 \  *	PARSE-FLOATS     ( a u -- n ) ( F: r1 ... rn ) | ( a u -- r1 ... rn n )
 \  *    PARSE-CSV-FLOATS ( a u -- n ) ( F: r1 ... rn ) | ( a u -- r1 ... rn n )
-\
 \
 \  * PARSE_TOKEN and PARSE_LINE are deprecated names for 
 \    PARSE-TOKEN and PARSE-LINE
@@ -78,6 +82,20 @@
  	
 BASE @
 DECIMAL
+
+[UNDEFINED] 64BIT? [IF] 1 cells 8 = constant 64BIT? [THEN]
+[DEFINED] fdepth constant FPSTACK?
+
+64BIT? [IF]
+: GET-FSIGN ( F: r -- r ) ( -- b ) fp@ @ $8000000000000000 and 0<> ;
+[ELSE]
+  \ assumes 32-bit
+  FPSTACK? [IF]
+    : GET-FSIGN ( F: r -- r ) ( -- b ) fp@ 2@ 0< ; \ untested (little-endian assumed) 
+  [ELSE]
+    : GET-FSIGN ( r -- r b ) dup 0< ; \ unified data/fp stack
+  [THEN]
+[THEN] 
 
 \ Create a new allocated and initialized fixed string
 \ from an existing string which may be transient in 
@@ -255,28 +273,9 @@ synonym parse_line  parse-line
 	  s" -" rot count strcat strpck
     THEN ;
 
-variable  number_sign
-variable  number_val
-
-\ Convert counted string to signed integer in base 10 
+\ Convert counted string to signed single in base 10 
 : string>s ( ^str -- n )
-	0 number_val !
-	false number_sign !
-	count
-	0 ?DO
-	  dup c@
-	  case
-	    [char] -  of true  number_sign ! endof 
-	    [char] +  of false number_sign ! endof 
-	    dup isdigit 
-	    IF
-	      dup [char] 0 - number_val @ 10 * + number_val !
-	    THEN
-	  endcase
-	  1+
-	LOOP
-	drop
-	number_val @ number_sign @ IF negate THEN ;
+    string>d drop ;
  
 \ Convert r to a formatted fixed point string with
 \ n decimal places, 0 <= n <= 17.
@@ -284,70 +283,45 @@ variable  number_val
 \   results in total number of digits > 17 will give
 \   incorrect results, e.g. "65536.9921875e 15 f>fpstr type"
 \   will output garbage (20 digits are being requested).
-: f>fpstr ( n -- a u ) ( F: r -- ) \ ( r n -- a u )
-    0 max 17 min >r 10e r@ s>f f** 
-    f* fround f>d dup -rot dabs
-    <# r> 0 ?DO # LOOP [char] . hold #s rot sign #> ; 
+
+: F>FPSTR ( n -- a u ) ( F: r -- ) \ ( r n -- a u )
+    0 max 17 min >r  
+    get-fsign r> 2>r     \ r: sign n
+    r@ s>f falog f* fround f>d dabs
+    <# r> 0 ?DO # LOOP [char] . hold #s r> sign #>
+    strpck count  \ place in circular buffer
+; 
 
 \ Print an fp number as a fixed point string with
 \ n decimal places, right-justified in a field of width, w
 : f.rd ( w n -- ) ( F: r -- ) \ ( r w n -- )
-    swap >r f>fpstr dup 20 > IF
+    swap >r f>fpstr dup 20 > IF   \ caddr u  r: w
       \ Too many digits requested in fixed point output
-      2drop r> 0 ?DO [char] * emit LOOP
-    ELSE
-      r> over - 
-      dup 0> IF spaces ELSE drop THEN type
-    THEN ;
-
-create    fnumber_buf 64 allot
-variable  fnumber_sign
-variable  fnumber_power
-variable  fnumber_digits
+      2drop s" ***"
+    THEN
+    r> over - 
+    dup 0> IF spaces ELSE drop THEN
+    type ;
 
 \ Convert r to a counted string in scientific notation
 \ with n decimal places
 : f>string ( n -- ^str ) ( F: r -- ) \ ( r n -- ^str )
-	>r 
-	fdup f0= IF
-	  f>d <# r> 0 ?do # loop #> s" e0" strcat 
-	  s"  0." 2swap strcat strpck EXIT	  
-	THEN
-	r>
-	dup 16 swap u< IF drop fdrop c" ******" exit THEN  \ test for invalid n
-	fnumber_digits !
-	0 fnumber_power !
-	fdup 0e f< fnumber_sign ! 
-	fabs
-	fdup 1e f< IF
-	  fdup 0e f> IF
-	    BEGIN
-	      10e f* -1 fnumber_power +!
-	      fdup 1e f>=
-	    UNTIL
-	  THEN
-	ELSE
-	  fdup 10e f>= IF
-	    BEGIN
-	      10e f/ 1 fnumber_power +!
-	      fdup 10e f<
-	    UNTIL
-	  THEN
-	THEN
-	10e fnumber_digits @ s>f f**
-	f* floor f>d d>string
-	count drop dup fnumber_buf
-	fnumber_sign @ 
-	IF [char] - ELSE bl THEN 
-	swap c!
-	fnumber_buf 1+ 1 cmove
-	1+
-	[char] . fnumber_buf 2+ c!
-	fnumber_buf 3 + fnumber_digits @ cmove
-	fnumber_buf fnumber_digits @ 3 +	
-	s" e" strcat
-	fnumber_power @ s>string count strcat
-	strpck 	;
+    precision >r \ save current precision
+    dup 0 249 within IF    \ in limits for counted string
+      1+ set-precision (fs.)  
+    ELSE 
+      drop s" ***"
+    THEN  
+    strpck   \ put in circular buffer as counted string
+    r> set-precision  \ restore earlier precision
+;
+
+\ Convert r to a scientific notation string, caddr u pair,
+\ with n decimal places
+: (fs.n) ( n -- a u ) ( F: r -- ) \ ( r n -- a u )
+    precision >r 1+ set-precision (fs.) strbufmove
+    r> set-precision ;
+
 
 0e 0e f/ fconstant NAN
 	 
@@ -357,7 +331,7 @@ variable  fnumber_digits
 
 \ Parse a string delimited by spaces into fp numbers
 
-[DEFINED] FDEPTH [IF]
+FPSTACK? [IF]
 : parse-floats ( a u -- n ) ( F: -- r1 ... rn )
 	0 >r  
 	BEGIN
