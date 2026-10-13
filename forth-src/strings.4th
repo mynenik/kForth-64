@@ -93,7 +93,7 @@ DECIMAL
   FPSTACK? [IF]
     : GET-FSIGN ( F: r -- r ) ( -- b ) fp@ 2@ 0< ; \ untested (little-endian assumed) 
   [ELSE]
-    : GET-FSIGN ( r -- r b ) dup 0< ; \ unified data/fp stack
+    : GET-FSIGN ( r -- r b ) over 0< ; \ unified data/fp stack
   [THEN]
 [THEN] 
 
