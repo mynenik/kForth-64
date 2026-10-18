@@ -74,7 +74,8 @@ create (strbuf) 16384 allot
      (strindx) dup >r a@ 1024 + 16384 mod dup r> ! (strbuf) + ;
 
 [then]
-\ print float to n decimals
+
+\ (F.N) print float to n decimals
 
 create fpad 1024 allot
 
@@ -88,85 +89,78 @@ create fpad 1024 allot
 : s"0."  s" 0." stype ;
     
 : one-or-zero ( F: r -- )           \ exp<=0 n=0 round to +-1 or 0
-    fround>s 48 + semit ;           \ kForth version
-\    fround f>s 48 + semit ;        \ ANS version
+    fround>s 48 + semit ;
     
 : f.n-case-00  ( F: r  --  )        \ exp<=0 n=0 round to +-1 or 0
+\ ." f.n-case-00" cr
     one-or-zero 46 semit ;
      
-: f.n-case-e+n<0 ( F: r -- ) ( n  -- )
+: f.n-case-e+n<0 ( F: r -- ) ( n -- )
+\ ." f.n-case-e+n<0" cr
     >r fdrop r>
     s"0." .zeros ;
 
 : f.n-case-e+n=0 ( F: r -- ) ( n e -- )
+\ ." f.n-case-e+n=0" cr
     2>r
     fdup r> abs s>f falog f* fswap  \ prepare fp for rounding
     r>
     1- f.n-case-e+n<0               \ print 1 less zero
     one-or-zero ;
-    
-: f.n-case-e>0 ( F: r -- ) (  n e -- )
-    over + swap >r                  \ e+n  r: n  f: r
-    fpad 1024 48 fill
-    fpad swap represent 2drop       \ e' r: n
-    dup >r                          \ e' r: n e'
-    fpad swap stype 2r>             \ n e'
-    over 0 >= if 46 semit then      \ n e' 
-    fpad +                          \ n fpad+e'
-    swap 0 max stype ;
-    
-: f.n-case-e<=0 ( F: r -- )  ( n e -- )
-    over +  1 max swap >r           \ e+n r: n
-    fpad 1024 48 fill
-    fpad swap represent 2drop       \ e' r: n
-    dup >r                          \ e' r: n e'
-    s"0." abs .zeros  
-    fpad 2r> +                      \ fpad n+e'
-    stype ;
 
-0 [IF]  \ original version
-: (f.n) ( F:fp n -- )
-    strbuf init-string-buf >r       \ save old string on rs
-    fdup fpad 32 represent          \ find exp and sign
-    swap .sign fabs                 \ print the sign
-    0= if 2drop fdrop 
-          fpad 3 stype else         \ print nan or inf             
-    over 0< if 
-        swap over 1- negate max swap else   \ limit negative n
-        swap over 1024 swap - min swap then \ limit positive n
-    2dup 0 <= swap 0= and             \ n e f
-    if 2drop   f.n-case-00 else
-    2dup + 0<
-    if drop f.n-case-e+n<0 else
-    2dup + 0=
-    if  f.n-case-e+n=0 else
-    dup 0>
-    if  f.n-case-e>0 else
-    f.n-case-e<=0 
-    then then then then then r> >sbuf> ;
-[THEN]
+: f.n-case-normal ( F: |r| -- )  ( n e -- )
+\ ." f.n-case-normal" cr
+    over +  1 max                   ( n e1=max{1, e+n} )
+    fpad 1024 [char] 0 fill
+    swap >r                         ( F: |r| ) ( e1 ) ( r: n )
+    fpad swap represent 2drop       ( F: -- )  ( e' ) ( r: n )
+    r> swap                         ( n e' ) 
+    dup >r dup 0>                   ( n e' f ) ( r: e' ) 
+    if                              \ exp >0
+        fpad swap stype
+        dup 0 >= if 46 semit then   \ n
+        fpad r> +                   \ n fpad+e'
+        swap 0 max stype
+    else                            \ exp <=0
+        s"0." abs .zeros
+        fpad swap r> +              \ fpad n+e'
+        stype
+    then ;
+
     
 : (f.n) ( F: r -- ) ( n -- caddr u )
     strbuf init-string-buf >r >r  \ save old string r: addr n
-    fdup fabs fswap fpad 32 represent  \ find exp and sign  ( exp sign f )
-    swap .sign                    \ print the sign ( exp f )
-    0= if drop fdrop 
+    fdup fabs fswap fpad 17 represent  \ find exp and sign  ( exp sign f )
+    swap >r        \ print the sign ( F: |r|) ( exp flag) ( r: addr n sign)
+    0= IF 
+      drop fdrop
+      r> fpad 3 s" inf" compare 0= IF .sign ELSE drop THEN    
       fpad 3 stype
-      2r> 2drop EXIT
-    else  
-      r> swap over  \ n exp n  r: addr 
-      0< if 
-        swap over 1- negate max swap else   \ limit negative n
-        swap over 1024 swap - min swap then \ limit positive n
-        2dup 0 <= swap 0= and             \ n e f
-    if 2drop f.n-case-00 else
-    2dup + 0<
-    if drop f.n-case-e+n<0 else
-    2dup + 0=
-    if  f.n-case-e+n=0 else
-    dup 0>
-    if  f.n-case-e>0 else
-    f.n-case-e<=0 
-    then then then then then r> >sbuf> ;
+      r> drop       ( r: addr)
+    ELSE  
+      r> .sign
+      ( F: |r| ) ( exp ) ( r: addr n )
+      r> swap  ( n exp ) ( r: addr )
+      >r       ( n ) ( r: addr exp)
+      dup 0 >= IF
+        1024 r@ - min
+      ELSE
+        r@ 0 <= IF
+          drop 0
+        ELSE
+          1 r@ - max  
+        THEN
+      THEN
+      r>    ( F: |r|) ( n' exp ) ( r: addr ) 
+
+      2dup 0 <= swap 0= and 
+      IF  2drop f.n-case-00  ELSE
+        2dup + 0<
+      IF  drop f.n-case-e+n<0  ELSE
+        2dup + 0=
+      IF  f.n-case-e+n=0  ELSE
+        f.n-case-normal
+      THEN THEN THEN
+    THEN r> >sbuf> ;
 
 : f.n  (f.n) type space ;

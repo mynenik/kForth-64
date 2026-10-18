@@ -1,5 +1,5 @@
 \ fdotn-test.4th
-\ 05 Oct 2026
+\ 18 Oct 2026
 \
 \ Test F.N ( F: r -- ) ( n -- ) 
 \ Fixed point output and n is the number of decimal places.
@@ -9,11 +9,12 @@
 include ans-words
 include strings
 
-CR .( FDOTN-TEST        V1.0      06 Oct     2026 )
+CR .( FDOTN-TEST        V1.2      18 Oct     2026 )
 [UNDEFINED] T{ [IF] s" ttester" included [THEN]
 \ The included below will change to strings.4th
 \ (F.N) and F.N will be integrated into strings.4th
-[UNDEFINED] (F.N) [IF] s" fdotn.4th" included [THEN]
+\ [UNDEFINED] (F.N) [IF] s" fdotn.4th" included [THEN]
+include fdotn.4th
 
 variable fdotn-errors  0 fdotn-errors !
 :noname ( c-addr u -- | Keep cumulative error count )
@@ -89,6 +90,70 @@ t{ ( 53 ) -5.0999913335e0  9 (f.n) s" -5.099991334" comp -> 0 }t
 t{ ( 54 ) 9.599999999e8    0 (f.n) s" 960000000." comp -> 0 }t
 t{ ( 55 ) 0.0e             0 (f.n) s" 0." comp -> 0 }t
 t{ ( 56 ) -0.0e            0 (f.n) s" -0." comp -> 0 }t
+
+\ Addtional tests by <peter@noreply.tin.it>:
+\ from message on comp.lang.forth 8 October 2026
+t{ (  1)  0.9e  0 (f.n) s" 1." comp -> 0 }t
+t{ (  2)  0.3e  0 (f.n) s" 0." comp -> 0 }t
+t{ (  3) -0.9e  0 (f.n) s" -1." comp -> 0 }t
+t{ (  4) -0.3e  0 (f.n) s" -0." comp -> 0 }t
+
+t{ (  5) 0.123e   0 (f.n) s" 0." comp -> 0 }t
+t{ (  6) 0.123e-1 1 (f.n) s" 0.0" comp -> 0 }t
+t{ (  7) 0.123e-2 2 (f.n) s" 0.00" comp -> 0 }t
+t{ (  8) 0.123e-3 3 (f.n) s" 0.000" comp -> 0 }t
+
+t{ (  9) 0.823e   0 (f.n) s" 1." comp -> 0 }t
+t{ ( 10) 0.823e-1 1 (f.n) s" 0.1" comp -> 0 }t
+t{ ( 11) 0.823e-2 2 (f.n) s" 0.01" comp -> 0 }t
+t{ ( 12) 0.823e-3 3 (f.n) s" 0.001" comp -> 0 }t
+
+t{ ( 13)  0.1368e    3 (f.n) s" 0.137" comp -> 0 }t
+t{ ( 14) -0.1368e-1  3 (f.n) s" -0.014" comp -> 0 }t
+t{ ( 15)  0.1368e-2  3 (f.n) s" 0.001" comp -> 0 }t
+t{ ( 16) -0.1368e-3  3 (f.n) s" -0.000" comp -> 0 }t
+t{ ( 17)  0.1368e-4  3 (f.n) s" 0.000" comp -> 0 }t
+
+t{ ( 18) -0.8368e    3 (f.n) s" -0.837" comp -> 0 }t
+t{ ( 19) -0.8368e-1  3 (f.n) s" -0.084" comp -> 0 }t
+t{ ( 20) -0.8368e-2  3 (f.n) s" -0.008" comp -> 0 }t
+t{ ( 21) -0.8368e-3  3 (f.n) s" -0.001" comp -> 0 }t
+t{ ( 22) -0.8368e-4  3 (f.n) s" -0.000" comp -> 0 }t
+
+t{ ( 23) 126.8567e   3 (f.n) s" 126.857" comp -> 0 }t
+t{ ( 24) 126.8567e   2 (f.n) s" 126.86" comp -> 0 }t
+t{ ( 25) 126.8567e   1 (f.n) s" 126.9" comp -> 0 }t
+t{ ( 26) 126.8567e   0 (f.n) s" 127." comp -> 0 }t
+t{ ( 27) 126.8567e  -1 (f.n) s" 130" comp -> 0 }t
+t{ ( 28) 126.8567e  -2 (f.n) s" 100" comp -> 0 }t
+t{ ( 29) 126.8567e  -3 (f.n) s" 100" comp -> 0 }t
+
+t{ ( 30) 99.995e  3 (f.n) s" 99.995" comp -> 0 }t
+t{ ( 31) 99.995e  2 (f.n) s" 100.00" comp -> 0 }t
+t{ ( 32) 99.995e  1 (f.n) s" 100.0" comp -> 0 }t
+
+t{ ( 33) 0.999955555e 0 (f.n) s" 1." comp -> 0 }t
+t{ ( 34) 0.999955555e 1 (f.n) s" 1.0" comp -> 0 }t
+t{ ( 35) 0.999955555e 2 (f.n) s" 1.00" comp -> 0 }t
+t{ ( 36) 0.999955555e 3 (f.n) s" 1.000" comp -> 0 }t
+t{ ( 37) 0.999955555e 4 (f.n) s" 1.0000" comp -> 0 }t
+t{ ( 38) 0.999955555e 5 (f.n) s" 0.99996" comp -> 0 }t
+
+t{ ( 39) 5.2345678e-1  10 (f.n) s" 0.5234567800" comp -> 0 }t
+t{ ( 40) 5.2345678e-2  10 (f.n) s" 0.0523456780" comp -> 0 }t
+t{ ( 41) 5.2345678e-3  10 (f.n) s" 0.0052345678" comp -> 0 }t
+t{ ( 42) 5.2345678e-4  10 (f.n) s" 0.0005234568" comp -> 0 }t
+t{ ( 43) 5.2345678e-5  10 (f.n) s" 0.0000523457" comp -> 0 }t
+t{ ( 44) 5.2345678e-6  10 (f.n) s" 0.0000052346" comp -> 0 }t
+t{ ( 45) 5.2345678e-7  10 (f.n) s" 0.0000005235" comp -> 0 }t
+t{ ( 46) 5.2345678e-8  10 (f.n) s" 0.0000000523" comp -> 0 }t
+t{ ( 47) 5.2345678e-9  10 (f.n) s" 0.0000000052" comp -> 0 }t
+t{ ( 48) 5.2345678e-10 10 (f.n) s" 0.0000000005" comp -> 0 }t
+t{ ( 49) 5.2345678e-11 10 (f.n) s" 0.0000000001" comp -> 0 }t
+t{ ( 50) 5.2345678e-12 10 (f.n) s" 0.0000000000" comp -> 0 }t
+
+t{ ( 50) -1e 0e f/ 5 (f.n) s" -inf" comp -> 0 }t
+t{ ( 51)  0e 0e f/ 5 (f.n) s" nan" comp -> 0 }t
 
 CR .( Error Count: ) fdotn-errors ? CR
 
