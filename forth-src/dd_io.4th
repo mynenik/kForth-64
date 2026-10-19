@@ -154,12 +154,13 @@ fp-stack? [IF]
 ;
 [ELSE]
 : (ddfs.) ( x xx -- caddr u )
-    FOVER   F0=  IF  dddrop s" 0.0 DD 0"  EXIT  THEN   \ handle 0
+    FOVER   F0=  IF  dddrop s" 0.0DD0"  EXIT  THEN   \ handle 0
     getSign >R
     getPower normalize R> SWAP
     S>D  SWAP  OVER  DABS       \ convert exponent
     <#  #S  ROT SIGN            \ append  digits of exponent
     [char] d HOLD  [char] d HOLD
+    2>R >R
     PRECISION 1- 0 ?DO 
       peelDigit
       ddout_digits PRECISION 1- I - CELLS + !
