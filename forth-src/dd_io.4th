@@ -29,15 +29,20 @@
 \
 \  GLOSSARY:
 \
-\    >DD   ( caddr u -- ) ( F: -- x xx)   convert string to dd#
-\    DD>$  ( F: x xx -- ) ( -- caddr u )  convert dd# to string
-\    DDFS. ( F: x xx -- )                 output the dd# in special format
+\    >DD      ( caddr u -- ) ( F: -- x xx)   convert string to dd#
+\    (DDFS.)  ( F: x xx -- ) ( -- caddr u )  convert dd# to string
+\    DDFS.    ( F: x xx -- )                 output the dd# in special format
 \
 \ Revisions:
 \   2026-09-07 dxf;  bug-fixes for DDOUT_DIGITS  DD>$ INITIALIZE
 \                    ADJUST-EXPONENT >DD
+\   2026-10-19 km; DD>$ is deprecated; use (DDFS.);
+\     modified output to remove spaces and leading '+' for
+\     positive number.
+\
 \ Notes:
-\  1. DD>$ has been modified to use PRECISION setting.
+\  1. (DDFS.) uses PRECISION setting for number of significant
+\     digits.
 \
 \ Requires:
 \   ans-words
@@ -123,18 +128,15 @@ fp-stack? [IF]
 
 \ Convert a double double to a string
 
-create ddout_digits 32 CELLS allot
+create ddout_digits 33 CELLS allot
 fp-stack? [IF]
-: dd>$ ( F: x xx -- ) ( -- caddr u )
-    FOVER   F0=  IF  dddrop s" 0.0 DD 0"  EXIT  THEN   \ handle 0
+: (ddfs.) ( F: x xx -- ) ( -- caddr u )
+    FOVER   F0=  IF  dddrop s" 0.0DD0"  EXIT  THEN   \ handle 0
     getSign
     getPower normalize
     S>D  SWAP  OVER  DABS       \ convert exponent
     <#  #S  ROT SIGN            \ append  digits of exponent
-    BL       HOLD
-    [char] d HOLD
-    [char] d HOLD
-    BL       HOLD    \ append dd
+    [char] d HOLD  [char] d HOLD
     PRECISION 1- 0 ?DO
       peelDigit
       ddout_digits PRECISION 1- I - CELLS + !
@@ -142,24 +144,22 @@ fp-stack? [IF]
     LOOP  peelDigit ddout_digits !
     ddout_digits  PRECISION 1- 0 ?DO
       DUP CELL+  SWAP @
+
       DUP 0< IF ( fix-up) 10 +  OVER  -1 SWAP +!  THEN
       S>D   #  2DROP
     LOOP
     [char] .  HOLD  ( a) @ S>D  #  2DROP
-    ROT  IF  [char] -  ELSE  [char] +  THEN   HOLD
+    ROT  IF  [char] -  HOLD  THEN
     #> f2drop
 ;
 [ELSE]
-: dd>$ ( x xx -- caddr u )
+: (ddfs.) ( x xx -- caddr u )
     FOVER   F0=  IF  dddrop s" 0.0 DD 0"  EXIT  THEN   \ handle 0
     getSign >R
     getPower normalize R> SWAP
     S>D  SWAP  OVER  DABS       \ convert exponent
     <#  #S  ROT SIGN            \ append  digits of exponent
-    BL       HOLD
-    [char] d HOLD
-    [char] d HOLD
-    BL       HOLD  2>R >R   \ append dd
+    [char] d HOLD  [char] d HOLD
     PRECISION 1- 0 ?DO 
       peelDigit
       ddout_digits PRECISION 1- I - CELLS + !
@@ -172,13 +172,14 @@ fp-stack? [IF]
       S>D   #  2DROP
     LOOP
     [char] .  HOLD  ( a) @ S>D  #  2DROP
-    ROT  IF  [char] -  ELSE  [char] +  THEN   HOLD
+    ROT  IF  [char] - HOLD   THEN
     #> 2>R f2drop 2R>
 ;
 [THEN]
+synonym dd>$ (ddfs.)  \ deprecated name DD>$ for backward compat
 
 : ddfs.     ( f: x xx -- )  \ display double-double in E-format
-    dd>$ type ;
+    (ddfs.) type ;
 
 32 SET-PRECISION
 
@@ -393,7 +394,7 @@ false [IF]
 cr .( Examples: ) cr
 
 .( 1 ) s" -11.1112222233333444445555566666dd-45" >dd ddfs. cr
-cr .( -1.1111222223333344444555556666603 dd -44  ok )
+cr .( -1.1111222223333344444555556666603dd-44  ok )
 
 .( 2 ) s" +-11.1112222233333444445555566666dd-45" >dd ddfs. cr
 cr .( Error: >dd Non-digit in significand! )
@@ -402,19 +403,19 @@ cr .( Error: >dd Non-digit in significand! )
 cr .( Error: >dd One dp to a customer! )
 
 .( 4 ) s" +11.1112222233333444445555566666dd+45" >dd ddfs. cr
-cr .( +1.1111222223333344444555556666604 dd 46  ok )
+cr .( +1.1111222223333344444555556666604dd46  ok )
 
 .( 5 ) s" +11.1112222233333444445555566666" >dd ddfs. cr
-cr .( +0.0000000000000000000000000000000 dd 0  ok  <- Must have exponent field)
+cr .( +0.0000000000000000000000000000000dd0  ok  <- Must have exponent field)
 
 .( 6 ) s" +11.1112222233333444445555566666dd" >dd ddfs. cr
-cr .( +1.1111222223333344444555556666603 dd 1  ok )
+cr .( +1.1111222223333344444555556666603dd1  ok )
 
 .( 7 ) s" +11.1112222233333444445555566666D" >dd ddfs. cr
-cr .( +1.1111222223333344444555556666603 dd 1  ok )
+cr .( +1.1111222223333344444555556666603dd1  ok )
 
 .( 8 ) s" 1111122.222333D" >dd ddfs. cr
-cr .( +1.1111222223330000000000000000000 dd 6  ok )
+cr .( +1.1111222223330000000000000000000dd6  ok )
 
 [THEN]
 
